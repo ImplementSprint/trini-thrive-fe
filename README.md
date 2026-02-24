@@ -1,6 +1,6 @@
 # FE Multi Template Repo Starter
 
-Starter for a multi-app Next.js monorepo that calls the central FE Multi pipeline.
+Starter for a multi-app Next.js monorepo that calls the central FE Multi  pipeline.
 
 ## Includes
 - `.github/workflows/master-pipeline-fe-multi.yml`
