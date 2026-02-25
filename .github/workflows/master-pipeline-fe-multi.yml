@@ -40,7 +40,7 @@ concurrency:
 jobs:
   master-orchestrator:
     name: "Call Master Orchestrator"
-    uses: ImplementSprint/CICD-Fe-Multi/.github/workflows/master-pipeline-fe-multi.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/master-pipeline-fe-multi.yml@main
     with:
       run_deploy: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.run_deploy == 'true' }}
       run_promotion: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.run_promotion == 'true' }}
