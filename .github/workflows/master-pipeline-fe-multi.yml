@@ -53,7 +53,7 @@ jobs:
       - name: Resolve systems JSON
         id: resolve
         env:
-          SYSTEMS_JSON_VAR: ${{ vars.TEMPLATE_REPO_FE_MULTI }}
+          SYSTEMS_JSON_VAR: ${{ vars.FE_MULTI_SYSTEM_JSON }}
         run: |
           if [ -z "${SYSTEMS_JSON_VAR}" ]; then
             echo "❌ Missing required repository variable TEMPLATE_FE_MULTI_SYSTEMS_JSON."
