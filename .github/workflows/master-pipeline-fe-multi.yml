@@ -222,7 +222,7 @@ jobs:
       fail-fast: false
       matrix:
         system: ${{ fromJson(needs.active-systems.outputs.active_systems_json) }}
-    uses: ImplementSprint/central_workflow/.github/workflows/vercel-deploy.yml@main
+    uses: ImplementSprint/central-workflow/.github/workflows/vercel-deploy.yml@main
     with:
       working-directory: ${{ matrix.system.dir }}
       environment: preview
