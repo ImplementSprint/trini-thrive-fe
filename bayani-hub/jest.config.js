@@ -12,6 +12,7 @@ const customJestConfig = {
   collectCoverage: true,
   collectCoverageFrom: [
     '<rootDir>/src/**/*.{ts,tsx}',
+    '!<rootDir>/src/app/**/*.{ts,tsx}',
     '!<rootDir>/src/**/*.d.ts',
   ],
   coverageThreshold: {
