@@ -96,4 +96,11 @@ describe('middleware', () => {
     middleware(req);
     expect(mockRedirect).toHaveBeenCalledWith('/hope-card/donor/login');
   });
+
+  it('redirects to login when system claim is not hopecard', () => {
+    const token = makeToken({ persona: 'admin', system: 'other-system' });
+    const req = new NextRequest('http://localhost/hope-card/admin/dashboard', token);
+    middleware(req);
+    expect(mockRedirect).toHaveBeenCalledWith('/hope-card/admin/login');
+  });
 });

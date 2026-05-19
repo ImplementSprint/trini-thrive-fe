@@ -37,7 +37,7 @@ export function middleware(request: NextRequest) {
   }
 
   const payload = decodeJwtPayload(token);
-  if (!payload || typeof payload.persona !== 'string') {
+  if (!payload || typeof payload.persona !== 'string' || payload.system !== 'hopecard') {
     return NextResponse.redirect(new URL(`/hope-card/${urlSlug}/login`, request.nextUrl));
   }
 
