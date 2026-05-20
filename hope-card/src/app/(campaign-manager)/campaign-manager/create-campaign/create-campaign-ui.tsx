@@ -789,7 +789,7 @@ export default function CreateCampaignUI({
                   <Check size={28} strokeWidth={3} />
                 </div>
                 <h2 className="mt-6 text-[26px] font-extrabold tracking-[-0.02em] text-[#2e2523]">
-                  Congratulations, {managerName.split(' ')[0]}! 🎉
+                  Congratulations, {(managerName ?? '').split(' ')[0]}! 🎉
                 </h2>
                 <p className="mx-auto mt-3 max-w-[560px] text-[14px] leading-7 text-[#7f6f6a]">
                   Your campaign <span className="font-bold text-[#b55247]">&quot;{title}&quot;</span> has been successfully created and is saved as a <span className="font-bold text-[#e38f4d]">Draft</span>. It&apos;s ready for you to activate whenever you are.

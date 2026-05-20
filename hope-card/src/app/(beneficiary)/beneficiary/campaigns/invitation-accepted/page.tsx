@@ -66,7 +66,7 @@ const SIDEBAR_W_COLLAPSED = 80;
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const InvitationAcceptedPage: React.FC = () => {
+const InvitationAcceptedContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [collapsed, setCollapsed] = useState<boolean>(false);
@@ -373,5 +373,11 @@ const InvitationAcceptedPage: React.FC = () => {
     </div>
   );
 };
+
+const InvitationAcceptedPage: React.FC = () => (
+  <React.Suspense fallback={null}>
+    <InvitationAcceptedContent />
+  </React.Suspense>
+);
 
 export default InvitationAcceptedPage;

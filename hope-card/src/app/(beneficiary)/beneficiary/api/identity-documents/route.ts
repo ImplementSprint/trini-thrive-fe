@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const formData = await request.formData();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formData = await request.formData() as any;
     const file = formData.get("file") as File | null;
     const label = formData.get("label") as string | null;
 

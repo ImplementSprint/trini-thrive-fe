@@ -1,18 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export type AuthError = {
   message: string;
   code?: string;
 };
 
+let _supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return _supabase;
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return (getSupabase() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
+
 export async function signUp(email: string, password: string) {
   try {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await getSupabase().auth.signUp({
       email,
       password,
     });
@@ -39,7 +51,7 @@ export async function signUp(email: string, password: string) {
 
 export async function signIn(email: string, password: string) {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await getSupabase().auth.signInWithPassword({
       email,
       password,
     });
@@ -66,7 +78,7 @@ export async function signIn(email: string, password: string) {
 
 export async function signOut() {
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await getSupabase().auth.signOut();
 
     if (error) {
       return {
@@ -89,14 +101,14 @@ export async function signOut() {
 
 export async function getCurrentUser() {
   try {
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await getSupabase().auth.getUser();
 
     if (error || !data.user) {
       return null;
     }
 
     return data.user;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

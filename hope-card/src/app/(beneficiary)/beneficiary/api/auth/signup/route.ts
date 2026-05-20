@@ -17,7 +17,8 @@ const MIME_MAP: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formData = await request.formData() as any;
 
     const firstName = formData.get('firstName') as string;
     const lastName = formData.get('lastName') as string;

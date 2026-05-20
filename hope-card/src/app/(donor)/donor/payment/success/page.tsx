@@ -183,7 +183,7 @@ export default function PaymentSuccessPage() {
                 <p style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: `${colors.onSurfaceVariant}99`, fontFamily: "Manrope, sans-serif" }}>
                   Breakdown
                 </p>
-                {cart.map((item) => (
+                {(cart as Array<{ id: string; title: string; quantity: number; price: number }>).map((item) => (
                   <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: "0.875rem", color: colors.onSurface, fontFamily: "Plus Jakarta Sans, sans-serif" }}>
                       {String(item.quantity).padStart(2, "0")}× {item.title}

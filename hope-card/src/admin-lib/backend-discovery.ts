@@ -2,7 +2,7 @@
  * Get backend URL from environment or default to localhost:5000
  */
 export async function getBackendUrl(): Promise<string> {
-  const url = process.env.NEXT_PUBLIC_ADMIN_BACKEND_URL;
+  const url = process.env.NEXT_PUBLIC_ADMIN_BACKEND_URL ?? '';
   console.log(`🔍 Backend URL: ${url}`);
   return url;
 }
