@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Mail, ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import styles from "@/app/login/login.module.css";
+import styles from "@/app/(admin)/admin/login/login.module.css";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -96,7 +96,7 @@ export default function ForgotPassword() {
           <div className={styles.forgotPassword}>
             <button 
               type="button"
-              onClick={() => router.push("/login")}
+              onClick={() => router.push("/admin/login")}
               style={{
                 display: "flex",
                 alignItems: "center",

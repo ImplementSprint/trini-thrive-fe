@@ -25,6 +25,8 @@ export async function createJWT(adminId: string, adminEmail: string) {
   const token = await new SignJWT({
     sub: adminId,
     email: adminEmail,
+    persona: 'admin',
+    system: 'hopecard',
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

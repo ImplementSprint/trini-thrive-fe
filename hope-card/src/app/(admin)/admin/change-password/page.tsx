@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
-import styles from "@/app/login/login.module.css";
+import styles from "@/app/(admin)/admin/login/login.module.css";
 
 export default function ChangePassword() {
   const router = useRouter();
@@ -90,7 +90,7 @@ export default function ChangePassword() {
 
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/admin/dashboard");
       }, 2000);
     } catch (err) {
       setError("An error occurred - make sure backend is running");
@@ -188,7 +188,7 @@ export default function ChangePassword() {
         <div className={styles.forgotPassword}>
           <button 
             type="button"
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/admin/dashboard")}
           >
             Back to Dashboard
           </button>

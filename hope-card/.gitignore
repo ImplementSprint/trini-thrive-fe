@@ -43,3 +43,6 @@ next-env.d.ts
 # Testing artifacts
 test-results/
 playwright-report/
+
+# Runtime artifacts (not config)
+/public/admin/backend-info.json
