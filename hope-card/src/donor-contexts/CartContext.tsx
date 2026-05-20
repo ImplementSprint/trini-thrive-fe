@@ -95,11 +95,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function fetchCart(session: any) {
       setAuthUserId(session.user.id);
-      setAccessToken(session.access_token);
+      const donorToken = localStorage.getItem('donor_token') ?? session.access_token;
+      setAccessToken(donorToken);
       setLoading(true);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/cart?authUserId=${session.user.id}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+        const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart?authUserId=${session.user.id}`, {
+          headers: { Authorization: `Bearer ${donorToken}` },
         });
         const data: ApiCartResponse = await parseJsonResponse(res);
         if (res.ok) applyCartResponse(data);
@@ -148,7 +149,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     imageSrc: string; imageAlt: string; category?: string;
   }) => {
     if (!authUserId) throw new Error('Please log in to manage your cart');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/cart`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -168,7 +169,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removeFromCart = useCallback(async (cartItemId: string) => {
     if (!authUserId) throw new Error('Please log in to manage your cart');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/cart`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -183,7 +184,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = useCallback(async (cartItemId: string, quantity: number) => {
     if (!authUserId) throw new Error('Please log in to manage your cart');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/cart`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

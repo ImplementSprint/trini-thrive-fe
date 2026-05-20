@@ -493,7 +493,7 @@ export default function HopecardSettings() {
           {/* ── Sign Out ───────────────────────────────────────────────────── */}
           <div style={{ paddingTop: "2rem" }}>
             <button
-              onClick={async () => { await supabase.auth.signOut(); document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0'; router.push('/donor/login'); }}
+              onClick={async () => { await supabase.auth.signOut(); localStorage.removeItem('donor_token'); document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0'; router.push('/donor/login'); }}
               style={{
                 width: "100%",
                 background: C.primaryContainer,

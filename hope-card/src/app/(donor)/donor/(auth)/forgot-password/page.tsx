@@ -1,43 +1,32 @@
 'use client';
 
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import CustomInput from '@/donor-components/CustomInput';
-import GradientButton from '@/donor-components/GradientButton';
+import { Mail, ArrowLeft } from 'lucide-react';
+import { C, AuthShell, MobileLogo } from '@/donor-components/auth-shared';
 
-export default function ForgotPasswordScreen() {
+function ForgotPasswordForm() {
   const router = useRouter();
-  const [email, setEmail] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [errorMessage, setErrorMessage] = React.useState('');
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSendOtp = async () => {
-    if (!email) {
-      setErrorMessage('Email is required');
-      return;
-    }
-    
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) { setErrorMessage('Email is required'); return; }
+
     setIsLoading(true);
     setErrorMessage('');
-    
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/auth/generate-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/generate-otp`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
-      
       const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to send OTP');
-      }
-      
-      // Success, route to OTP screen and pass the email so they know who it belongs to
-      router.push(`/otp?email=${encodeURIComponent(email)}`);
+      if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+      router.push(`/donor/otp?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       setErrorMessage(err.message);
     } finally {
@@ -46,74 +35,109 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <View style={styles.formContainer}>
-      <Text style={styles.headerText}>Forgot Password?</Text>
-      
-      <Text style={styles.subHeaderText}>Find your account</Text>
+    <AuthShell>
+      <div
+        style={{
+          padding: 'clamp(2rem, 5vw, 5rem)',
+          background: C.surfaceContainerLowest,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
+      >
+        <MobileLogo />
 
-      {errorMessage ? (
-        <Text style={{ color: '#E74C3C', textAlign: 'center', marginBottom: 15, fontSize: 13 }}>
-          {errorMessage}
-        </Text>
-      ) : null}
+        <div style={{ marginBottom: '2.5rem' }}>
+          <h2 style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '1.875rem', fontWeight: 700, color: C.onPrimaryFixed, margin: '0 0 0.5rem' }}>
+            Forgot Password?
+          </h2>
+          <p style={{ color: C.onSurfaceVariant, margin: 0, fontFamily: 'Manrope, sans-serif' }}>
+            Enter your email and we'll send you a verification code.
+          </p>
+        </div>
 
-      <CustomInput 
-        placeholder="Enter your email" 
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-        icon={<Text style={styles.icon}>✉️</Text>} 
-      />
+        {errorMessage && (
+          <div style={{ padding: '1rem', marginBottom: '1.5rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#991b1b', fontSize: '0.875rem', fontFamily: 'Manrope, sans-serif' }}>
+            {errorMessage}
+          </div>
+        )}
 
-      <GradientButton 
-        title={isLoading ? 'Sending...' : 'Continue'} 
-        onPress={handleSendOtp} 
-      />
+        <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+            <label style={{ fontSize: '0.875rem', fontWeight: 600, color: C.onSurfaceVariant, paddingLeft: '0.25rem', fontFamily: 'Manrope, sans-serif' }}>
+              Email Address
+            </label>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: C.onSurfaceVariant, display: 'flex' }}>
+                <Mail size={18} />
+              </span>
+              <input
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  paddingLeft: '3rem',
+                  paddingRight: '1rem',
+                  paddingTop: '1rem',
+                  paddingBottom: '1rem',
+                  borderRadius: '1rem',
+                  background: C.surfaceContainerHighest,
+                  border: 'none',
+                  outline: 'none',
+                  color: C.onSurface,
+                  fontFamily: 'Manrope, sans-serif',
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => { e.currentTarget.style.background = C.surfaceContainerLowest; e.currentTarget.style.boxShadow = `0 0 0 1px ${C.primary}33`; }}
+                onBlur={(e) => { e.currentTarget.style.background = C.surfaceContainerHighest; e.currentTarget.style.boxShadow = 'none'; }}
+              />
+            </div>
+          </div>
 
-      {/* Footer updated to match the mockup */}
-      <View style={styles.footerContainer}>
-        <View style={styles.line} />
-        <Text style={styles.footerText}>Dont have an account? </Text>
-        <Pressable onPress={() => router.push('/donor/signup')}>
-          <Text style={styles.signupText}> Sign up here!</Text>
-        </Pressable>
-        <View style={styles.line} />
-      </View>
-    </View>
+          <button
+            type="submit"
+            disabled={isLoading}
+            style={{
+              width: '100%',
+              padding: '1.25rem',
+              borderRadius: '1rem',
+              background: C.coralRose,
+              color: C.onPrimary,
+              fontFamily: 'Plus Jakarta Sans, sans-serif',
+              fontWeight: 700,
+              fontSize: '1.125rem',
+              border: 'none',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 8px 24px rgba(242,141,131,0.3)',
+              opacity: isLoading ? 0.7 : 1,
+            }}
+          >
+            {isLoading ? 'Sending...' : 'Continue'}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '2.5rem', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => router.push('/donor/login')}
+            style={{ background: 'none', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: C.onSurfaceVariant, fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}
+          >
+            <ArrowLeft size={16} />
+            Back to Sign In
+          </button>
+        </div>
+      </div>
+    </AuthShell>
   );
 }
 
-const styles = StyleSheet.create({
-  formContainer: {
-    width: '100%', 
-    maxWidth: 480,       
-    padding: 40,         
-    alignItems: 'stretch', 
-  } as any,
-  headerText: { 
-    fontSize: 42,        
-    fontWeight: 'bold', 
-    color: '#6A1B1B', 
-    marginBottom: 50, // Pushed down slightly to give the top more breathing room    
-    textAlign: 'center' 
-  },
-  subHeaderText: { 
-    fontSize: 22, 
-    fontWeight: '700', 
-    color: '#6A1B1B', 
-    alignSelf: 'flex-start', // Left aligned to match mockup
-    marginBottom: 20,    
-    marginLeft: 5,
-  },
-  icon: { fontSize: 16, color: '#888' },
-  footerContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginTop: 50,       
-    width: '100%' 
-  },
-  line: { flex: 1, height: 1, backgroundColor: '#D9B3B3' },
-  footerText: { fontSize: 14, color: '#888', marginLeft: 10, textAlign: 'center' },
-  signupText: { fontSize: 14, fontWeight: 'bold', color: '#6A1B1B', marginRight: 10 },
-});
+export default function ForgotPasswordScreen() {
+  return (
+    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>Loading...</div>}>
+      <ForgotPasswordForm />
+    </Suspense>
+  );
+}

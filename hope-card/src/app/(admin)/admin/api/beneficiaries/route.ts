@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     const BACKEND_URL = await getBackendUrl();
     // Build backend URL
-    let url = `${BACKEND_URL}/api/beneficiaries?page=${page}&limit=${limit}`;
+    let url = `${BACKEND_URL}/api/v1/beneficiaries?page=${page}&limit=${limit}`;
     if (status) url += `&status=${status}`;
     if (search) url += `&search=${search}`;
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const BACKEND_URL = await getBackendUrl();
 
-    const response = await fetch(`${BACKEND_URL}/api/beneficiaries`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/beneficiaries`, {
       method: 'POST',
       headers: {
         'Authorization': token,

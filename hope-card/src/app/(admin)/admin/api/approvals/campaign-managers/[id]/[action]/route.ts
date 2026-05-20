@@ -22,7 +22,7 @@ export async function POST(
 
     const body = await request.json();
     const BACKEND_URL = await getBackendUrl();
-    const url = `${BACKEND_URL}/api/approvals/campaign-managers/${id}/${action}`;
+    const url = `${BACKEND_URL}/api/v1/approvals/campaign-managers/${id}/${action}`;
 
     console.log(`[API ROUTE] Forwarding ${action} for ${id} to ${url}`);
     console.log(`[API ROUTE] Body:`, JSON.stringify(body));

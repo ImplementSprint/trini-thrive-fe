@@ -81,28 +81,14 @@ export default function Dashboard() {
         const backendUrl = await getBackendUrlCached();
         const token = localStorage.getItem('admin_token');
         
-        // Check backend health with retry logic
-        await retryFetch(async () => {
-          const response = await fetch(`${backendUrl}/api/health`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Health check failed: ${response.status}`);
-          }
-          
-          return response;
-        }, 3, 500);
-        
         setIsBackendReady(true);
-        
+
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 10000);
-        
+
         // Fetch dashboard metrics with retry
         const response = await retryFetch(async () => {
-          return fetch(`${backendUrl}/api/dashboard/metrics`, {
+          return fetch(`${backendUrl}/api/v1/dashboard/metrics`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -114,6 +100,12 @@ export default function Dashboard() {
         
         if (timeoutId) clearTimeout(timeoutId);
         
+        if (response.status === 401) {
+          localStorage.removeItem('admin_token');
+          window.location.href = '/admin/login';
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`Backend error (${response.status}): ${response.statusText}`);
         }
@@ -142,7 +134,7 @@ export default function Dashboard() {
         ]);
         
         if (process.env.NODE_ENV === "development") {
-          setError(`⚠️ Backend unavailable. Check if backend is running on port 3011.`);
+          setError(`⚠️ Backend unavailable. Check if the admin service is running on port 4020.`);
         } else {
           setError(null);
         }
@@ -157,9 +149,9 @@ export default function Dashboard() {
         const backendUrl = await getBackendUrlCached();
         const token = localStorage.getItem('admin_token');
         
-        console.log("🔍 Fetching activities from:", `${backendUrl}/api/activity`);
-        
-        const response = await fetch(`${backendUrl}/api/activity?page=1&limit=50`, {
+        console.log("🔍 Fetching activities from:", `${backendUrl}/api/v1/activity`);
+
+        const response = await fetch(`${backendUrl}/api/v1/activity?page=1&limit=50`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -167,8 +159,15 @@ export default function Dashboard() {
           },
         });
         
+        if (response.status === 401) {
+          localStorage.removeItem('admin_token');
+          window.location.href = '/admin/login';
+          return;
+        }
+
         if (!response.ok) {
-          throw new Error(`Failed to fetch activities: ${response.status}`);
+          setActivities([]);
+          return;
         }
         
         const activityData = await response.json();

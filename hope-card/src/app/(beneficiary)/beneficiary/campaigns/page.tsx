@@ -87,7 +87,7 @@ function LargeCampaignCard({ campaign }: { campaign: CampaignRow }) {
           <span className="text-[#554240]/70">Total Received</span>
           <span className="font-extrabold text-[#241918]">{formatAmount(campaign.total_received)}</span>
         </div>
-        <a href={`/campaigns/${campaign.id}`} className="w-full py-3 bg-[#f28d83] text-[#6e2621] rounded-[1rem] font-bold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2">
+        <a href={`/beneficiary/campaigns/${campaign.id}`} className="w-full py-3 bg-[#f28d83] text-[#6e2621] rounded-[1rem] font-bold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2">
           View Details
           <span className="material-symbols-outlined text-sm">arrow_forward</span>
         </a>
@@ -113,7 +113,7 @@ function SmallCampaignCard({ campaign }: { campaign: CampaignRow }) {
         <span className="text-xs font-bold text-[#554240]/70">Total Received</span>
         <span className="font-extrabold text-[#241918]">{formatAmount(campaign.total_received)}</span>
       </div>
-      <a href={`/campaigns/${campaign.id}`} className="mt-6 text-[#97453e] font-extrabold text-xs inline-flex items-center gap-2 hover:underline">
+      <a href={`/beneficiary/campaigns/${campaign.id}`} className="mt-6 text-[#97453e] font-extrabold text-xs inline-flex items-center gap-2 hover:underline">
         View Details <span className="material-symbols-outlined text-xs">open_in_new</span>
       </a>
     </div>

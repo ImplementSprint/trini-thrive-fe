@@ -20,7 +20,7 @@ export async function GET(
     }
 
     const BACKEND_URL = await getBackendUrl();
-    const response = await fetch(`${BACKEND_URL}/api/beneficiaries/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/beneficiaries/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': token,
@@ -62,7 +62,7 @@ export async function PUT(
 
     const BACKEND_URL = await getBackendUrl();
 
-    const response = await fetch(`${BACKEND_URL}/api/beneficiaries/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/beneficiaries/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': token,
@@ -103,7 +103,7 @@ export async function DELETE(
 
     const BACKEND_URL = await getBackendUrl();
 
-    const response = await fetch(`${BACKEND_URL}/api/beneficiaries/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/beneficiaries/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': token,

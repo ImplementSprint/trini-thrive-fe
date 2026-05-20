@@ -62,7 +62,7 @@ export default function MyCampaignsUI({
       if (v) next.set(k, v);
       else next.delete(k);
     }
-    startTransition(() => router.push(`/my-campaigns?${next.toString()}`));
+    startTransition(() => router.push(`/campaign-manager/my-campaigns?${next.toString()}`));
   }
 
   function handleFilterChange(filter: string) {

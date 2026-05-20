@@ -33,21 +33,27 @@ export default async function MyCampaignsPage({
 
     const params = await searchParams;
     const currentPage = Math.max(1, parseInt(params.page ?? '1', 10));
+    const statusFilter = params.status?.trim() || '';
+    const searchFilter = params.search?.trim() || '';
 
-    // Simplified query - just get campaigns without complex joins
-    const { data: campaigns, error: campaignsError } = await adminSupabase
+    let query = adminSupabase
       .from('hc_campaigns')
-      .select('id, title, status, collected_amount, target_amount, end_date, cover_image_key, created_at')
+      .select('id, title, status, collected_amount, target_amount, end_date, cover_image_key, created_at', { count: 'exact' })
       .eq('created_by', user.id)
       .order('created_at', { ascending: false })
       .range((currentPage - 1) * 10, currentPage * 10 - 1);
+
+    if (statusFilter) query = query.eq('status', statusFilter);
+    if (searchFilter) query = query.ilike('title', `%${searchFilter}%`);
+
+    const { data: campaigns, count, error: campaignsError } = await query;
 
     if (campaignsError) {
       throw campaignsError;
     }
 
     const campaignList = campaigns ?? [];
-    const totalCount = campaignList.length;
+    const totalCount = count ?? campaignList.length;
 
     const managerName = `${managerProfile.first_name} ${managerProfile.last_name}`;
 

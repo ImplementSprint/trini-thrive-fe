@@ -41,7 +41,7 @@ function LoginForm() {
     setErrorMessage('');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/auth/login`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -66,14 +66,14 @@ function LoginForm() {
         throw new Error(data.error || 'Login failed');
       }
 
-      if (data.session) {
+      if (data.token && data.session) {
+        localStorage.setItem('donor_token', data.token);
         const { supabase } = await import('@/donor-lib/supabase-client');
         await supabase.auth.setSession(data.session);
         document.cookie = 'persona=digital-donor; path=/; SameSite=Strict';
         router.push(redirectTo || '/donor/home');
         return;
       }
-      // If no session returned, show an error instead of redirecting
       setErrorMessage('Authentication failed. Please try again.');
       return;
     } catch (err: any) {

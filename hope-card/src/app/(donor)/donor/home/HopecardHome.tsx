@@ -264,6 +264,7 @@ export default function HopecardHome() {
   const handleLogout = useCallback(async () => {
     const { supabase } = await import('@/donor-lib/supabase-client');
     await supabase.auth.signOut();
+    localStorage.removeItem('donor_token');
     document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
     router.push('/donor/login');
   }, [router]);

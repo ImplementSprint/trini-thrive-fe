@@ -64,23 +64,20 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (profileError || !profile) {
-      await supabaseAdmin.auth.admin.signOut(data.user.id);
       return NextResponse.json(
-        { error: 'Your account is pending admin approval. You can log in once approved.' },
+        { error: 'No beneficiary account found for this email. Please contact support.' },
         { status: 403 }
       );
     }
 
     if (profile.status === 'pending') {
-      await supabaseAdmin.auth.admin.signOut(data.user.id);
       return NextResponse.json(
-        { error: 'Your account is pending admin approval. You can log in once approved.' },
+        { error: 'Your account is pending admin approval. You will be notified once approved.' },
         { status: 403 }
       );
     }
 
     if (profile.status === 'rejected') {
-      await supabaseAdmin.auth.admin.signOut(data.user.id);
       return NextResponse.json(
         { error: 'Your account application was not approved. Please contact support.' },
         { status: 403 }

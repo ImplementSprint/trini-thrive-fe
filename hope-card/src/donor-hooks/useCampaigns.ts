@@ -25,11 +25,14 @@ export function useCampaigns(category?: string) {
     setLoading(true);
     setError(null);
     try {
-      const base = process.env.NEXT_PUBLIC_API_GATEWAY_URL;
+      const base = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL;
       const url = category
-        ? `${base}/api/campaigns?category=${encodeURIComponent(category)}`
-        : `${base}/api/campaigns`;
-      const res = await fetch(url);
+        ? `${base}/api/v1/campaigns?category=${encodeURIComponent(category)}`
+        : `${base}/api/v1/campaigns`;
+      const donorToken = typeof window !== 'undefined' ? localStorage.getItem('donor_token') : null;
+      const res = await fetch(url, {
+        headers: donorToken ? { Authorization: `Bearer ${donorToken}` } : {},
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load campaigns');
       setCampaigns(data.campaigns ?? []);

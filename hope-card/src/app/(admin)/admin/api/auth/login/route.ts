@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const backendUrl = await getBackendUrlServer();
     console.log(`🌐 Calling backend: ${backendUrl}/api/auth/login`);
 
-    const backendResponse = await fetch(`${backendUrl}/api/auth/login`, {
+    const backendResponse = await fetch(`${backendUrl}/api/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

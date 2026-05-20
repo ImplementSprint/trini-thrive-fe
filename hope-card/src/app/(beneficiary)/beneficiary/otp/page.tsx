@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
   );
 
   const postJson = async (path: string, body: Record<string, string>) => {
-    const res = await fetch(`${BACKEND}/api/auth/${path}`, {
+    const res = await fetch(`${BACKEND}/api/v1/auth/${path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

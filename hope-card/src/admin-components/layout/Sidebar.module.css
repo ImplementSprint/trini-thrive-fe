@@ -96,34 +96,6 @@
 }
 
 .collapseBtn:hover {
-  background-color: #f9f9f9;
-  color: #111;
-}
-
-/* --- Collapsed State Styles --- */
-.collapsed {
-  width: 72px;
-  align-items: center;
-  padding: 1.5rem 0.5rem;
-}
-
-.collapsed .logoContainer {
-  margin-bottom: 2rem;
-}
-
-.navItemCollapsed {
-  justify-content: center;
-  padding: 0.6rem 0.5rem;
-  width: 44px;
-  border-radius: 10px;
-}
-
-.collapsed .navItem.active {
-  width: 44px;
-  padding: 0.6rem 0.5rem;
-}
-
-.collapseBtnCenter {
-  justify-content: center;
-  padding: 0.8rem 0;
+  background-color: #fce4e4;
+  color: #a32a2a;
 }

@@ -74,7 +74,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
         return;
       }
 
-      const response = await fetch(`${backendUrl}/api/auth/change-password`, {
+      const response = await fetch(`/admin/api/auth/change-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -97,7 +97,7 @@ export default function ChangePasswordModal({ isOpen, onClose }: ChangePasswordM
 
       // Verify the new password works by attempting login
       try {
-        const loginTest = await fetch(`${backendUrl}/api/auth/login`, {
+        const loginTest = await fetch(`/admin/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userEmail, password: newPassword }),

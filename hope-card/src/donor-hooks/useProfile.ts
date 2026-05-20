@@ -48,8 +48,8 @@ export function useProfile() {
         }
 
         if (isMounted) setAuthUserId(user.id);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/profile?authUserId=${user.id}&email=${encodeURIComponent(user.email || '')}`, {
-          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+        const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/profile?authUserId=${user.id}&email=${encodeURIComponent(user.email || '')}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('donor_token') ?? session?.access_token ?? ''}` },
         });
         const data = await res.json();
 
@@ -83,11 +83,11 @@ export function useProfile() {
     setSaveSuccess(false);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/profile`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          ...({ Authorization: `Bearer ${localStorage.getItem('donor_token') ?? session?.access_token ?? ''}` }),
         },
         body: JSON.stringify({ authUserId, ...updates }),
       });

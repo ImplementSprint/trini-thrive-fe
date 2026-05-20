@@ -21,6 +21,7 @@ const PUBLIC_SUFFIXES = [
   '/create-account',
   '/upload-id',
   '/landing',
+  '/api',
 ];
 
 export function middleware(req: NextRequest) {

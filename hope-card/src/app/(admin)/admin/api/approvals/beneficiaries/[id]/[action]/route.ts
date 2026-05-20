@@ -22,7 +22,7 @@ export async function POST(
 
     const body = await request.json();
     const BACKEND_URL = await getBackendUrl();
-    const url = `${BACKEND_URL}/api/approvals/beneficiaries/${id}/${action}`;
+    const url = `${BACKEND_URL}/api/v1/approvals/beneficiaries/${id}/${action}`;
 
     console.log(`[API ROUTE] Forwarding beneficiary ${action} for ${id} to ${url}`);
 

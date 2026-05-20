@@ -99,7 +99,7 @@ function OTPForm() {
     setErrorMessage('');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/auth/verify-numeric-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/verify-numeric-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: fullCode })
@@ -108,7 +108,7 @@ function OTPForm() {
       if (!res.ok) throw new Error(data.error || 'Invalid OTP');
 
       // Redirect to change password page after successful verification
-      router.push(`/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(data.sessionToken)}`);
+      router.push(`/donor/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(data.sessionToken)}`);
     } catch (err: any) {
       setErrorMessage(err.message);
     } finally {
@@ -120,7 +120,7 @@ function OTPForm() {
     if (!email || resendTimer > 0) return;
     
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/auth/generate-otp`, {
+      await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/generate-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

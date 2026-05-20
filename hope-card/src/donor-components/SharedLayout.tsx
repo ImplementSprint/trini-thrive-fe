@@ -361,7 +361,7 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
         {/* Logout */}
         <div style={{ marginTop: "auto", paddingTop: "1.5rem" }}>
           <button
-            onClick={async () => { await supabase.auth.signOut(); document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0'; router.push('/donor/login'); }}
+            onClick={async () => { await supabase.auth.signOut(); localStorage.removeItem('donor_token'); document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0'; router.push('/donor/login'); }}
             style={{
               width: "100%",
               display: "flex",
@@ -455,10 +455,10 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
 
             <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
               {[
-                { label: "Home", path: "/home", page: "home" },
-                { label: "Explore", path: "/explore", page: "explore" },
-                { label: "Stories", path: "/stories", page: "stories" },
-                { label: "Basket", path: "/basket", page: "basket" }
+                { label: "Home", path: "/donor/home", page: "home" },
+                { label: "Explore", path: "/donor/explore", page: "explore" },
+                { label: "Stories", path: "/donor/stories", page: "stories" },
+                { label: "Basket", path: "/donor/basket", page: "basket" }
               ].map((item) => {
                 const isActive = currentPage === item.page || (item.page === "basket" && currentPage === "basket");
                 return (

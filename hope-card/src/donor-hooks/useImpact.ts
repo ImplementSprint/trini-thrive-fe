@@ -36,8 +36,8 @@ export function useImpact() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { setLoading(false); return; }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_GATEWAY_URL}/api/impact?authUserId=${session.user.id}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/impact?authUserId=${session.user.id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('donor_token') ?? session.access_token}` },
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Failed to load impact data');

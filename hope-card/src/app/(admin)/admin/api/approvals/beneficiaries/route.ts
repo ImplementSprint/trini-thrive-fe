@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const BACKEND_URL = await getBackendUrl();
-    const url = `${BACKEND_URL}/api/approvals/beneficiaries?page=${page}&limit=${limit}`;
+    const url = `${BACKEND_URL}/api/v1/approvals/beneficiaries?page=${page}&limit=${limit}`;
 
     const response = await fetch(url, {
       method: 'GET',

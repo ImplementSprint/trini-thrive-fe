@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const BACKEND_URL = await getBackendUrl();
-    const url = `${BACKEND_URL}/api/approvals/campaign-managers?page=${page}&limit=${limit}`;
+    const url = `${BACKEND_URL}/api/v1/approvals/campaign-managers?page=${page}&limit=${limit}`;
     console.log(`[API ROUTE] Full request URL: ${url}`);
     console.log(`[API ROUTE] Authorization header present: ${!!token}`);
     

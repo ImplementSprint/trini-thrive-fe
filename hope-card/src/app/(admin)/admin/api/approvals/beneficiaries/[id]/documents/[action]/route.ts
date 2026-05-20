@@ -22,7 +22,7 @@ export async function POST(
 
     const body = await request.json();
     const BACKEND_URL = await getBackendUrl();
-    const url = `${BACKEND_URL}/api/approvals/beneficiaries/${id}/documents/${action}`;
+    const url = `${BACKEND_URL}/api/v1/approvals/beneficiaries/${id}/documents/${action}`;
 
     const response = await fetch(url, {
       method: 'POST',
