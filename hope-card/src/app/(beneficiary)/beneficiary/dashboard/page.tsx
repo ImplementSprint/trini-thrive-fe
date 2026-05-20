@@ -25,7 +25,7 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  if (!user) redirect("/beneficiary/login");
 
   const displayName =
     user.user_metadata.full_name ??
