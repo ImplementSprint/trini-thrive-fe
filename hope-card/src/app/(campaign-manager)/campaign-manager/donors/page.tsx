@@ -13,7 +13,7 @@ export default async function DonorsPage({
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/campaign-manager/create-account');
+    redirect('/campaign-manager/login');
     return null;
   }
 
@@ -25,7 +25,7 @@ export default async function DonorsPage({
     .single();
 
   if (!managerProfile || managerProfile.status !== 'approved') {
-    redirect('/campaign-manager/create-account');
+    redirect('/campaign-manager/login');
     return null;
   }
 

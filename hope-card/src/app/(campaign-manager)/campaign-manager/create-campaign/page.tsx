@@ -8,7 +8,7 @@ export default async function CreateCampaignPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/campaign-manager/create-account');
+    redirect('/campaign-manager/login');
     return null;
   }
 
@@ -20,7 +20,7 @@ export default async function CreateCampaignPage() {
     .single();
 
   if (!profile || profile.status !== 'approved') {
-    redirect('/campaign-manager/create-account');
+    redirect('/campaign-manager/login');
     return null;
   }
 

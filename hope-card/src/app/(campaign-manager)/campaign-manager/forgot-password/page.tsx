@@ -163,7 +163,7 @@ export default function ForgotPasswordPage() {
       </form>
 
       <div className="mt-8 text-center text-[13px] text-[#8f817d]">
-        <Link href="/campaign-manager/create-account" className="inline-flex items-center gap-2 font-semibold text-[#f0a4a0] hover:text-[#e4807b]">
+        <Link href="/campaign-manager/login" className="inline-flex items-center gap-2 font-semibold text-[#f0a4a0] hover:text-[#e4807b]">
           <ArrowLeft size={14} />
           Back to Sign In
         </Link>

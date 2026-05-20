@@ -10,20 +10,15 @@ export async function createClient() {
     {
       cookies: {
         getAll() {
-          const all = cookieStore.getAll();
-          console.log('[supabase.getAll] Returning', all.length, 'cookies:', all.map(c => c.name).join(','));
-          return all;
+          return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          console.log('[supabase.setAll] Setting', cookiesToSet.length, 'cookies:', cookiesToSet.map(c => c.name).join(','));
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              console.log('[supabase.setAll] Setting', name);
               cookieStore.set(name, value, options);
             });
-            console.log('[supabase.setAll] Cookies set successfully');
           } catch (e) {
-            console.error('[supabase.setAll] Error:', e);
+            // setAll called from a Server Component — cookies are read-only in that context
           }
         },
       },

@@ -34,11 +34,11 @@ export default function CampaignDetails() {
         if (found) {
           setCampaign(found);
         } else {
-          router.push('/campaign-manager/create-account');
+          router.push('/campaign-manager/login');
         }
       } catch (error) {
         console.error('Error loading campaign:', error);
-        router.push('/campaign-manager/create-account');
+        router.push('/campaign-manager/login');
       } finally {
         setLoading(false);
       }

@@ -9,7 +9,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/campaign-manager/create-account');
+    redirect('/campaign-manager/login');
     return null;
   }
 
@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
   if (!profile || profile.status !== 'approved') {
     await supabase.auth.signOut();
-    redirect('/campaign-manager/create-account');
+    redirect('/campaign-manager/login');
     return null;
   }
 

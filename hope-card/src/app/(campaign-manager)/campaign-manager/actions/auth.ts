@@ -3,6 +3,7 @@
 import { createClient } from '@/campaign-manager-utils/supabase/server';
 import { createAdminClient } from '@/campaign-manager-utils/supabase/admin';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import nodemailer from 'nodemailer';
 
 export type AuthActionResult = { error?: string; success?: boolean } | null;
@@ -194,8 +195,12 @@ export async function loginAction(formData: FormData): Promise<AuthActionResult>
   }
 
   console.log('[loginAction] Login successful, redirecting');
-  // Use redirect() which is the proper Next.js way to handle post-action redirects
-  // This ensures the Set-Cookie headers are included in the redirect response
+  const cookieStore = await cookies();
+  cookieStore.set('persona', 'campaign-manager', {
+    path: '/',
+    sameSite: 'strict',
+    httpOnly: false,
+  });
   redirect('/campaign-manager/dashboard');
 }
 

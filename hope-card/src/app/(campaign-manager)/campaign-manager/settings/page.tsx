@@ -6,7 +6,7 @@ export default async function SettingsPage() {
   const profile = await getProfileAction();
 
   if (!profile || profile.status !== 'approved') {
-    redirect('/campaign-manager/create-account');
+    redirect('/campaign-manager/login');
     return null;
   }
 

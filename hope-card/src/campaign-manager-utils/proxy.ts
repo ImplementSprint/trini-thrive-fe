@@ -30,20 +30,8 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(new URL('/campaign-manager/create-account', request.url));
+    return NextResponse.redirect(new URL('/campaign-manager/login', request.url));
   }
 
   return response;
 }
-
-export const config = {
-  matcher: [
-    '/campaign-manager/dashboard/:path*',
-    '/campaign-manager/my-campaigns/:path*',
-    '/campaign-manager/create-campaign/:path*',
-    '/campaign-manager/campaign/:path*',
-    '/campaign-manager/donors/:path*',
-    '/campaign-manager/reports/:path*',
-    '/campaign-manager/settings/:path*',
-  ],
-};

@@ -187,7 +187,7 @@ export default function AppShell({
                   const supabase = createClient();
                   await supabase.auth.signOut();
                   document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
-                  router.push('/campaign-manager/create-account');
+                  router.push('/campaign-manager/login');
                 }}
                 className="rounded-full bg-[#b55247] px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)]"
               >
