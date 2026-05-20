@@ -1,0 +1,283 @@
+.header {
+  background-color: white;
+  border-bottom: 1px solid #eaeaea;
+  padding: 1.25rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pageTitle h2 {
+  font-size: 1.25rem;
+  color: #111;
+  font-weight: 600;
+  margin-bottom: 0.1rem;
+}
+
+/* Updated: "Welcome back, Administrator" color */
+.pageTitle p {
+  color: #a32a2a; 
+  font-size: 0.85rem;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* ... notificationBtn and notificationDot stay the same ... */
+
+.notificationBtn {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.notificationBtn:hover {
+  background-color: #f5f5f5;
+}
+
+.notificationDot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.divider {
+  width: 1px;
+  height: 32px;
+  background-color: #eaeaea;
+}
+
+.profileContainer {
+  position: relative;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  padding: 0.4rem 0.5rem;
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.profileActive {
+  border-color: #111;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.profileName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #111;
+}
+
+/* Updated: "Administrator" role color */
+.profileRole {
+  font-size: 0.75rem;
+  color: #a32a2a; 
+}
+
+/* Updated: Avatar background color */
+.avatar {
+  background-color: #a32a2a; 
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chevron {
+  color: #666;
+}
+
+/* ... dropdown styles updated for consistency ... */
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background-color: white;
+  border: 1px solid #eaeaea;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 160px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  z-index: 50;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dropdownIcon {
+  color: #555;
+}
+
+.dropdownItem:hover {
+  background-color: #fcebeb;
+  color: #a32a2a; /* Consistent red */
+}
+
+.dropdownItem:hover .dropdownIcon {
+  color: #a32a2a; /* Consistent red */
+}
+
+.notificationDropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background-color: white;
+  border: 1px solid #eaeaea;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  width: 360px;
+  max-height: 400px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+}
+
+.notificationDropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.notificationDropdownHeader h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+}
+
+.notificationList {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.notificationDropdownItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f9f9f9;
+}
+
+.notificationDropdownItem:hover {
+  background-color: #f9f9f9;
+}
+
+.notificationDropdownItem.unread {
+  background-color: #fff8ee;
+}
+
+.notificationIconWrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notificationIconWrapper.application {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.notificationIconWrapper.approval {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.notificationIconWrapper.rejection {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.notificationIconWrapper.donation {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.notificationIconWrapper.campaign {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+}
+
+.notificationContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.notificationTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111;
+}
+
+.notificationTime {
+  font-size: 0.75rem;
+  color: #9b2c2c;
+}
+
+.notificationMessage {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 2px 0 0 0;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
