@@ -248,7 +248,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     >
                       <span style={{ fontSize: "1.25rem" }}>→</span>
                       <span>Log Out</span>
-                    </a>
+                    </button>
                   </div>
                 </div>
               </>
