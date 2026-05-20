@@ -346,7 +346,7 @@ export default function CreateAccountPage() {
 
       <p className="mt-8 text-center text-[13px] text-[#8f817d]">
         Already have an account?{' '}
-        <Link href="/campaign-manager/create-account" className="font-semibold text-[#f07b71]">
+        <Link href="/campaign-manager" className="font-semibold text-[#f07b71]">
           Sign In
         </Link>
       </p>
