@@ -46,3 +46,4 @@ playwright-report/
 
 # Runtime artifacts (not config)
 /public/admin/backend-info.json
+/public/donor/backend-info.json

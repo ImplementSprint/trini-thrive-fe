@@ -14,6 +14,10 @@ function LoginForm() {
   const redirectTo = searchParams.get('redirect') || '/donor/home';
 
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const cookies = document.cookie.split(';').map(c => c.trim());
@@ -22,10 +26,6 @@ function LoginForm() {
       document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
     }
   }, []);
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const togglePassword = useCallback(() => setShowPassword((p) => !p), []);
 
@@ -69,10 +69,13 @@ function LoginForm() {
       if (data.session) {
         const { supabase } = await import('@/donor-lib/supabase-client');
         await supabase.auth.setSession(data.session);
+        document.cookie = 'persona=digital-donor; path=/; SameSite=Strict';
+        router.push(redirectTo || '/donor/home');
+        return;
       }
-
-      document.cookie = 'persona=digital-donor; path=/; SameSite=Strict';
-      router.push(redirectTo);
+      // If no session returned, show an error instead of redirecting
+      setErrorMessage('Authentication failed. Please try again.');
+      return;
     } catch (err: any) {
       setErrorMessage(err.message);
     } finally {
