@@ -137,16 +137,17 @@ export default function ReportsUI({
 
   // Category donut
   const totalCat = categoryBreakdown.reduce((s, c) => s + c.amount, 0);
-  let cumulativePct = 0;
   function conicStop(pct: number, color: string, prev: number): string {
     return `${color} ${prev}% ${prev + pct}%`;
   }
-  const conicStops = categoryBreakdown.map((c, i) => {
-    const pct = totalCat > 0 ? (c.amount / totalCat) * 100 : 0;
-    const stop = conicStop(pct, CATEGORY_COLORS[i % CATEGORY_COLORS.length], cumulativePct);
-    cumulativePct += pct;
-    return stop;
-  });
+  const conicStops = categoryBreakdown.reduce<{ stops: string[]; cumPct: number }>(
+    (acc, c, i) => {
+      const pct = totalCat > 0 ? (c.amount / totalCat) * 100 : 0;
+      const stop = conicStop(pct, CATEGORY_COLORS[i % CATEGORY_COLORS.length], acc.cumPct);
+      return { stops: [...acc.stops, stop], cumPct: acc.cumPct + pct };
+    },
+    { stops: [], cumPct: 0 },
+  ).stops;
   const conicGradient =
     conicStops.length > 0
       ? `conic-gradient(${conicStops.join(', ')})`

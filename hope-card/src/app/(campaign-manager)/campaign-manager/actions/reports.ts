@@ -236,7 +236,7 @@ export async function getMyCampaigns(
   const totalCount = count ?? 0;
 
   const campaignIds = campaignList.map((c) => c.id);
-  let beneficiaryMap: Record<string, string> = {};
+  const beneficiaryMap: Record<string, string> = {};
 
   if (campaignIds.length > 0) {
     const { data: links } = await adminSupabase
@@ -359,8 +359,8 @@ export async function getDonorsData(
   const donorList = allDonors ?? [];
   const donorAuthIds = donorList.map((d) => d.auth_user_id).filter(Boolean);
 
-  let lastDonationMap: Record<string, string> = {};
-  let campaignTagsMap: Record<string, string[]> = {};
+  const lastDonationMap: Record<string, string> = {};
+  const campaignTagsMap: Record<string, string[]> = {};
 
   if (donorAuthIds.length > 0) {
     const { data: recentPurchases } = await adminSupabase

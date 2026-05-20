@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Menu, Bell, LayoutDashboard, CreditCard,
   Landmark, IdCard, User, ShieldCheck, HelpCircle
@@ -449,14 +450,14 @@ const CampaignsPage: React.FC = () => {
                 Track the impact of your community. Review active initiatives and completed support cycles here.
               </p>
             </div>
-            <a href="/beneficiary/campaigns/invitations" className="bg-[#D1736A] text-white px-8 py-4 rounded-[1rem] font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap">
+            <Link href="/beneficiary/campaigns/invitations" className="bg-[#D1736A] text-white px-8 py-4 rounded-[1rem] font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap">
               <span>View Invitations</span>
               {summary.pending_invitations > 0 && (
                 <div className="flex items-center justify-center bg-white w-5 h-5 rounded-full text-[10px] text-[#D1736A] font-bold">
                   {summary.pending_invitations}
                 </div>
               )}
-            </a>
+            </Link>
           </div>
 
           {/* Bento Grid */}

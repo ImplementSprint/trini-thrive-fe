@@ -194,7 +194,7 @@ export default function Dashboard() {
           
           // Determine activity type and format
           let type = "approval";
-          let actionText = activity.description;
+          const actionText = activity.description;
           let status = activity.action || "Activity";
           
           if (activity.action === "APPROVED") {

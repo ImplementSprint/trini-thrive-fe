@@ -20,6 +20,35 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  // Migrated persona code — relax strict rules that were never enforced in the
+  // source apps and would require large-scale refactoring to fix.
+  {
+    files: [
+      "src/app/(admin)/**/*.{ts,tsx}",
+      "src/app/(donor)/**/*.{ts,tsx}",
+      "src/app/(campaign-manager)/**/*.{ts,tsx}",
+      "src/app/(beneficiary)/**/*.{ts,tsx}",
+      "src/admin-lib/**/*.{ts,tsx}",
+      "src/admin-components/**/*.{ts,tsx}",
+      "src/donor-lib/**/*.{ts,tsx}",
+      "src/donor-components/**/*.{ts,tsx}",
+      "src/donor-hooks/**/*.{ts,tsx}",
+      "src/donor-contexts/**/*.{ts,tsx}",
+      "src/campaign-manager-components/**/*.{ts,tsx}",
+      "src/campaign-manager-utils/**/*.{ts,tsx}",
+      "src/campaign-manager-types/**/*.{ts,tsx}",
+      "src/beneficiary-lib/**/*.{ts,tsx}",
+      "src/beneficiary-components/**/*.{ts,tsx}",
+      "src/beneficiary-utils/**/*.{ts,tsx}",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "react/no-unescaped-entities": "off",
+      "@next/next/no-html-link-for-pages": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
