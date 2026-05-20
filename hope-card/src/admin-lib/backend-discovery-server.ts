@@ -44,10 +44,10 @@ export async function getBackendUrlServer(): Promise<string> {
     return envUrl;
   }
 
-  // Final fallback
-  const defaultUrl = "http://127.0.0.1:3011";
+  // No fallback — require explicit configuration via env var or config file
+  const defaultUrl = process.env.NEXT_PUBLIC_ADMIN_BACKEND_URL ?? '';
   if (DEBUG) {
-    console.log(`[Backend Discovery] Using default: ${defaultUrl}`);
+    console.warn(`[Backend Discovery] No backend URL configured; falling back to empty string`);
   }
   return defaultUrl;
 }
