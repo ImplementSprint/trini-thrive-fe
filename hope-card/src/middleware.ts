@@ -25,10 +25,12 @@ const PUBLIC_SUFFIXES = [
 
 export function middleware(req: NextRequest) {
   const prefix = Object.keys(PERSONA_MAP).find(p =>
-    req.nextUrl.pathname.startsWith(p)
+    req.nextUrl.pathname === p || req.nextUrl.pathname.startsWith(p + '/')
   );
   if (!prefix) return NextResponse.next();
-  if (PUBLIC_SUFFIXES.some(s => req.nextUrl.pathname.endsWith(s)))
+
+  const relative = req.nextUrl.pathname.slice(prefix.length);
+  if (PUBLIC_SUFFIXES.some(s => relative === s || relative.startsWith(s + '/')))
     return NextResponse.next();
 
   const stored = req.cookies.get('persona')?.value;
