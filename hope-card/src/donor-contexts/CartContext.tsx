@@ -3,7 +3,7 @@
 import React, {
   createContext, useContext, useState, useCallback, useEffect, ReactNode
 } from 'react';
-import { supabase } from '../lib/supabase-client';
+import { supabase } from '@/donor-lib/supabase-client';
 
 export interface CartItem {
   id: string;           // cart_items.id (DB row id)

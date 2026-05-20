@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase-client';
+import { supabase } from '@/donor-lib/supabase-client';
 
 export interface ImpactStats {
   total_donations_amount: number;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { useCart } from "../contexts/CartContext";
+import { useCart } from "@/donor-contexts/CartContext";
 import {
   GraduationCap,
   Star,

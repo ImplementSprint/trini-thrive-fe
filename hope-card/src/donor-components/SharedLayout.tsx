@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../contexts/CartContext';
-import { useProfile } from '../hooks/useProfile';
-import { supabase } from '../lib/supabase-client';
+import { useCart } from '@/donor-contexts/CartContext';
+import { useProfile } from '@/donor-hooks/useProfile';
+import { supabase } from '@/donor-lib/supabase-client';
 import {
   Menu,
   Search,
