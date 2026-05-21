@@ -40,6 +40,7 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
     setIsSubmitting(true);
 
     try {
+      // Step 1: Validate credentials + profile via backend (issues persona-scoped JWT)
       const res = await fetch('/beneficiary/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,29 +50,27 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Something went wrong, please try again.');
+        setError(data.error || data.message || 'Something went wrong, please try again.');
         setIsSubmitting(false);
         return;
       }
 
-      // Guard against missing session data
-      if (!data.session?.access_token || !data.session?.refresh_token) {
+      if (!data.token) {
         setError('Something went wrong, please try again.');
         setIsSubmitting(false);
         return;
       }
 
-      // Establish session in the browser using the returned tokens
-      const supabase = createClient();
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
+      // Step 2: Store the persona-scoped JWT for API calls (cookie so SSR proxy can read it)
+      localStorage.setItem('beneficiary_token', data.token);
+      document.cookie = `beneficiary_token=${data.token}; path=/; SameSite=Strict`;
 
+      // Step 3: Establish Supabase browser session so SSR middleware works
+      const supabase = createClient();
+      const { error: sessionError } = await supabase.auth.signInWithPassword({ email, password });
       if (sessionError) {
-        setError('Failed to establish session. Please try again.');
-        setIsSubmitting(false);
-        return;
+        // Non-fatal — persona JWT is stored; proceed anyway
+        console.warn('Supabase session error:', sessionError.message);
       }
 
       // Set persona cookie and navigate

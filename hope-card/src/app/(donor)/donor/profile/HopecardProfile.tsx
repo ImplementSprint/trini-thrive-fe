@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   Menu,
   Search,
-  Bell,
   ShoppingCart,
   User,
   BadgeCheck,
@@ -16,15 +15,12 @@ import {
   Monitor,
   Laptop,
   Smartphone,
-  Heart,
-  Globe,
-  ShieldCheck,
-  ArrowRight,
   LogOut,
 } from "lucide-react";
 import { useProfile } from "@/donor-hooks/useProfile";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/donor-lib/supabase-client";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const colors = {
@@ -271,7 +267,22 @@ SessionCard.displayName = "SessionCard";
 export default function HopecardProfile() {
   const { profile, loading, saveProfile, saving, saveSuccess, saveError } = useProfile();
   const [searchFocused, setSearchFocused] = useState(false);
+  const [lifetimeTotal, setLifetimeTotal] = useState<number | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    async function fetchLifetimeTotal() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const { data } = await supabase
+        .from('hopecard_purchases')
+        .select('amount_paid')
+        .eq('buyer_auth_id', session.user.id)
+        .eq('status', 'paid');
+      if (data) setLifetimeTotal(data.reduce((sum, r) => sum + (r.amount_paid ?? 0), 0));
+    }
+    fetchLifetimeTotal();
+  }, []);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -308,6 +319,51 @@ export default function HopecardProfile() {
     });
   };
 
+  // Password state
+  const [passwordData, setPasswordData] = useState({ newPassword: "", confirmPassword: "" });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdatePassword = async () => {
+    setPasswordMsg(null);
+    if (passwordData.newPassword.length < 8) {
+      setPasswordMsg({ type: "error", text: "Password must be at least 8 characters." });
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordMsg({ type: "error", text: "Passwords do not match." });
+      return;
+    }
+    setPasswordSaving(true);
+    const { error } = await supabase.auth.updateUser({ password: passwordData.newPassword });
+    setPasswordSaving(false);
+    if (error) {
+      setPasswordMsg({ type: "error", text: error.message });
+    } else {
+      setPasswordMsg({ type: "success", text: "Password updated successfully." });
+      setPasswordData({ newPassword: "", confirmPassword: "" });
+    }
+  };
+
+  const passwordStrength = (() => {
+    const p = passwordData.newPassword;
+    if (!p) return 0;
+    let score = 0;
+    if (p.length >= 8) score++;
+    if (/[A-Z]/.test(p)) score++;
+    if (/[0-9]/.test(p)) score++;
+    if (/[^A-Za-z0-9]/.test(p)) score++;
+    return score;
+  })();
+
+  const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"][passwordStrength];
+  const strengthColor = ["", colors.primaryContainer, "#f59e0b", "#3b82f6", colors.primary][passwordStrength];
+
   if (loading) {
     return (
       <div style={{ 
@@ -327,9 +383,9 @@ export default function HopecardProfile() {
   const joinedDate = profile?.created_at 
     ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : "Recently";
-  const impactAmount = profile?.total_donations_amount 
-    ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(profile.total_donations_amount)
-    : "$0.00";
+  const impactAmount = lifetimeTotal !== null
+    ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(lifetimeTotal)
+    : "—";
 
   return (
     <div
@@ -357,156 +413,88 @@ export default function HopecardProfile() {
         {/* Hero Profile Section */}
         <section
           style={{
-            position: "relative",
             width: "100%",
             borderRadius: "2rem",
-            overflow: "hidden",
             marginBottom: "4rem",
             background: colors.surfaceContainerLow,
+            padding: "2rem 3rem",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: "2rem",
           }}
         >
-          {/* BG gradient overlay */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: `linear-gradient(to right, ${colors.primary}33, transparent)`,
-              zIndex: 0,
-            }}
-          />
-          {/* BG image */}
-          <img
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3aM9DZCsiXcpWZJY_FEhGc8CCSE7P9Vq9Qjje96ViFRPmjMgS2P76H0L5w2d6X-SRc5rSOyjfN_d0_N5glYtbh9DOkP1f0RbzO7-l4QtgjMEAQlaCATJ5Miz5jU-9eRl3vpj4B2Fee3fVym8VZs1ookYjfxDUOS_AZWAMpRcpQotUyscZYWN0ZIbvAE4xIQ8mrux6nnZGu-8b66Zgm4cgEumew7IVLj_1s9V1PPI0MJiOydrLbDZZDbyz8crvBLylmQQmqhHa2Sf_"
-            alt="Hero background — soft abstract coral background"
-            style={{ width: "100%", height: "300px", objectFit: "cover", opacity: 0.6 }}
-          />
-
-          {/* Profile Info Row */}
-          <div
-            style={{
-              position: "relative",
-              zIndex: 10,
-              padding: "0 3rem 2rem",
-              marginTop: "-5rem",
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "flex-end",
-              gap: "2rem",
-            }}
-          >
-            {/* Avatar */}
-            <div
-              style={{
-                width: "10rem",
-                height: "10rem",
-                borderRadius: "1rem",
-                overflow: "hidden",
-                border: `6px solid ${colors.surface}`,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-                flexShrink: 0,
-              }}
-            >
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdnEsN3hi4C0joKKnhz1O1oeh3UpXyAX7dEgr7Q81U-7a-JEWGxotqwmyV1KBluq9yp1x55RH_k1l1iRFw03ZgBjcauMs1F2LMD2D4lRdoTrL32GLXrRyK7Boio93vLcVVKS2hQ2a603XboUgDh-kuSfdf1IjQKu04E0j57ow4E7m8RxfA5PgeDpb4fyHJ3rx8MqO3GChPNhSypAhJZBuFYPVixVlC2dYEndjr6d4uklYd7pkfGZlp855CHfgKeZCMc0MiAzWdFH3D"
-                alt="Alex Rivera profile photo"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </div>
-
-            {/* Name + Stats */}
-            <div style={{ flex: 1, paddingBottom: "1rem" }}>
-              <div
+          {/* Name + Stats */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <h1
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  marginBottom: "0.5rem",
+                  fontSize: "2.25rem",
+                  fontWeight: 800,
+                  fontFamily: "Plus Jakarta Sans, sans-serif",
+                  color: colors.onSurface,
+                  letterSpacing: "-0.03em",
+                  margin: 0,
                 }}
               >
-                <h1
-                  style={{
-                    fontSize: "2.25rem",
-                    fontWeight: 800,
-                    fontFamily: "Plus Jakarta Sans, sans-serif",
-                    color: colors.onSurface,
-                    letterSpacing: "-0.03em",
-                    margin: 0,
-                  }}
-                >
-                  {fullName}
-                </h1>
-                <span
-                  style={{
-                    padding: "0.25rem 0.75rem",
-                    background: profile?.status === 'approved' ? `${colors.secondaryContainer}33` : `${colors.surfaceContainerHigh}`,
-                    color: profile?.status === 'approved' ? colors.onSecondaryContainer : colors.onSurfaceVariant,
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    borderRadius: "999px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.25rem",
-                    fontFamily: "Manrope, sans-serif",
-                  }}
-                >
-                  <BadgeCheck size={14} fill={profile?.status === 'approved' ? "currentColor" : "none"} />
-                  {profile?.status === 'approved' ? 'Verified Donor' : 'Pending Verification'}
-                </span>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-                <p
-                  style={{
-                    color: colors.primary,
-                    fontFamily: "Plus Jakarta Sans, sans-serif",
-                    fontWeight: 700,
-                    fontSize: "1.125rem",
-                    margin: 0,
-                  }}
-                >
-                  Lifetime Impact: {impactAmount}
-                </p>
-                <span
-                  style={{
-                    width: "1px",
-                    height: "1.5rem",
-                    background: `${colors.outlineVariant}4d`,
-                    display: "inline-block",
-                  }}
-                />
-                <p
-                  style={{
-                    color: colors.onSurfaceVariant,
-                    fontSize: "0.875rem",
-                    fontWeight: 500,
-                    margin: 0,
-                  }}
-                >
-                  Joined {joinedDate}
-                </p>
-              </div>
-            </div>
-
-            {/* Edit Button */}
-            <div style={{ paddingBottom: "1rem" }}>
-              <button
+                {fullName}
+              </h1>
+              <span
                 style={{
-                  background: colors.primaryContainer,
-                  color: colors.onPrimaryContainer,
-                  padding: "0.75rem 2rem",
-                  borderRadius: "1rem",
+                  padding: "0.25rem 0.75rem",
+                  background: profile?.status === 'approved' ? `${colors.secondaryContainer}33` : `${colors.surfaceContainerHigh}`,
+                  color: profile?.status === 'approved' ? colors.onSecondaryContainer : colors.onSurfaceVariant,
+                  fontSize: "0.7rem",
                   fontWeight: 700,
-                  border: "none",
-                  cursor: "pointer",
-                  boxShadow: `0 8px 20px ${colors.primaryContainer}33`,
+                  borderRadius: "999px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
                   fontFamily: "Manrope, sans-serif",
-                  fontSize: "0.95rem",
                 }}
               >
-                Edit Profile
-              </button>
+                <BadgeCheck size={14} fill={profile?.status === 'approved' ? "currentColor" : "none"} />
+                {profile?.status === 'approved' ? 'Verified Donor' : 'Pending Verification'}
+              </span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+              <p
+                style={{
+                  color: colors.primary,
+                  fontFamily: "Plus Jakarta Sans, sans-serif",
+                  fontWeight: 700,
+                  fontSize: "1.125rem",
+                  margin: 0,
+                }}
+              >
+                Lifetime Impact: {impactAmount}
+              </p>
+              <span style={{ width: "1px", height: "1.5rem", background: `${colors.outlineVariant}4d`, display: "inline-block" }} />
+              <p style={{ color: colors.onSurfaceVariant, fontSize: "0.875rem", fontWeight: 500, margin: 0 }}>
+                Joined {joinedDate}
+              </p>
             </div>
           </div>
+
+          {/* Edit Button */}
+          <button
+            style={{
+              background: colors.primaryContainer,
+              color: colors.onPrimaryContainer,
+              padding: "0.75rem 2rem",
+              borderRadius: "1rem",
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              boxShadow: `0 8px 20px ${colors.primaryContainer}33`,
+              fontFamily: "Manrope, sans-serif",
+              fontSize: "0.95rem",
+              flexShrink: 0,
+            }}
+          >
+            Edit Profile
+          </button>
         </section>
 
         {/* ── Two-Column Layout ──────────────────────────────────────────────── */}
@@ -543,55 +531,6 @@ export default function HopecardProfile() {
               />
             </nav>
 
-            {/* Help Card */}
-            <div
-              style={{
-                marginTop: "3rem",
-                padding: "1.5rem",
-                borderRadius: "1rem",
-                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                color: colors.onPrimary,
-                boxShadow: `0 12px 30px ${colors.primary}33`,
-              }}
-            >
-              <h3
-                style={{
-                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                  fontWeight: 700,
-                  marginBottom: "0.5rem",
-                  margin: "0 0 0.5rem",
-                }}
-              >
-                Need Help?
-              </h3>
-              <p
-                style={{
-                  fontSize: "0.875rem",
-                  opacity: 0.9,
-                  marginBottom: "1rem",
-                  margin: "0 0 1rem",
-                  lineHeight: 1.5,
-                }}
-              >
-                Our donor support team is here to help you maximize your impact.
-              </p>
-              <button
-                style={{
-                  width: "100%",
-                  background: colors.surfaceContainerLowest,
-                  color: colors.primary,
-                  padding: "0.5rem",
-                  borderRadius: "0.75rem",
-                  fontWeight: 700,
-                  fontSize: "0.875rem",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "Manrope, sans-serif",
-                }}
-              >
-                Contact Support
-              </button>
-            </div>
           </aside>
 
           {/* Main Content */}
@@ -730,312 +669,89 @@ export default function HopecardProfile() {
               </h2>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-                <FormField label="Current Password" type="password" value="••••••••••••" readOnly />
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "2rem",
-                  }}
-                >
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
                   <FormField
                     label="New Password"
                     name="newPassword"
                     type="password"
                     placeholder="Min. 8 characters"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
                   />
                   <FormField
                     label="Confirm New Password"
                     name="confirmPassword"
                     type="password"
                     placeholder="Repeat password"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
                   />
                 </div>
 
                 {/* Password Strength */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  <div
+                {passwordData.newPassword.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 0.25rem" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
+                        Password Strength
+                      </span>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: strengthColor, fontFamily: "Manrope, sans-serif" }}>
+                        {strengthLabel}
+                      </span>
+                    </div>
+                    <div style={{ height: "0.5rem", width: "100%", background: colors.surfaceContainer, borderRadius: "999px", display: "flex", overflow: "hidden" }}>
+                      {[1, 2, 3, 4].map((level) => (
+                        <div
+                          key={level}
+                          style={{
+                            flex: 1,
+                            height: "100%",
+                            background: strengthColor,
+                            opacity: passwordStrength >= level ? 1 : 0.2,
+                            borderRight: level < 4 ? `1px solid ${colors.surface}` : "none",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Feedback message */}
+                {passwordMsg && (
+                  <p style={{ margin: 0, fontSize: "0.875rem", fontWeight: 600, color: passwordMsg.type === "success" ? colors.tertiary : "#ba1a1a", fontFamily: "Manrope, sans-serif" }}>
+                    {passwordMsg.text}
+                  </p>
+                )}
+
+                {/* Submit button */}
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    onClick={handleUpdatePassword}
+                    disabled={passwordSaving}
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "0 0.25rem",
+                      background: colors.primaryContainer,
+                      color: colors.onPrimaryContainer,
+                      padding: "0.75rem 2rem",
+                      borderRadius: "1rem",
+                      fontWeight: 700,
+                      border: "none",
+                      cursor: passwordSaving ? "not-allowed" : "pointer",
+                      fontFamily: "Manrope, sans-serif",
+                      fontSize: "0.95rem",
+                      opacity: passwordSaving ? 0.7 : 1,
+                      transition: "opacity 0.15s",
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        color: colors.onSurfaceVariant,
-                        fontFamily: "Manrope, sans-serif",
-                      }}
-                    >
-                      Password Strength
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        color: colors.primary,
-                        fontFamily: "Manrope, sans-serif",
-                      }}
-                    >
-                      Strong
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      height: "0.5rem",
-                      width: "100%",
-                      background: colors.surfaceContainer,
-                      borderRadius: "999px",
-                      display: "flex",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {[1, 1, 1, 0].map((active, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          flex: 1,
-                          height: "100%",
-                          background: colors.primaryContainer,
-                          opacity: active ? 1 : 0.3,
-                          borderRight: i < 3 ? `1px solid ${colors.surface}` : "none",
-                        }}
-                      />
-                    ))}
-                  </div>
+                    {passwordSaving ? "Updating…" : "Update Password"}
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* ── Active Sessions ──────────────────────────────────────────── */}
-            <div
-              style={{
-                background: colors.surfaceContainerLowest,
-                borderRadius: "1rem",
-                padding: "2rem",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: "1.5rem",
-                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                  fontWeight: 700,
-                  color: colors.onSurface,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  marginBottom: "2rem",
-                }}
-              >
-                <Monitor size={24} color={colors.primary} />
-                Active Sessions
-              </h2>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <SessionCard
-                  icon={<Laptop size={24} />}
-                  deviceName="Chrome on MacOS"
-                  lastActive="Just now"
-                  location="San Francisco, USA"
-                  isCurrent
-                />
-                <SessionCard
-                  icon={<Smartphone size={24} />}
-                  deviceName="HOPECARD iOS App"
-                  lastActive="2 hours ago"
-                  location="San Francisco, USA"
-                />
-              </div>
-
-              <div
-                style={{
-                  marginTop: "2rem",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <button
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: colors.onSurfaceVariant,
-                    fontSize: "0.875rem",
-                    fontWeight: 500,
-                    fontFamily: "Manrope, sans-serif",
-                    borderBottom: `1px solid ${colors.outlineVariant}4d`,
-                    paddingBottom: "0.25rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                  }}
-                >
-                  <LogOut size={14} />
-                  Sign out from all other devices
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>
 
-      {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer
-        style={{
-          width: "100%",
-          borderRadius: "3rem 3rem 0 0",
-          marginTop: "4rem",
-          background: "#f5f5f4",
-          fontFamily: "Manrope, sans-serif",
-          fontSize: "0.875rem",
-          fontWeight: 500,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            padding: "4rem",
-            gap: "3rem",
-            maxWidth: "80rem",
-            margin: "0 auto",
-          }}
-        >
-          {/* Brand */}
-          <div style={{ maxWidth: "18rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            <span
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: 700,
-                color: "#7f1d1d",
-                textTransform: "uppercase",
-                letterSpacing: "-0.04em",
-              }}
-            >
-              HOPECARD
-            </span>
-            <p style={{ color: "#78716c", lineHeight: 1.6, margin: 0 }}>
-              Empowering the world's storytellers through compassionate funding. We verify, you amplify.
-            </p>
-            <div style={{ display: "flex", gap: "1rem" }}>
-              {[<Heart key="h" size={20} />, <Globe key="g" size={20} />, <ShieldCheck key="s" size={20} />].map(
-                (icon, i) => (
-                  <span key={i} style={{ color: "#7f1d1d", opacity: 0.3 }}>
-                    {icon}
-                  </span>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* Links */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "3rem",
-              flex: 1,
-              paddingLeft: "4rem",
-            }}
-          >
-            {[
-              { heading: "Company", links: ["Our Story", "Impact", "Sustainability"] },
-              { heading: "Resources", links: ["Support", "Privacy", "Terms"] },
-            ].map(({ heading, links }) => (
-              <div key={heading} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <span style={{ fontWeight: 700, color: "#7f1d1d" }}>{heading}</span>
-                {links.map((l) => (
-                  <a
-                    key={l}
-                    href="#"
-                    style={{
-                      color: "#78716c",
-                      textDecoration: "underline",
-                      textDecorationColor: "rgba(244,63,94,0.3)",
-                    }}
-                  >
-                    {l}
-                  </a>
-                ))}
-              </div>
-            ))}
-
-            {/* Newsletter */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <span style={{ fontWeight: 700, color: "#7f1d1d" }}>Newsletter</span>
-              <div style={{ position: "relative", marginTop: "0.5rem" }}>
-                <input
-                  type="text"
-                  placeholder="Your email"
-                  style={{
-                    width: "100%",
-                    background: "rgba(255,255,255,0.5)",
-                    border: "none",
-                    borderRadius: "0.75rem",
-                    padding: "0.75rem 1rem",
-                    fontSize: "0.75rem",
-                    fontFamily: "Manrope, sans-serif",
-                    outline: "none",
-                  }}
-                />
-                <button
-                  style={{
-                    position: "absolute",
-                    right: "0.5rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "#7f1d1d",
-                    color: "#fff",
-                    border: "none",
-                    padding: "0.375rem",
-                    borderRadius: "0.5rem",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div
-          style={{
-            padding: "0 4rem 3rem",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            maxWidth: "80rem",
-            margin: "0 auto",
-            opacity: 0.8,
-          }}
-        >
-          <span style={{ color: "#78716c" }}>© 2024 HOPECARD. Every card holds a heart.</span>
-          <span
-            style={{
-              fontSize: "0.7rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              color: "#7f1d1d",
-              opacity: 0.5,
-              fontWeight: 700,
-            }}
-          >
-            Made with intentionality
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }

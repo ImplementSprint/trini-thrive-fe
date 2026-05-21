@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import SharedLayout from "@/donor-components/SharedLayout";
-import { MapPin, CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { useImpact } from "@/donor-hooks/useImpact";
+import { useProfile } from "@/donor-hooks/useProfile";
 
 // Design Tokens
 const colors = {
@@ -28,10 +29,26 @@ const colors = {
   onSurfaceVariant: "#554240",
 } as const;
 
+type SortKey = "recent" | "amount";
+
 export default function TransactionsPage() {
   const { data, loading, error } = useImpact();
+  const { profile } = useProfile();
+  const [expanded, setExpanded] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("recent");
 
-  const handleViewImpactMap = useCallback(() => console.log("View Impact Map"), []);
+  const sortedHistory = useMemo(() => {
+    const list = [...(data?.donation_history ?? [])];
+    if (sortKey === "recent") {
+      list.sort((a, b) => new Date(b.purchased_at).getTime() - new Date(a.purchased_at).getTime());
+    } else {
+      list.sort((a, b) => b.amount_paid - a.amount_paid);
+    }
+    return list;
+  }, [data?.donation_history, sortKey]);
+
+  const visibleHistory = expanded ? sortedHistory : sortedHistory.slice(0, 4);
+
 
   return (
     <SharedLayout currentPage="transactions">
@@ -39,7 +56,7 @@ export default function TransactionsPage() {
         {/* Dashboard Header */}
         <header style={{ marginBottom: "3rem" }}>
           <h1 style={{ fontSize: "2.5rem", fontWeight: 800, color: colors.primary, marginBottom: "0.5rem", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
-            Welcome home, {data?.first_name ?? ''}.
+            Welcome home, {profile?.first_name ?? ''}.
           </h1>
           <p style={{ color: colors.onSurfaceVariant, fontSize: "1.125rem" }}>
             Your heart is changing the world, one pulse at a time.
@@ -57,18 +74,11 @@ export default function TransactionsPage() {
                   ACTIVE IMPACT
                 </div>
                 <h2 style={{ fontSize: "3rem", fontWeight: 800, marginBottom: "1rem", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
-                  {data?.stats.lives_touched ?? 0} Lives Touched
+                  {data?.stats.hopecards_donated ?? 0} Hopecards Donated
                 </h2>
                 <p style={{ fontSize: "1.25rem", opacity: 0.9, maxWidth: "600px", lineHeight: 1.6 }}>
-                  Through your contributions to HOPECARD, you've helped {data?.stats.lives_touched ?? 0} individuals this year.
+                  Through your contributions to HOPECARD, you've supported {data?.stats.hopecards_donated ?? 0} campaign{(data?.stats.hopecards_donated ?? 0) !== 1 ? 's' : ''}.
                 </p>
-              </div>
-              <div style={{ marginTop: "2rem" }}>
-                <button onClick={handleViewImpactMap} style={{ background: colors.onPrimary, color: colors.primary, padding: "0.875rem 1.5rem", borderRadius: "1rem", fontWeight: 700, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", fontFamily: "Plus Jakarta Sans, sans-serif", transition: "transform 0.2s" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}>
-                  View Impact Map <MapPin size={18} />
-                </button>
               </div>
             </div>
             <div style={{ position: "absolute", top: 0, right: 0, width: "24rem", height: "24rem", background: "rgba(255,255,255,0.05)", borderRadius: "999px", transform: "translate(25%, -25%)" }} />
@@ -80,16 +90,35 @@ export default function TransactionsPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
           {/* Donation History */}
           <section>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "1.5rem" }}>
-              <h3 style={{ fontSize: "1.5rem", fontWeight: 700, color: colors.onSurface, fontFamily: "Plus Jakarta Sans, sans-serif" }}>Donation History</h3>
-              <a href="#" style={{ color: colors.primary, fontWeight: 700, fontSize: "0.875rem", textDecoration: "underline", textDecorationColor: colors.primaryContainer }}>
-                View All
-              </a>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+              <h3 style={{ fontSize: "1.5rem", fontWeight: 700, color: colors.onSurface, fontFamily: "Plus Jakarta Sans, sans-serif", margin: 0 }}>Donation History</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {(["recent", "amount"] as SortKey[]).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setSortKey(key)}
+                    style={{
+                      padding: "0.375rem 0.875rem",
+                      borderRadius: "999px",
+                      border: "none",
+                      cursor: "pointer",
+                      fontFamily: "Manrope, sans-serif",
+                      fontSize: "0.8125rem",
+                      fontWeight: 600,
+                      background: sortKey === key ? colors.primary : colors.surfaceContainerHigh,
+                      color: sortKey === key ? colors.onPrimary : colors.onSurfaceVariant,
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {key === "recent" ? "Most Recent" : "By Amount"}
+                  </button>
+                ))}
+              </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {loading && <p style={{ color: colors.onSurfaceVariant }}>Loading history...</p>}
               {error && <p style={{ color: colors.secondary }}>Could not load donation history.</p>}
-              {!loading && (data?.donation_history ?? []).map((item) => {
+              {!loading && visibleHistory.map((item) => {
                 const isProcessed = item.status === 'paid';
                 return (
                   <div key={item.id} style={{ background: colors.surfaceContainerLow, padding: "1.25rem", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s" }}
@@ -113,8 +142,34 @@ export default function TransactionsPage() {
                   </div>
                 );
               })}
-              {!loading && (data?.donation_history ?? []).length === 0 && !error && (
+              {!loading && sortedHistory.length === 0 && !error && (
                 <p style={{ color: colors.onSurfaceVariant }}>No donations yet.</p>
+              )}
+              {!loading && sortedHistory.length > 4 && (
+                <button
+                  onClick={() => setExpanded((p) => !p)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.5rem",
+                    width: "100%",
+                    padding: "0.875rem",
+                    background: colors.surfaceContainerLow,
+                    border: `1px solid ${colors.surfaceContainerHigh}`,
+                    borderRadius: "1rem",
+                    cursor: "pointer",
+                    fontFamily: "Manrope, sans-serif",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    color: colors.primary,
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = colors.surfaceContainerHigh)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = colors.surfaceContainerLow)}
+                >
+                  {expanded ? <><ChevronUp size={16} /> Show Less</> : <><ChevronDown size={16} /> View All ({sortedHistory.length})</>}
+                </button>
               )}
             </div>
           </section>

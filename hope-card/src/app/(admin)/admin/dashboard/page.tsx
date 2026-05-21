@@ -88,7 +88,7 @@ export default function Dashboard() {
 
         // Fetch dashboard metrics with retry
         const response = await retryFetch(async () => {
-          return fetch(`${backendUrl}/api/v1/dashboard/metrics`, {
+          return fetch(`${backendUrl}/api/v1/hopecard/admin/dashboard/metrics`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -149,9 +149,9 @@ export default function Dashboard() {
         const backendUrl = await getBackendUrlCached();
         const token = localStorage.getItem('admin_token');
         
-        console.log("🔍 Fetching activities from:", `${backendUrl}/api/v1/activity`);
+        console.log("🔍 Fetching activities from:", `${backendUrl}/api/v1/hopecard/admin/activity`);
 
-        const response = await fetch(`${backendUrl}/api/v1/activity?page=1&limit=50`, {
+        const response = await fetch(`${backendUrl}/api/v1/hopecard/admin/activity?page=1&limit=50`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

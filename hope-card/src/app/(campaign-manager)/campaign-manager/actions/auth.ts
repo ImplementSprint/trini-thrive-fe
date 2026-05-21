@@ -1,349 +1,129 @@
-﻿'use server';
+'use server';
 
-import { createClient } from '@/campaign-manager-utils/supabase/server';
-import { createAdminClient } from '@/campaign-manager-utils/supabase/admin';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import nodemailer from 'nodemailer';
+import { createClient } from '@/campaign-manager-utils/supabase/server';
+import { createAdminClient } from '@/campaign-manager-utils/supabase/admin';
 
-export type AuthActionResult = { error?: string; success?: boolean } | null;
-export type SendOTPResult = { error?: string; success?: boolean };
-export type VerifyOTPResult = { error?: string; success?: boolean };
+const CM_BACKEND_URL = process.env.NEXT_PUBLIC_CM_BACKEND_URL ?? 'http://localhost:3103';
 
-// Generate a random 6-digit OTP code
-function generateOTPCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+export async function loginAction(fd: FormData): Promise<{ error: string } | null> {
+  const email = fd.get('email') as string;
+  const password = fd.get('password') as string;
+
+  if (!email || !password) {
+    return { error: 'Email and password are required.' };
+  }
+
+  let token: string;
+  try {
+    const res = await fetch(`${CM_BACKEND_URL}/api/v1/hopecard/cm/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      cache: 'no-store',
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return { error: data.message ?? data.error ?? 'Invalid credentials.' };
+    }
+
+    token = data.token ?? data.access_token;
+    if (!token) {
+      return { error: 'Login failed. Please try again.' };
+    }
+  } catch {
+    return { error: 'Unable to reach the server. Please try again.' };
+  }
+
+  // Establish Supabase browser session
+  const supabase = await createClient();
+  await supabase.auth.signInWithPassword({ email, password });
+
+  const cookieStore = await cookies();
+  cookieStore.set('cm_token', token, { path: '/', sameSite: 'strict', httpOnly: true });
+  cookieStore.set('persona', 'campaign-manager', { path: '/', sameSite: 'strict' });
+
+  redirect('/campaign-manager/dashboard');
 }
 
-export async function signUpAction(formData: FormData): Promise<AuthActionResult> {
-  const firstName = formData.get('firstName') as string;
-  const lastName = formData.get('lastName') as string;
-  const organizationName = formData.get('organization') as string;
-  const email = formData.get('email') as string;
-  const phone = formData.get('contactNumber') as string;
-  const password = formData.get('password') as string;
-  const confirmPassword = formData.get('confirmPassword') as string;
-  const secFile = formData.get('secRegistration') as File;
-  const orgCertFile = formData.get('orgCertificate') as File;
-
-  if (!firstName || !lastName || !organizationName || !email || !phone || !password || !confirmPassword) {
-    return { error: 'All fields are required.' };
-  }
+export async function signUpAction(fd: FormData): Promise<{ error: string } | null> {
+  const email = fd.get('email') as string;
+  const password = fd.get('password') as string;
+  const confirmPassword = fd.get('confirmPassword') as string;
+  const firstName = fd.get('firstName') as string;
+  const lastName = fd.get('lastName') as string;
+  const organization = fd.get('organization') as string;
+  const contactNumber = fd.get('contactNumber') as string;
+  const secRegistration = fd.get('secRegistration') as File | null;
+  const orgCertificate = fd.get('orgCertificate') as File | null;
 
   if (password !== confirmPassword) {
     return { error: 'Passwords do not match.' };
   }
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-
-  if (!secFile || secFile.size === 0) {
-    return { error: 'Please upload your SEC Registration.' };
-  }
-  if (secFile.size > MAX_FILE_SIZE) {
-    return { error: 'SEC Registration must be smaller than 5 MB.' };
-  }
-
-  if (!orgCertFile || orgCertFile.size === 0) {
-    return { error: 'Please upload your Organizational Certificate.' };
-  }
-  if (orgCertFile.size > MAX_FILE_SIZE) {
-    return { error: 'Organizational Certificate must be smaller than 5 MB.' };
-  }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    return { error: 'Server misconfiguration. Please contact support.' };
-  }
-
-  const adminClient = createAdminClient();
-
-  // Upload SEC Registration
-  const secExt = secFile.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') ?? 'bin';
-  const secKey = `sec-registrations/${Date.now()}-${crypto.randomUUID()}.${secExt}`;
-  const { error: secUploadError } = await adminClient.storage
-    .from('camp-man-files')
-    .upload(secKey, secFile);
-
-  if (secUploadError) {
-    return { error: `Failed to upload SEC Registration: ${secUploadError.message}` };
-  }
-
-  // Upload Org Certificate
-  const orgCertExt = orgCertFile.name.split('.').pop()?.replace(/[^a-zA-Z0-9]/g, '') ?? 'bin';
-  const orgCertKey = `org-certificates/${Date.now()}-${crypto.randomUUID()}.${orgCertExt}`;
-  const { error: orgCertUploadError } = await adminClient.storage
-    .from('camp-man-files')
-    .upload(orgCertKey, orgCertFile);
-
-  if (orgCertUploadError) {
-    await adminClient.storage.from('camp-man-files').remove([secKey]);
-    return { error: 'Failed to upload Organizational Certificate. Please try again.' };
-  }
-
-  // Create auth user
   const supabase = await createClient();
-  const { data, error: signUpError } = await supabase.auth.signUp({
+
+  const { error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${appUrl}/campaign-manager/auth/callback`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/campaign-manager/auth/callback`,
+      data: {
+        first_name: firstName,
+        last_name: lastName,
+        organization,
+        contact_number: contactNumber,
+        role: 'campaign-manager',
+      },
     },
   });
 
   if (signUpError) {
-    await adminClient.storage.from('camp-man-files').remove([secKey, orgCertKey]);
     return { error: signUpError.message };
   }
 
-  const user = data.user;
-  if (!user) {
-    return { error: 'Signup failed. Please try again.' };
-  }
+  // Upload documents to backend if provided
+  if (secRegistration || orgCertificate) {
+    try {
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('organization', organization);
+      formData.append('contactNumber', contactNumber);
+      if (secRegistration) formData.append('secRegistration', secRegistration);
+      if (orgCertificate) formData.append('orgCertificate', orgCertificate);
 
-  // Insert profile row
-  const { error: profileError } = await adminClient
-    .from('campaign_manager_profiles')
-    .insert({
-      auth_user_id: user.id,
-      first_name: firstName,
-      last_name: lastName,
-      organization_name: organizationName,
-      email,
-      phone,
-      sec_registration: secKey,
-      organizational_certificate: orgCertKey,
-      status: 'pending',
-    });
-
-  if (profileError) {
-    console.error('[signUpAction] profile insertion failed:', profileError);
-    await adminClient.storage.from('camp-man-files').remove([secKey, orgCertKey]);
-    await adminClient.auth.admin.deleteUser(user.id);
-    return { error: `Failed to save profile: ${profileError.message}` };
-  }
-
-  return null; // success — caller shows confirmation message
-}
-
-export async function loginAction(formData: FormData): Promise<AuthActionResult> {
-  const email = (formData.get('email') as string | null)?.trim() ?? '';
-  const password = (formData.get('password') as string | null) ?? '';
-
-  console.log('[loginAction] Attempting login for:', email);
-
-  if (!email || !password) {
-    console.log('[loginAction] Missing email or password');
-    return { error: 'Email and password are required.' };
-  }
-
-  const supabase = await createClient();
-
-  console.log('[loginAction] Signing in with Supabase...');
-  const { data, error: signInError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (signInError) {
-    console.error('[loginAction] Sign in error:', signInError);
-    return { error: 'Invalid email or password.' };
-  }
-
-  if (!data.user) {
-    console.log('[loginAction] No user returned from sign in');
-    await supabase.auth.signOut();
-    return { error: 'Invalid email or password.' };
-  }
-
-  const user = data.user;
-  console.log('[loginAction] User signed in:', user.id);
-
-  // Belt-and-suspenders: Supabase also blocks unconfirmed sign-ins at the
-  // project level, but we re-check here in case that setting is disabled.
-  if (!user.email_confirmed_at) {
-    console.log('[loginAction] User email not confirmed');
-    await supabase.auth.signOut();
-    return { error: 'Please confirm your email before signing in.' };
-  }
-
-  const adminClient = createAdminClient();
-  console.log('[loginAction] Fetching profile...');
-  const { data: profile, error: profileError } = await adminClient
-    .from('campaign_manager_profiles')
-    .select('status')
-    .eq('auth_user_id', user.id)
-    .single();
-
-  if (profileError || !profile) {
-    console.error('[loginAction] profile query failed:', profileError?.message);
-    await supabase.auth.signOut();
-    return { error: 'Account not found. Please contact support.' };
-  }
-
-  console.log('[loginAction] Profile status:', profile.status);
-
-  if (profile.status !== 'approved') {
-    await supabase.auth.signOut();
-    const msg =
-      profile.status === 'pending'
-        ? 'Your account is pending admin approval.'
-        : profile.status === 'rejected'
-          ? 'Your account has been rejected. Please contact support.'
-          : 'Your account is not active. Please contact support.';
-    console.log('[loginAction] Account not approved:', msg);
-    return { error: msg };
-  }
-
-  console.log('[loginAction] Login successful, redirecting');
-  const cookieStore = await cookies();
-  cookieStore.set('persona', 'campaign-manager', {
-    path: '/',
-    sameSite: 'strict',
-    httpOnly: false,
-  });
-  redirect('/campaign-manager/dashboard');
-}
-
-export async function getProfileAction() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const adminClient = createAdminClient();
-  const { data: profile, error } = await adminClient
-    .from('campaign_manager_profiles')
-    .select('*')
-    .eq('auth_user_id', user.id)
-    .single();
-
-  if (error || !profile) return null;
-
-  return profile;
-}
-
-export async function updateProfileAction(formData: FormData): Promise<AuthActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Unauthorized' };
-
-  const firstName = formData.get('firstName') as string;
-  const lastName = formData.get('lastName') as string;
-  const organizationName = formData.get('organizationName') as string;
-  const phone = formData.get('phone') as string;
-
-  if (!firstName || !lastName || !organizationName || !phone) {
-    return { error: 'First name, last name, organization, and phone are required.' };
-  }
-
-  const adminClient = createAdminClient();
-  const { error: profileError } = await adminClient
-    .from('campaign_manager_profiles')
-    .update({
-      first_name: firstName,
-      last_name: lastName,
-      organization_name: organizationName,
-      phone: phone,
-    })
-    .eq('auth_user_id', user.id);
-
-  if (profileError) {
-    return { error: profileError.message };
+      await fetch(`${CM_BACKEND_URL}/api/v1/hopecard/cm/auth/register`, {
+        method: 'POST',
+        body: formData,
+        cache: 'no-store',
+      });
+    } catch {
+      // Non-fatal — documents can be submitted later
+    }
   }
 
   return null;
 }
 
-export async function sendOTPAction(formData: FormData): Promise<SendOTPResult> {
-  const email = (formData.get('email') as string | null)?.trim() ?? '';
+export async function sendOTPAction(formData: FormData): Promise<{ error?: string; success?: boolean }> {
+  const email = formData.get('email') as string;
 
   if (!email) {
     return { error: 'Email is required.' };
   }
 
-  // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return { error: 'Please enter a valid email address.' };
-  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/campaign-manager/auth/callback`,
+  });
 
-  const adminClient = createAdminClient();
-
-  // Check if user exists in auth
-  const { data: users, error: userQueryError } = await adminClient.auth.admin.listUsers();
-
-  if (userQueryError) {
-    console.error('[sendOTPAction] failed to query users:', userQueryError);
-    return { error: 'Failed to verify account. Please try again.' };
-  }
-
-  const userExists = users?.users.some(u => u.email === email);
-  if (!userExists) {
-    return { error: 'No account found with this email address.' };
-  }
-
-  // Generate OTP
-  const otpCode = generateOTPCode();
-  const expiresAtMs = Date.now() + 15 * 60 * 1000; // 15 minutes
-
-  // Delete any existing OTP sessions for this email
-  await adminClient
-    .from('otp_sessions')
-    .delete()
-    .eq('email', email);
-
-  // Insert new OTP session
-  const { error: insertError } = await adminClient
-    .from('otp_sessions')
-    .insert({
-      email,
-      otp: otpCode,
-      expires_at_ms: expiresAtMs,
-      created_at_ms: Date.now(),
-    });
-
-  if (insertError) {
-    console.error('[sendOTPAction] failed to insert OTP session:', insertError);
-    return { error: 'Failed to send recovery code. Please try again.' };
-  }
-
-  // Send email via SMTP (non-blocking - OTP is already stored in database)
-  try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '465'),
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    });
-
-    const mailOptions = {
-      from: `${process.env.SMTP_FROM} <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: 'Your Hopecard Password Reset Code',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #a6493f;">Password Reset Request</h2>
-          <p>You have requested to reset your password. Use the code below to complete the process:</p>
-          <div style="background-color: #f5f2f1; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
-            <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #6d4a44; margin: 0;">
-              ${otpCode}
-            </p>
-          </div>
-          <p style="color: #666;">This code will expire in 15 minutes.</p>
-          <p style="color: #666;">If you did not request a password reset, please ignore this email.</p>
-          <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px;">© Hopecard. All rights reserved.</p>
-        </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-    console.log('[sendOTPAction] OTP email sent successfully to:', email);
-  } catch (emailError) {
-    console.warn('[sendOTPAction] email send failed (non-blocking):', emailError);
-    // Continue - OTP is already stored in database, user can still use it
+  if (error) {
+    return { error: error.message };
   }
 
   return { success: true };
@@ -351,43 +131,17 @@ export async function sendOTPAction(formData: FormData): Promise<SendOTPResult> 
 
 export async function verifyOTPAction(
   email: string,
-  otpCode: string
-): Promise<VerifyOTPResult> {
-  const trimmedEmail = (email ?? '').trim();
-  const trimmedOTP = (otpCode ?? '').trim();
+  otp: string,
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token: otp,
+    type: 'recovery',
+  });
 
-  if (!trimmedEmail || !trimmedOTP) {
-    return { error: 'Email and recovery code are required.' };
-  }
-
-  const adminClient = createAdminClient();
-
-  // Find matching OTP session
-  const { data: otpSessions, error: queryError } = await adminClient
-    .from('otp_sessions')
-    .select('*')
-    .eq('email', trimmedEmail)
-    .eq('otp', trimmedOTP)
-    .single();
-
-  if (queryError || !otpSessions) {
-    return { error: 'Invalid recovery code.' };
-  }
-
-  // Check if OTP has expired
-  if (Date.now() > otpSessions.expires_at_ms) {
-    return { error: 'Recovery code has expired. Please request a new one.' };
-  }
-
-  // Mark OTP as used
-  const { error: updateError } = await adminClient
-    .from('otp_sessions')
-    .update({ used: true })
-    .eq('id', otpSessions.id);
-
-  if (updateError) {
-    console.error('[verifyOTPAction] failed to verify OTP:', updateError);
-    return { error: 'Failed to verify code. Please try again.' };
+  if (error) {
+    return { error: error.message };
   }
 
   return { success: true };
@@ -395,65 +149,73 @@ export async function verifyOTPAction(
 
 export async function resetPasswordAction(
   email: string,
-  otpCode: string,
-  newPassword: string
-): Promise<AuthActionResult> {
-  const trimmedEmail = (email ?? '').trim();
-  const trimmedOTP = (otpCode ?? '').trim();
+  otp: string,
+  password: string,
+): Promise<{ error?: string } | null> {
+  const supabase = await createClient();
 
-  if (!trimmedEmail || !trimmedOTP || !newPassword) {
-    return { error: 'Email, recovery code, and new password are required.' };
-  }
+  // Re-verify OTP to get a session before updating password
+  const { error: verifyError } = await supabase.auth.verifyOtp({
+    email,
+    token: otp,
+    type: 'recovery',
+  });
 
-  const adminClient = createAdminClient();
-
-  // Verify that this OTP has been used (verified)
-  const { data: otpSession, error: queryError } = await adminClient
-    .from('otp_sessions')
-    .select('*')
-    .eq('email', trimmedEmail)
-    .eq('otp', trimmedOTP)
-    .eq('used', true)
-    .single();
-
-  if (queryError || !otpSession) {
+  if (verifyError) {
     return { error: 'Invalid or expired recovery code.' };
   }
 
-  // Check if OTP has expired
-  if (Date.now() > otpSession.expires_at_ms) {
-    return { error: 'Recovery code has expired. Please request a new one.' };
-  }
-
-  // Get user from auth by email
-  const { data: users, error: userListError } = await adminClient.auth.admin.listUsers();
-
-  if (userListError || !users) {
-    console.error('[resetPasswordAction] failed to list users:', userListError);
-    return { error: 'Failed to reset password. Please try again.' };
-  }
-
-  const user = users.users.find(u => u.email === trimmedEmail);
-  if (!user) {
-    return { error: 'User account not found.' };
-  }
-
-  // Update user password using admin API
-  const { error: updateError } = await adminClient.auth.admin.updateUserById(
-    user.id,
-    { password: newPassword }
-  );
+  const { error: updateError } = await supabase.auth.updateUser({ password });
 
   if (updateError) {
-    console.error('[resetPasswordAction] failed to update password:', updateError);
-    return { error: 'Failed to reset password. Please try again.' };
+    return { error: updateError.message };
   }
 
-  // Delete the OTP session after successful password reset
-  await adminClient
-    .from('otp_sessions')
-    .delete()
-    .eq('id', otpSession.id);
+  return null;
+}
 
-  return null; // success
+// ─── Profile ──────────────────────────────────────────────────────────────────
+
+export async function getProfileAction() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from('campaign_manager_profiles')
+    .select('first_name, last_name, email, organization_name, phone, address, status')
+    .eq('auth_user_id', user.id)
+    .single();
+
+  return profile ?? null;
+}
+
+export async function updateProfileAction(
+  fd: FormData,
+): Promise<{ error?: string } | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated.' };
+
+  const updates: Record<string, string> = {};
+  const firstName = fd.get('firstName') as string;
+  const lastName = fd.get('lastName') as string;
+  const organizationName = fd.get('organizationName') as string;
+  const phone = fd.get('phone') as string;
+
+  if (firstName) updates.first_name = firstName;
+  if (lastName) updates.last_name = lastName;
+  if (organizationName) updates.organization_name = organizationName;
+  if (phone) updates.phone = phone;
+  // bio field is not in DB — silently ignored
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('campaign_manager_profiles')
+    .update(updates)
+    .eq('auth_user_id', user.id);
+
+  if (error) return { error: error.message };
+  return null;
 }

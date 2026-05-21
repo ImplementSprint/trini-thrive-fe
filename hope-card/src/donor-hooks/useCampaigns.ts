@@ -27,8 +27,8 @@ export function useCampaigns(category?: string) {
     try {
       const base = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL;
       const url = category
-        ? `${base}/api/v1/campaigns?category=${encodeURIComponent(category)}`
-        : `${base}/api/v1/campaigns`;
+        ? `${base}/api/v1/hopecard/donor/campaigns?category=${encodeURIComponent(category)}`
+        : `${base}/api/v1/hopecard/donor/campaigns`;
       const donorToken = typeof window !== 'undefined' ? localStorage.getItem('donor_token') : null;
       const res = await fetch(url, {
         headers: donorToken ? { Authorization: `Bearer ${donorToken}` } : {},

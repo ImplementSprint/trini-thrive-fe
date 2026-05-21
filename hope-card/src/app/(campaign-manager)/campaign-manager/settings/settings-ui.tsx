@@ -169,111 +169,12 @@ export default function SettingsUI({
               </div>
             </section>
 
-            <section className="rounded-[28px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-[18px] font-extrabold text-[#382b28]">Banking &amp; Payouts</h2>
-                  <p className="mt-1 text-[13px] text-[#8d7d78]">Linked accounts for fund disbursement</p>
-                </div>
-                <button type="button" onClick={() => setShowAddAccountModal(true)} className="text-[12px] font-bold text-[#c96a5b] transition-colors hover:text-[#a0483e]">
-                  + Add Account
-                </button>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {bankingItems.map((item) => (
-                  <div key={item.title} className="flex flex-col gap-4 rounded-[22px] bg-[#faf7f5] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`flex h-11 w-11 items-center justify-center rounded-full ${
-                          item.active ? 'bg-[#fff3d5] text-[#bb9432]' : 'bg-[#f0ece9] text-[#8f817d]'
-                        }`}
-                      >
-                        <CreditCard size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[14px] font-bold text-[#3b2f2c]">{item.title}</p>
-                        <p className="mt-1 text-[12px] font-medium text-[#8d7d78]">{item.account}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${item.badgeClass}`}>{item.badge}</span>
-                      <button type="button" className="text-[#9d8f8a]">
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
           </div>
 
           <aside className="space-y-5">
-            <section className="rounded-[28px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
-              <h2 className="text-[18px] font-extrabold text-[#382b28]">Notifications</h2>
-
-              <div className="mt-5 space-y-5">
-                {Object.entries(notifications).map(([title, enabled]) => {
-                  const copy = title === 'Campaign Milestones' 
-                    ? 'Goal at 50% / 100% met' 
-                    : title === 'New Donations' 
-                      ? 'Instant alerts for every gift' 
-                      : 'Critical system updates';
-                  return (
-                    <div key={title} className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[14px] font-bold text-[#433330]">{title}</p>
-                        <p className="mt-1 text-[12px] text-[#8d7d78]">{copy}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setNotifications({ ...notifications, [title]: !enabled })}
-                        className={`flex h-7 w-12 cursor-pointer items-center rounded-full px-1 transition-colors ${
-                          enabled ? 'justify-end bg-[#fde8e5]' : 'justify-start bg-[#f0ece9]'
-                        }`}
-                      >
-                        <span className={`h-5 w-5 rounded-full transition-transform ${enabled ? 'bg-[#ef8f86]' : 'bg-white shadow-[0_4px_10px_rgba(0,0,0,0.08)]'}`} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="rounded-[28px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
-              <h2 className="text-[18px] font-extrabold text-[#382b28]">Security</h2>
-
-              <div className="mt-5 space-y-4">
-                {securityItems.map(({ title, copy, icon: Icon, accent, bg, trailing }) => (
-                  <div key={title} className="rounded-[22px] bg-[#faf7f5] px-4 py-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${bg} ${accent}`}>
-                        <Icon size={16} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[14px] font-bold text-[#433330]">{title}</p>
-                        <p className="mt-1 text-[12px] text-[#8d7d78]">{copy}</p>
-                        {trailing ? <button type="button" className="mt-3 text-[11px] font-bold text-[#c96a5b]">{trailing}</button> : null}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
           </aside>
         </div>
 
-        <div className="flex flex-col gap-8 pt-12">
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowDeactivateModal(true)}
-              className="flex h-[46px] items-center justify-center rounded-full bg-[#d72617] px-6 text-[14px] font-bold text-white shadow-[0_10px_22px_rgba(215,38,23,0.22)] transition-colors hover:bg-[#c22214]"
-            >
-              Deactivate Account
-            </button>
-          </div>
-        </div>
       </div>
 
       {showDeactivateModal && (

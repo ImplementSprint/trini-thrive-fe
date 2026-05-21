@@ -29,9 +29,10 @@
 }
 
 .logoText {
-  color: #a32a2a; /* Updated to a deeper red to match the brand */
+  color: #a32a2a;
   font-size: 1.25rem;
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 .navMenu {

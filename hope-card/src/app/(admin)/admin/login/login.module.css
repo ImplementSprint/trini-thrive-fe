@@ -42,9 +42,10 @@
 
 .logoText {
   color: #f05252;
-  font-size: 1.75rem; /* Larger for login page */
+  font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 
 .card {
@@ -120,6 +121,7 @@
   border-radius: 8px;
   font-size: 0.95rem;
   outline: none;
+  color: #111;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 

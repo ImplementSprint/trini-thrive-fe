@@ -60,7 +60,7 @@ export default function ChangePassword() {
         return;
       }
 
-      const response = await fetch(`${backendUrl}/api/v1/auth/change-password`, {
+      const response = await fetch(`${backendUrl}/api/v1/hopecard/admin/auth/change-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

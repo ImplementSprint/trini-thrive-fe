@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import SharedLayout from "@/donor-components/SharedLayout";
 import DonationModal from "@/donor-components/DonationModal";
 import ShareModal, { ShareCampaign } from "@/donor-components/ShareModal";
@@ -199,7 +200,27 @@ CampaignCard.displayName = "CampaignCard";
 const FILTER_PILLS = ["All", "Education", "Health", "Environment", "Disaster Relief"] as const;
 
 export default function HomePage() {
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<string>("All");
+  const [livesTouched, setLivesTouched] = useState<string>('—');
+
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL;
+    if (!base) return;
+    fetch(`${base}/api/v1/hopecard/donor/global-stats`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error) {
+          const n = Math.round(data.livesImpacted);
+          setLivesTouched(
+            n >= 1000
+              ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n) + '+'
+              : n.toString()
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
   const [selectedCampaign, setSelectedCampaign] = useState<(CampaignCardProps & { id: string }) | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedShareCampaign, setSelectedShareCampaign] = useState<ShareCampaign | null>(null);
@@ -236,38 +257,29 @@ export default function HomePage() {
           <div style={{ flex: 1, minWidth: "280px", display: "flex", flexDirection: "column", gap: "2rem" }}>
             <h1
               style={{
-                fontSize: "clamp(3.5rem, 8vw, 5rem)",
+                fontSize: "clamp(4.5rem, 10vw, 7rem)",
                 fontFamily: "Plus Jakarta Sans, sans-serif",
                 fontWeight: 800,
                 letterSpacing: "-0.05em",
-                lineHeight: 0.9,
+                lineHeight: 1,
                 color: C.onSurface,
                 margin: 0,
+                display: "flex",
+                flexDirection: "column",
               }}
             >
-              fund{" "}
-              <em
-                style={{
-                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                  fontStyle: "italic",
-                  fontWeight: 700,
-                  color: C.primary,
-                }}
-              >
-                stories
-              </em>
-              <br />
-              that{" "}
-              <em
-                style={{
-                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                  fontStyle: "italic",
-                  fontWeight: 700,
-                  color: C.primary,
-                }}
-              >
-                matter
-              </em>
+              <span style={{ whiteSpace: "nowrap" }}>
+                fund{" "}
+                <em style={{ fontFamily: "Plus Jakarta Sans, sans-serif", fontStyle: "italic", fontWeight: 700, color: C.primary }}>
+                  stories
+                </em>
+              </span>
+              <span style={{ whiteSpace: "nowrap" }}>
+                that{" "}
+                <em style={{ fontFamily: "Plus Jakarta Sans, sans-serif", fontStyle: "italic", fontWeight: 700, color: C.primary }}>
+                  matter
+                </em>
+              </span>
             </h1>
 
             <p
@@ -279,47 +291,33 @@ export default function HomePage() {
                 margin: 0,
               }}
             >
-              Fuel verified local initiatives and start your journey of compassion today. Every contribution is a heartbeat for change.
+              Every community has a story worth telling — and every story deserves a chance to be heard. HOPECARD connects you directly with verified local initiatives so your generosity reaches the people who need it most. Fuel change, build bridges, and become part of a movement where every contribution counts.
             </p>
 
-            <div style={{ display: "flex", gap: "1rem", paddingTop: "1rem" }}>
+            <div style={{ paddingTop: "0.5rem" }}>
               <button
+                onClick={() => router.push('/donor/explore')}
                 style={{
-                  padding: "1rem 2rem",
+                  padding: "1.25rem 3rem",
                   background: C.primaryContainer,
                   color: C.onPrimaryContainer,
                   fontFamily: "Plus Jakarta Sans, sans-serif",
-                  fontWeight: 600,
-                  borderRadius: "1rem",
+                  fontWeight: 700,
+                  borderRadius: "1.25rem",
                   border: "none",
                   cursor: "pointer",
+                  fontSize: "1.25rem",
                   transition: "transform 0.15s",
-                  fontSize: "1rem",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
+                onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
               >
-                Start Impact
-              </button>
-              <button
-                style={{
-                  padding: "1rem 2rem",
-                  background: `${C.secondary}1a`,
-                  color: C.secondary,
-                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                  fontWeight: 600,
-                  borderRadius: "1rem",
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "background 0.15s",
-                  fontSize: "1rem",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = `${C.secondary}33`)}
-                onMouseLeave={(e) => (e.currentTarget.style.background = `${C.secondary}1a`)}
-              >
-                Our Vision
+                Explore Hopecards
               </button>
             </div>
+
           </div>
 
           {/* Right image */}
@@ -369,7 +367,7 @@ export default function HomePage() {
                   margin: "0 0 0.25rem",
                 }}
               >
-                12k+
+                {livesTouched}
               </p>
               <p
                 style={{

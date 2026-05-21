@@ -174,12 +174,7 @@ const STAT_CARDS: StatCardProps[] = [
   },
 ];
 
-const NAV_LINKS = [
-  { label: "Stories", active: true },
-  { label: "Impact",  active: false },
-  { label: "Transparency", active: false },
-  { label: "About",   active: false },
-];
+const NAV_LINKS: { label: string; active: boolean }[] = [];
 
 const FOOTER_COLUMNS: FooterColumnProps[] = [
   { heading: "Explore", links: ["Our Story", "Impact Reports", "Community"] },
@@ -190,13 +185,15 @@ const FOOTER_COLUMNS: FooterColumnProps[] = [
 export default function HopecardMarketing() {
   const router = useRouter();
   const [stats, setStats] = useState({ 
-    livesImpacted: "124k+", 
+    livesImpacted: "124K+",
     fundsRaised: "₱8.2M", 
     globalPartners: "42" 
   });
 
   useEffect(() => {
-    fetch('/donor/api/global-stats')
+    const backendUrl = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL;
+    if (!backendUrl) return;
+    fetch(`${backendUrl}/api/v1/hopecard/donor/global-stats`)
       .then(r => r.json())
       .then(data => {
         if (!data.error) {
@@ -206,13 +203,14 @@ export default function HopecardMarketing() {
             notation: "compact",
             maximumFractionDigits: 1
           });
-          const numberFormatter = new Intl.NumberFormat('en-US', {
-            notation: "compact",
-            maximumFractionDigits: 1
-          });
-          
+
+          const lives = Math.round(data.livesImpacted);
+          const livesStr = lives >= 1000
+            ? new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(lives) + "+"
+            : lives.toString();
+
           setStats({
-            livesImpacted: numberFormatter.format(data.livesImpacted) + "+",
+            livesImpacted: livesStr,
             fundsRaised: moneyFormatter.format(data.fundsRaised),
             globalPartners: data.globalPartners.toString()
           });
@@ -269,7 +267,8 @@ export default function HopecardMarketing() {
           }}
         >
           {/* Brand */}
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+            <img src="/donor/logo_h.png" alt="Hopecard Logo" style={{ height: "3rem", width: "auto", objectFit: "contain" }} />
             <span
               style={{
                 fontSize: "1.5rem",
@@ -440,26 +439,6 @@ export default function HopecardMarketing() {
               onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
             >
               Get Started
-            </button>
-            <button
-              onClick={() => router.push('/donor/home')}
-              style={{
-                padding: "1.25rem 2.5rem",
-                background: C.surfaceContainerLowest,
-                border: `1px solid ${C.outlineVariant}4d`,
-                color: C.onSurfaceVariant,
-                borderRadius: "1rem",
-                fontSize: "1.125rem",
-                fontWeight: 700,
-                fontFamily: "Manrope, sans-serif",
-                cursor: "pointer",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceContainer)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = C.surfaceContainerLowest)}
-            >
-              Our Impact
             </button>
           </div>
         </div>
@@ -735,24 +714,11 @@ export default function HopecardMarketing() {
                 paddingTop: "1rem",
               }}
             >
-              {[
-                {
-                  label: "Create Your Hopecard",
-                  bg: "#ffffff",
-                  color: C.primaryContainer,
-                },
-                {
-                  label: "Donor Dashboard",
-                  bg: C.primaryContainer,
-                  color: C.onPrimaryContainer,
-                },
-              ].map(({ label, bg, color }) => (
-                <button
-                  key={label}
-                  onClick={() => router.push(label === "Create Your Hopecard" ? '/login' : '/home')}
+              <button
+                  onClick={() => router.push('/donor/login')}
                   style={{
-                    background: bg,
-                    color,
+                    background: "#ffffff",
+                    color: C.primaryContainer,
                     padding: "1rem 2.5rem",
                     borderRadius: "1rem",
                     fontSize: "1.125rem",
@@ -768,9 +734,8 @@ export default function HopecardMarketing() {
                   onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
                   onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
                 >
-                  {label}
+                  Create Your Hopecard
                 </button>
-              ))}
             </div>
           </div>
         </div>
@@ -881,7 +846,7 @@ export default function HopecardMarketing() {
               margin: 0,
             }}
           >
-            © 2024 HOPECARD | The Human Embrace. All rights reserved.
+            © 2026 HOPECARD | The Human Embrace. All rights reserved.
           </p>
         </div>
       </footer>

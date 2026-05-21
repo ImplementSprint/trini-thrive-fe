@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SharedLayout from "@/donor-components/SharedLayout";
 import { Trash2, Plus, Minus, Building2, Heart, Shield } from "lucide-react";
 import { useCart } from "@/donor-contexts/CartContext";
+import { supabase } from "@/donor-lib/supabase-client";
 
 // Design Tokens
 const colors = {
@@ -26,12 +27,40 @@ const colors = {
 
 const TRAIN_LAW_LIMIT = 250000;
 
+function getAnnualPeriodStart(createdAt: string): Date {
+  const created = new Date(createdAt);
+  const now = new Date();
+  const start = new Date(created);
+  start.setFullYear(now.getFullYear());
+  if (start > now) start.setFullYear(now.getFullYear() - 1);
+  return start;
+}
+
 export default function BasketPage() {
   const router = useRouter();
   const { cart, removeFromCart, updateQuantity, cartTotal, loading, processingFee, apiTotal } = useCart();
+  const [annualDonated, setAnnualDonated] = useState(0);
+
+  useEffect(() => {
+    async function fetchAnnualTotal() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const periodStart = getAnnualPeriodStart(session.user.created_at);
+      const { data } = await supabase
+        .from('hopecard_purchases')
+        .select('amount_paid')
+        .eq('buyer_auth_id', session.user.id)
+        .eq('status', 'paid')
+        .gte('purchased_at', periodStart.toISOString());
+      if (data) {
+        setAnnualDonated(data.reduce((sum, r) => sum + (r.amount_paid ?? 0), 0));
+      }
+    }
+    fetchAnnualTotal();
+  }, []);
 
   const subtotal = cartTotal;
-  const trainUsedPercent = Math.min(100, Math.round((subtotal / TRAIN_LAW_LIMIT) * 100));
+  const trainUsedPercent = Math.min(100, Math.round((annualDonated / TRAIN_LAW_LIMIT) * 100));
 
   return (
     <SharedLayout currentPage="basket">
@@ -121,7 +150,7 @@ export default function BasketPage() {
                   <div style={{ height: "100%", width: `${trainUsedPercent}%`, background: `linear-gradient(to right, ${colors.primary}, ${colors.primaryContainer})`, transition: "width 1s" }} />
                 </div>
                 <p style={{ fontSize: "0.875rem", fontWeight: 500, color: colors.onSurfaceVariant, marginTop: "0.75rem" }}>
-                  <span style={{ color: colors.primary, fontWeight: 700 }}>₱{subtotal.toLocaleString()}</span> of ₱{TRAIN_LAW_LIMIT.toLocaleString()} USED
+                  <span style={{ color: colors.primary, fontWeight: 700 }}>₱{annualDonated.toLocaleString()}</span> of ₱{TRAIN_LAW_LIMIT.toLocaleString()} USED
                 </p>
               </div>
             </div>

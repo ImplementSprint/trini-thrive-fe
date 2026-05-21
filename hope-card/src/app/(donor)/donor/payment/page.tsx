@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useCallback, useEffect } from "react";
 import SharedLayout from "@/donor-components/SharedLayout";
 import { useCart } from "@/donor-contexts/CartContext";
-import { CreditCard, Wallet, Building2, Check, Heart } from "lucide-react";
+import { ShieldCheck, Heart } from "lucide-react";
+import { supabase } from "@/donor-lib/supabase-client";
 
 // Design Tokens
 const colors = {
@@ -28,7 +28,6 @@ const colors = {
   outlineVariant: "#dac1be",
 } as const;
 
-type PaymentMethod = "card" | "wallet" | "bank";
 type CheckoutStepState = "completed" | "active" | "pending";
 
 interface CheckoutStep {
@@ -44,45 +43,49 @@ const STEPS: CheckoutStep[] = [
 ];
 
 
-const PAYMENT_METHODS: { id: PaymentMethod; icon: React.ReactNode; label: string }[] = [
-  { id: "card", icon: <CreditCard size={28} />, label: "Card" },
-  { id: "wallet", icon: <Wallet size={28} />, label: "Digital Wallet" },
-  { id: "bank", icon: <Building2 size={28} />, label: "Bank" },
-];
-
-
 export default function PaymentPage() {
-  const router = useRouter();
-  const [activeMethod, setActiveMethod] = useState<PaymentMethod>("card");
-  const [saveCard, setSaveCard] = useState<boolean>(true);
   const { cart, cartTotal, processingFee, apiTotal, loading: cartLoading, checkout } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const currency = "₱";
   const total = apiTotal > 0 ? apiTotal : cartTotal;
-  const trainPct = Math.min(100, (total / 250_000) * 100);
+  const [annualDonated, setAnnualDonated] = useState(0);
+  const trainPct = Math.min(100, (annualDonated / 250_000) * 100);
+
+  useEffect(() => {
+    async function fetchAnnualTotal() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const created = new Date(session.user.created_at);
+      const now = new Date();
+      const periodStart = new Date(created);
+      periodStart.setFullYear(now.getFullYear());
+      if (periodStart > now) periodStart.setFullYear(now.getFullYear() - 1);
+      const { data } = await supabase
+        .from('hopecard_purchases')
+        .select('amount_paid')
+        .eq('buyer_auth_id', session.user.id)
+        .eq('status', 'paid')
+        .gte('purchased_at', periodStart.toISOString());
+      if (data) setAnnualDonated(data.reduce((sum, r) => sum + (r.amount_paid ?? 0), 0));
+    }
+    fetchAnnualTotal();
+  }, []);
   const isDisabled = cartLoading || submitting || cart.length === 0;
 
   const handleComplete = useCallback(async () => {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // Snapshot cart before checkout clears it
-      sessionStorage.setItem('lastOrder', JSON.stringify({
-        cart,
-        cartTotal,
-        apiTotal,
-        processingFee,
-      }));
-      await checkout(activeMethod);
-      router.push('/donor/payment/success');
+      sessionStorage.setItem('lastOrder', JSON.stringify({ cart, cartTotal, apiTotal, processingFee }));
+      const checkoutUrl = await checkout();
+      window.location.href = checkoutUrl;
     } catch (err: any) {
       setSubmitError(err.message || "An error occurred during checkout");
-    } finally {
       setSubmitting(false);
     }
-  }, [router, checkout, activeMethod]);
+  }, [checkout, cart, cartTotal, apiTotal, processingFee]);
 
   return (
     <SharedLayout>
@@ -143,184 +146,30 @@ export default function PaymentPage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "7fr 5fr", gap: "3rem", alignItems: "start" }}>
-          {/* Left: Payment form */}
+          {/* Left: Secure checkout notice */}
           <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
             <section>
               <h2 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: "2rem", color: colors.onSurface, fontFamily: "Plus Jakarta Sans, sans-serif" }}>
-                Payment Method
+                Secure Checkout
               </h2>
-
-              {/* Method selector */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2.5rem" }}>
-                {PAYMENT_METHODS.map(({ id, icon, label }) => (
-                  <button
-                    key={id}
-                    onClick={() => setActiveMethod(id)}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                      padding: "1.5rem",
-                      borderRadius: "1rem",
-                      transition: "all 0.2s",
-                      cursor: "pointer",
-                      ...(activeMethod === id ? {
-                        background: colors.surfaceContainerLowest,
-                        border: `2px solid ${colors.primaryContainer}`,
-                        color: colors.primary,
-                      } : {
-                        background: colors.surfaceContainerLow,
-                        border: "none",
-                        color: colors.onSurfaceVariant,
-                      })
-                    }}
-                    onMouseEnter={(e) => {
-                      if (activeMethod !== id) e.currentTarget.style.background = colors.surfaceContainer;
-                    }}
-                    onMouseLeave={(e) => {
-                      if (activeMethod !== id) e.currentTarget.style.background = colors.surfaceContainerLow;
-                    }}
-                  >
-                    {icon}
-                    <span style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "Manrope, sans-serif" }}>{label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Card form */}
-              <div style={{ background: colors.surfaceContainerLow, padding: "2.5rem", borderRadius: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label htmlFor="cardholder-name" style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
-                    Cardholder Name
-                  </label>
-                  <input
-                    id="cardholder-name"
-                    style={{
-                      width: "100%",
-                      height: "3.5rem",
-                      padding: "0 1.5rem",
-                      borderRadius: "0.75rem",
-                      background: colors.surfaceContainerLowest,
-                      border: "none",
-                      outline: `1px solid ${colors.outlineVariant}33`,
-                      fontFamily: "Manrope, sans-serif",
-                      fontSize: "1rem",
-                      color: colors.onSurface,
-                    }}
-                    placeholder="ALEXANDER BENNETT"
-                    type="text"
-                    onFocus={(e) => (e.currentTarget.style.outline = `2px solid ${colors.primaryContainer}`)}
-                    onBlur={(e) => (e.currentTarget.style.outline = `1px solid ${colors.outlineVariant}33`)}
-                  />
+              <div style={{ background: colors.surfaceContainerLow, padding: "3rem", borderRadius: "1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem", textAlign: "center" }}>
+                <div style={{ width: "5rem", height: "5rem", borderRadius: "999px", background: `${colors.primaryContainer}33`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <ShieldCheck size={40} color={colors.primary} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label htmlFor="card-number" style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
-                    Card Number
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      id="card-number"
-                      style={{
-                        width: "100%",
-                        height: "3.5rem",
-                        padding: "0 1.5rem",
-                        borderRadius: "0.75rem",
-                        background: colors.surfaceContainerLowest,
-                        border: "none",
-                        outline: `1px solid ${colors.outlineVariant}33`,
-                        fontFamily: "Manrope, sans-serif",
-                        fontSize: "1rem",
-                        color: colors.onSurface,
-                      }}
-                      placeholder="•••• •••• •••• 4242"
-                      type="text"
-                      onFocus={(e) => (e.currentTarget.style.outline = `2px solid ${colors.primaryContainer}`)}
-                      onBlur={(e) => (e.currentTarget.style.outline = `1px solid ${colors.outlineVariant}33`)}
-                    />
-                    <div style={{ position: "absolute", right: "1rem", top: "50%", transform: "translateY(-50%)", display: "flex", gap: "0.5rem" }}>
-                      <span style={{ width: "2rem", height: "1.25rem", background: colors.surfaceContainerHighest, borderRadius: "0.25rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5rem", fontWeight: 700 }}>
-                        VISA
-                      </span>
-                      <span style={{ width: "2rem", height: "1.25rem", background: colors.surfaceContainerHighest, borderRadius: "0.25rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5rem", fontWeight: 700 }}>
-                        MC
-                      </span>
-                    </div>
-                  </div>
+                <div>
+                  <p style={{ fontSize: "1.25rem", fontWeight: 700, color: colors.onSurface, fontFamily: "Plus Jakarta Sans, sans-serif", marginBottom: "0.75rem" }}>
+                    You'll be redirected to a secure payment page
+                  </p>
+                  <p style={{ fontSize: "0.9375rem", color: colors.onSurfaceVariant, lineHeight: 1.6, maxWidth: "400px" }}>
+                    Clicking <strong>Complete Donation</strong> will take you to our payment partner's secure checkout where you can pay via GCash, Maya, GrabPay, QR Ph, or card.
+                  </p>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    <label htmlFor="expiry-date" style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
-                      Expiry Date
-                    </label>
-                    <input
-                      id="expiry-date"
-                      style={{
-                        width: "100%",
-                        height: "3.5rem",
-                        padding: "0 1.5rem",
-                        borderRadius: "0.75rem",
-                        background: colors.surfaceContainerLowest,
-                        border: "none",
-                        outline: `1px solid ${colors.outlineVariant}33`,
-                        fontFamily: "Manrope, sans-serif",
-                        fontSize: "1rem",
-                        color: colors.onSurface,
-                      }}
-                      placeholder="MM/YY"
-                      type="text"
-                      onFocus={(e) => (e.currentTarget.style.outline = `2px solid ${colors.primaryContainer}`)}
-                      onBlur={(e) => (e.currentTarget.style.outline = `1px solid ${colors.outlineVariant}33`)}
-                    />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                    <label htmlFor="cvv" style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
-                      CVV
-                    </label>
-                    <input
-                      id="cvv"
-                      style={{
-                        width: "100%",
-                        height: "3.5rem",
-                        padding: "0 1.5rem",
-                        borderRadius: "0.75rem",
-                        background: colors.surfaceContainerLowest,
-                        border: "none",
-                        outline: `1px solid ${colors.outlineVariant}33`,
-                        fontFamily: "Manrope, sans-serif",
-                        fontSize: "1rem",
-                        color: colors.onSurface,
-                      }}
-                      placeholder="•••"
-                      type="password"
-                      onFocus={(e) => (e.currentTarget.style.outline = `2px solid ${colors.primaryContainer}`)}
-                      onBlur={(e) => (e.currentTarget.style.outline = `1px solid ${colors.outlineVariant}33`)}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", paddingTop: "1rem" }}>
-                  <button
-                    onClick={() => setSaveCard((v) => !v)}
-                    style={{
-                      width: "1.25rem",
-                      height: "1.25rem",
-                      borderRadius: "0.25rem",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "background 0.2s",
-                      border: "none",
-                      cursor: "pointer",
-                      background: saveCard ? colors.primaryContainer : colors.surfaceContainerHigh,
-                    }}
-                    aria-pressed={saveCard}
-                    aria-label="Save card for future use"
-                  >
-                    {saveCard && <Check size={14} color={colors.onPrimaryContainer} strokeWidth={3} />}
-                  </button>
-                  <span style={{ fontSize: "0.875rem", color: colors.onSurfaceVariant }}>
-                    Save card details for future impact
-                  </span>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "center", marginTop: "0.5rem" }}>
+                  {["GCash", "Maya", "GrabPay", "QR Ph", "Card"].map((method) => (
+                    <span key={method} style={{ padding: "0.375rem 1rem", background: colors.surfaceContainerLowest, border: `1px solid ${colors.outlineVariant}`, borderRadius: "999px", fontSize: "0.8125rem", fontWeight: 600, color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
+                      {method}
+                    </span>
+                  ))}
                 </div>
               </div>
             </section>
@@ -383,7 +232,7 @@ export default function PaymentPage() {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <p style={{ fontSize: "0.625rem", fontWeight: 700, color: colors.onSurfaceVariant }}>
-                      {currency}{total.toLocaleString()} / {currency}250,000
+                      {currency}{annualDonated.toLocaleString()} / {currency}250,000
                     </p>
                   </div>
                 </div>

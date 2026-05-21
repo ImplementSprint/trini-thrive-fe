@@ -7,7 +7,7 @@ import { supabase } from '@/donor-lib/supabase-client';
 export interface ImpactStats {
   total_donations_amount: number;
   total_donations_count: number;
-  lives_touched: number;
+  hopecards_donated: number;
 }
 
 export interface DonationHistoryItem {
@@ -36,7 +36,7 @@ export function useImpact() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { setLoading(false); return; }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/impact?authUserId=${session.user.id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/impact?authUserId=${session.user.id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('donor_token') ?? session.access_token}` },
       });
       const json = await res.json();

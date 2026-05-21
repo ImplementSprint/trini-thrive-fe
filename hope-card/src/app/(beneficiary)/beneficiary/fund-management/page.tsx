@@ -1,11 +1,13 @@
-﻿﻿﻿﻿"use client";
+"use client";
+import { BeneficiaryNotificationBell } from "@/app/(beneficiary)/beneficiary/shared/BeneficiaryNotificationBell";
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from "@/beneficiary-utils/supabase/client";
 import {
-  Menu, Bell, LayoutDashboard, CreditCard,
-  Landmark, IdCard, User, ShieldCheck, HelpCircle
+  Menu, LayoutDashboard, CreditCard,
+  Landmark, IdCard, User, ShieldCheck, HelpCircle,
+  LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 
@@ -52,7 +54,7 @@ function formatDate(dateStr: string): string {
 const StatusBadge: React.FC<{ status: Transaction["status"] }> = ({ status }) => {
   const base = "px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider";
   if (status === "Completed") return <span className={`${base} bg-[#f4dddc] text-[#79342e]`}>Completed</span>;
-  if (status === "Rejected")  return <span className={`${base} bg-[#ffdad6] text-[#ba1a1a]`}>Rejected</span>;
+  if (status === "Rejected") return <span className={`${base} bg-[#ffdad6] text-[#ba1a1a]`}>Rejected</span>;
   return <span className={`${base} bg-[#ffdf98] text-[#4f3b00]`}>Pending</span>;
 };
 
@@ -87,9 +89,8 @@ const WithdrawalItem: React.FC<{ w: Withdrawal }> = ({ w }) => (
     <p className="text-sm font-bold">{w.label}</p>
     <p className="text-lg font-extrabold text-[#97453e] mt-1">{w.amount}</p>
     <p
-      className={`text-[10px] font-bold uppercase mt-2 ${
-        w.status === "Successful" ? "text-green-600" : "text-[#4f3b00]"
-      }`}
+      className={`text-[10px] font-bold uppercase mt-2 ${w.status === "Successful" ? "text-green-600" : "text-[#4f3b00]"
+        }`}
     >
       {w.status}
     </p>
@@ -144,7 +145,6 @@ const NAV_ITEMS = [
   { icon: <Landmark size={20} />, label: "Banking", active: false, href: "/beneficiary/banking-details" },
   { icon: <IdCard size={20} />, label: "Identity", active: false, href: "/beneficiary/identity-verification" },
   { icon: <User size={20} />, label: "Profile", active: false, href: "/beneficiary/profile-settings" },
-  { icon: <ShieldCheck size={20} />, label: "Security", active: false, href: "/beneficiary/security-settings" },
 ];
 
 const SIDEBAR_W_EXPANDED = 220;
@@ -220,7 +220,7 @@ const FundManagement: React.FC = () => {
 
         // Compute scorecards
         const approved = (txRows ?? []).filter((t: any) => t.status === "approved");
-        const pending  = (txRows ?? []).filter((t: any) => t.status === "pending");
+        const pending = (txRows ?? []).filter((t: any) => t.status === "pending");
         const wdApproved = (wdRows ?? []).filter((w: any) => w.status === "approved");
 
         const totalRx = approved.reduce((s: number, t: any) => s + Number(t.amount), 0);
@@ -278,14 +278,7 @@ const FundManagement: React.FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span style={{ position: "absolute", top: "0.5rem", right: "0.5rem", width: "0.5rem", height: "0.5rem", background: S.error, borderRadius: "999px" }} />
-          </button>
+          <BeneficiaryNotificationBell />
 
           <div style={{ position: "relative" }}>
             <button
@@ -436,9 +429,15 @@ const FundManagement: React.FC = () => {
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>
@@ -489,12 +488,6 @@ const FundManagement: React.FC = () => {
                   <span className="text-lg font-medium text-[#554240]">PHP</span>
                 </h3>
               </div>
-              <div className="flex items-center text-[#97453e] gap-1">
-                <span className="material-symbols-outlined text-sm">
-                  trending_up
-                </span>
-                <span className="text-xs font-bold">+12% from last month</span>
-              </div>
             </div>
 
             {/* Card 2 */}
@@ -528,7 +521,6 @@ const FundManagement: React.FC = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold">Ready to transfer</span>
-                <span className="material-symbols-outlined">arrow_forward</span>
               </div>
             </div>
           </div>
@@ -565,9 +557,8 @@ const FundManagement: React.FC = () => {
                           (h) => (
                             <th
                               key={h}
-                              className={`px-8 py-5 ${
-                                h === "Amount" ? "text-right" : ""
-                              } ${h === "Status" ? "text-center" : ""}`}
+                              className={`px-8 py-5 ${h === "Amount" ? "text-right" : ""
+                                } ${h === "Status" ? "text-center" : ""}`}
                             >
                               {h}
                             </th>
@@ -630,9 +621,8 @@ const FundManagement: React.FC = () => {
           <a
             key={item.label}
             href={item.href}
-            className={`flex flex-col items-center ${
-              item.active ? "text-[#97453e]" : "text-stone-500"
-            }`}
+            className={`flex flex-col items-center ${item.active ? "text-[#97453e]" : "text-stone-500"
+              }`}
           >
             <span
               className="material-symbols-outlined"

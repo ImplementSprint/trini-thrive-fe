@@ -1,11 +1,13 @@
-﻿﻿﻿﻿"use client";
+﻿﻿"use client";
+import { BeneficiaryNotificationBell } from "@/app/(beneficiary)/beneficiary/shared/BeneficiaryNotificationBell";
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Menu, Bell, LayoutDashboard, CreditCard,
-  Landmark, IdCard, User, ShieldCheck, HelpCircle
+  Menu, LayoutDashboard, CreditCard,
+  Landmark, IdCard, User, ShieldCheck, HelpCircle,
+  LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 import { createClient } from "@/beneficiary-utils/supabase/client";
@@ -168,7 +170,6 @@ const NAV_ITEMS = [
   { icon: <Landmark size={20} />, label: "Banking", active: false, href: "/beneficiary/banking-details" },
   { icon: <IdCard size={20} />, label: "Identity", active: false, href: "/beneficiary/identity-verification" },
   { icon: <User size={20} />, label: "Profile", active: false, href: "/beneficiary/profile-settings" },
-  { icon: <ShieldCheck size={20} />, label: "Security", active: false, href: "/beneficiary/security-settings" },
 ];
 
 const SIDEBAR_W_EXPANDED = 220;
@@ -262,14 +263,7 @@ const CampaignsPage: React.FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span style={{ position: "absolute", top: "0.5rem", right: "0.5rem", width: "0.5rem", height: "0.5rem", background: S.error, borderRadius: "999px" }} />
-          </button>
+          <BeneficiaryNotificationBell />
 
           <div style={{ position: "relative" }}>
             <button
@@ -420,9 +414,15 @@ const CampaignsPage: React.FC = () => {
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>
@@ -514,7 +514,7 @@ const CampaignsPage: React.FC = () => {
           </div>
 
           <footer className="pt-8 pb-12 text-center text-[#554240]/50 text-[10px] font-bold uppercase tracking-widest">
-            © 2024 HOPECARD Beneficiary Portal. Built for community impact.
+            © 2026 HOPECARD Beneficiary Portal. Built for community impact.
           </footer>
         </main>
       </div>

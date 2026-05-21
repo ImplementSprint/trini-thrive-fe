@@ -1,10 +1,12 @@
-﻿﻿﻿"use client";
+﻿"use client";
+import { BeneficiaryNotificationBell } from "@/app/(beneficiary)/beneficiary/shared/BeneficiaryNotificationBell";
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import {
-  Menu, Bell, LayoutDashboard, CreditCard,
-  Landmark, IdCard, User, ShieldCheck, HelpCircle
+  Menu, LayoutDashboard, CreditCard,
+  Landmark, IdCard, User, ShieldCheck, HelpCircle,
+  LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 import { createClient } from "@/beneficiary-utils/supabase/client";
@@ -69,7 +71,7 @@ function FeaturedCard({ invitation, onAccept, onDecline }: InvitationCardProps) 
         <div className="flex justify-between items-start mb-4">
           <CategoryBadge label={invitation.category ?? "Campaign"} />
           <span className="text-[#97453e] font-bold text-lg">
-            ₱{invitation.target_amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })} Goal
+            ₱{(invitation.target_amount ?? 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })} Goal
           </span>
         </div>
         <h3 className="text-2xl font-extrabold text-[#241918] mb-1">{invitation.title}</h3>
@@ -188,7 +190,6 @@ const NAV_ITEMS = [
   { icon: <Landmark size={20} />, label: "Banking", active: false, href: "/beneficiary/banking-details" },
   { icon: <IdCard size={20} />, label: "Identity", active: false, href: "/beneficiary/identity-verification" },
   { icon: <User size={20} />, label: "Profile", active: false, href: "/beneficiary/profile-settings" },
-  { icon: <ShieldCheck size={20} />, label: "Security", active: false, href: "/beneficiary/security-settings" },
 ];
 
 const SIDEBAR_W_EXPANDED = 220;
@@ -294,14 +295,7 @@ const CampaignInvitationsPage: React.FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span style={{ position: "absolute", top: "0.5rem", right: "0.5rem", width: "0.5rem", height: "0.5rem", background: S.error, borderRadius: "999px" }} />
-          </button>
+          <BeneficiaryNotificationBell />
 
           <div style={{ position: "relative" }}>
             <button
@@ -452,9 +446,15 @@ const CampaignInvitationsPage: React.FC = () => {
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>
@@ -507,7 +507,7 @@ const CampaignInvitationsPage: React.FC = () => {
           )}
 
           <footer className="pt-8 pb-12 text-center text-[#554240]/50 text-[10px] font-bold uppercase tracking-widest">
-            © 2024 HOPECARD Beneficiary Portal. Built for community impact.
+            © 2026 HOPECARD Beneficiary Portal. Built for community impact.
           </footer>
         </main>
       </div>

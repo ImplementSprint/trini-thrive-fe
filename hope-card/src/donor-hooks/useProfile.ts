@@ -48,7 +48,7 @@ export function useProfile() {
         }
 
         if (isMounted) setAuthUserId(user.id);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/profile?authUserId=${user.id}&email=${encodeURIComponent(user.email || '')}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/profile?authUserId=${user.id}&email=${encodeURIComponent(user.email || '')}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('donor_token') ?? session?.access_token ?? ''}` },
         });
         const data = await res.json();
@@ -83,7 +83,7 @@ export function useProfile() {
     setSaveSuccess(false);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/profile`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

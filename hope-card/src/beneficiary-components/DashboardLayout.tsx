@@ -90,13 +90,66 @@ const NAV_ITEMS = [
 
 // ─── Main Layout Component ────────────────────────────────────────────────────
 
+interface BeneficiaryNotification {
+  id: string;
+  type: 'invitation' | 'disbursement';
+  title: string;
+  message: string;
+  created_at: string;
+  is_read: boolean;
+  metadata: Record<string, unknown>;
+}
+
+function timeAgo(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [profileOpen, setProfileOpen] = useState<boolean>(false);
   const [activeSince, setActiveSince] = useState<number | null>(null);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [notifications, setNotifications] = useState<BeneficiaryNotification[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const bellRef = useState(() => ({ current: null as HTMLDivElement | null }))[0];
   const pathname = usePathname();
 
   const toggleSidebar = useCallback(() => setCollapsed((p) => !p), []);
+
+  const fetchNotifications = useCallback(async () => {
+    setNotifLoading(true);
+    try {
+      const res = await fetch('/beneficiary/api/notifications');
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications ?? []);
+      }
+    } catch { /* silently fail */ }
+    finally { setNotifLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  // Close bell on outside click
+  useEffect(() => {
+    if (!bellOpen) return;
+    const handler = (e: MouseEvent) => {
+      const el = document.getElementById('beneficiary-bell-dropdown');
+      if (el && !el.contains(e.target as Node)) setBellOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [bellOpen]);
+
+  const unreadCount = notifications.length;
 
   useEffect(() => {
     const supabase = createClient();
@@ -155,14 +208,78 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span style={{ position: "absolute", top: "0.5rem", right: "0.5rem", width: "0.5rem", height: "0.5rem", background: S.error, borderRadius: "999px" }} />
-          </button>
+          <div id="beneficiary-bell-dropdown" style={{ position: "relative" }}>
+            <button
+              onClick={() => setBellOpen(v => !v)}
+              style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <Bell size={22} />
+              {unreadCount > 0 && (
+                <span style={{
+                  position: "absolute", top: "0.25rem", right: "0.25rem",
+                  minWidth: "1rem", height: "1rem", padding: "0 0.2rem",
+                  background: S.error, color: "#fff",
+                  fontSize: "0.55rem", fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  borderRadius: "999px", border: "2px solid #fff",
+                }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {bellOpen && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 0.75rem)", right: 0,
+                width: "340px", background: "#fff", borderRadius: "1.25rem",
+                boxShadow: "0 20px 50px rgba(27,28,27,0.12)",
+                border: `1px solid ${S.outlineVariant}33`, zIndex: 200, overflow: "hidden",
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 1.25rem", borderBottom: `1px solid ${S.outlineVariant}22` }}>
+                  <span style={{ fontFamily: "Plus Jakarta Sans, sans-serif", fontWeight: 700, fontSize: "0.9rem", color: S.onSurface }}>Notifications</span>
+                  <button onClick={() => setBellOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#78716c", display: "flex" }}>✕</button>
+                </div>
+                <div style={{ maxHeight: "380px", overflowY: "auto" }}>
+                  {notifLoading && notifications.length === 0 && (
+                    <p style={{ padding: "1.5rem", textAlign: "center", color: "#78716c", fontSize: "0.875rem", margin: 0 }}>Loading…</p>
+                  )}
+                  {!notifLoading && notifications.length === 0 && (
+                    <p style={{ padding: "2rem", textAlign: "center", color: "#78716c", fontSize: "0.875rem", margin: 0 }}>No notifications</p>
+                  )}
+                  {notifications.map(n => (
+                    <a
+                      key={n.id}
+                      href={n.type === 'invitation' ? '/beneficiary/campaigns/invitations' : '/beneficiary/fund-management'}
+                      onClick={() => setBellOpen(false)}
+                      style={{
+                        display: "flex", gap: "0.875rem", padding: "0.875rem 1.25rem",
+                        background: "transparent", borderBottom: `1px solid ${S.outlineVariant}22`,
+                        textDecoration: "none", transition: "background 0.12s", alignItems: "flex-start",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerLow)}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <div style={{
+                        flexShrink: 0, width: "2.25rem", height: "2.25rem", borderRadius: "999px",
+                        background: n.type === 'disbursement' ? "#d1fae5" : `${S.primaryContainer}22`,
+                        color: n.type === 'disbursement' ? "#065f46" : S.primary,
+                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.875rem",
+                      }}>
+                        {n.type === 'disbursement' ? '₱' : '✉'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: 0, fontFamily: "Plus Jakarta Sans, sans-serif", fontWeight: 700, fontSize: "0.8125rem", color: S.onSurface }}>{n.title}</p>
+                        <p style={{ margin: "0.2rem 0 0", fontFamily: "Manrope, sans-serif", fontSize: "0.75rem", color: "#78716c", lineHeight: 1.4 }}>{n.message}</p>
+                        <p style={{ margin: "0.25rem 0 0", fontFamily: "Manrope, sans-serif", fontSize: "0.65rem", color: "#78716c", opacity: 0.6 }}>{timeAgo(n.created_at)}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div style={{ position: "relative" }}>
             <button

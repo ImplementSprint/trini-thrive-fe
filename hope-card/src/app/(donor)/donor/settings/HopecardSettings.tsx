@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SharedLayout from "@/donor-components/SharedLayout";
 import {
-  Shield, BellRing, Settings as SettingsIcon,
+  Shield, Settings as SettingsIcon,
   HelpCircle, HeadphonesIcon, FileText, Scale,
   ChevronRight, LogOut, ArrowLeft,
 } from "lucide-react";
@@ -33,13 +33,6 @@ const C = {
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface ToggleProps {
-  enabled: boolean;
-  onChange: () => void;
-}
-
-interface ToggleRowProps {
-  title: string;
-  description: string;
   enabled: boolean;
   onChange: () => void;
 }
@@ -98,16 +91,6 @@ const Toggle = React.memo<ToggleProps>(({ enabled, onChange }) => (
 ));
 Toggle.displayName = "Toggle";
 
-const ToggleRow = React.memo<ToggleRowProps>(({ title, description, enabled, onChange }) => (
-  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-    <div>
-      <p style={{ fontWeight: 600, color: C.onSurface, margin: "0 0 0.125rem", fontFamily: "Manrope, sans-serif" }}>{title}</p>
-      <p style={{ fontSize: "0.875rem", color: C.onSurfaceVariant, margin: 0, fontFamily: "Manrope, sans-serif" }}>{description}</p>
-    </div>
-    <Toggle enabled={enabled} onChange={onChange} />
-  </div>
-));
-ToggleRow.displayName = "ToggleRow";
 
 const LegalLink = React.memo<LegalLinkProps>(({ icon, label }) => (
   <a
@@ -187,9 +170,6 @@ PasswordField.displayName = "PasswordField";
 export default function HopecardSettings() {
   const router = useRouter();
   const [biometric,      setBiometric]      = useState(true);
-  const [emailReceipts,  setEmailReceipts]  = useState(true);
-  const [pointAlerts,    setPointAlerts]    = useState(true);
-  const [campaignUpdates,setCampaignUpdates]= useState(false);
 
   const { profile, loading: profileLoading, saving, saveError, saveSuccess, saveProfile, authUserId } = useProfile();
 
@@ -198,8 +178,6 @@ export default function HopecardSettings() {
   const [barangay, setBarangay] = useState('');
   const [municipality, setMunicipality] = useState('');
   const [province, setProvince] = useState('');
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const [photoError, setPhotoError] = useState('');
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -228,23 +206,7 @@ export default function HopecardSettings() {
     await saveProfile({ phone, address, barangay, municipality, province });
   }, [saveProfile, phone, address, barangay, municipality, province]);
 
-  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !authUserId) return;
-    setPhotoUploading(true);
-    try {
-      const key = `${authUserId}/profile.${file.name.split('.').pop()}`;
-      const { error } = await supabase.storage.from('profiles').upload(key, file, { upsert: true });
-      if (error) throw error;
-      await saveProfile({ profile_photo_key: key });
-    } catch {
-      setPhotoError('Photo upload failed. Please try again.');
-    } finally {
-      setPhotoUploading(false);
-    }
-  }, [authUserId, saveProfile]);
-
-  const handleChangePassword = useCallback(async () => {
+const handleChangePassword = useCallback(async () => {
     setPasswordError('');
     setPasswordSuccess(false);
     if (newPassword !== confirmPassword) {
@@ -311,28 +273,6 @@ export default function HopecardSettings() {
               <p style={{ color: C.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>Loading profile...</p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                {/* Profile Photo */}
-                <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-                  <div style={{ width: "5rem", height: "5rem", borderRadius: "999px", background: C.surfaceContainerHigh, overflow: "hidden", flexShrink: 0 }}>
-                    {profile?.profile_photo_url ? (
-                      <img src={profile.profile_photo_url} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: C.onSurfaceVariant, fontSize: "2rem" }}>
-                        {profile?.first_name?.[0] ?? '?'}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p style={{ fontWeight: 700, color: C.onSurface, marginBottom: "0.25rem", fontFamily: "Manrope, sans-serif" }}>
-                      {profile?.first_name} {profile?.last_name}
-                    </p>
-                    <label style={{ cursor: "pointer", fontSize: "0.875rem", color: C.primary, fontWeight: 600, fontFamily: "Manrope, sans-serif" }}>
-                      {photoUploading ? 'Uploading...' : 'Change Photo'}
-                      <input type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoUpload} disabled={photoUploading} />
-                    </label>
-                  </div>
-                </div>
-                {photoError && <p style={{ color: C.secondary, fontSize: "0.875rem", margin: 0 }}>{photoError}</p>}
                 {/* Fields */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
                   {/* Read-only email from signup */}
@@ -405,83 +345,7 @@ export default function HopecardSettings() {
             </div>
           </SectionCard>
 
-          {/* ── Notification Preferences ───────────────────────────────────── */}
-          <SectionCard icon={<BellRing size={22} color={C.primary} />} title="Notification Preferences">
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              <ToggleRow
-                title="Email Receipts"
-                description="Get confirmation for every contribution"
-                enabled={emailReceipts}
-                onChange={toggle(setEmailReceipts)}
-              />
-              <ToggleRow
-                title="Point Alerts"
-                description="Notify me when I earn impact points"
-                enabled={pointAlerts}
-                onChange={toggle(setPointAlerts)}
-              />
-              <ToggleRow
-                title="Campaign Updates"
-                description="Hear about stories from projects you support"
-                enabled={campaignUpdates}
-                onChange={toggle(setCampaignUpdates)}
-              />
-            </div>
-          </SectionCard>
-
-          {/* ── App Preferences ────────────────────────────────────────────── */}
-          <SectionCard icon={<SettingsIcon size={22} color={C.primary} />} title="App Preferences">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
-              {[
-                { label: "Theme",    options: ["System Default", "Light Mode", "Dark Mode"] },
-                { label: "Language", options: ["English US", "Spanish", "French"] },
-              ].map(({ label, options }) => (
-                <div key={label} style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <label style={{ fontSize: "0.875rem", fontWeight: 500, color: C.onSurfaceVariant, marginLeft: "0.25rem", fontFamily: "Manrope, sans-serif" }}>{label}</label>
-                  <div style={{ position: "relative" }}>
-                    <select
-                      style={{
-                        width: "100%",
-                        appearance: "none",
-                        background: C.surfaceContainerHighest,
-                        border: "none",
-                        borderRadius: "1rem",
-                        padding: "1rem 1.25rem",
-                        cursor: "pointer",
-                        outline: "none",
-                        fontFamily: "Manrope, sans-serif",
-                        fontSize: "1rem",
-                        color: C.onSurface,
-                      }}
-                      onFocus={(e: React.FocusEvent<HTMLSelectElement>) => {
-                        e.currentTarget.style.background = C.surfaceContainerLowest;
-                        e.currentTarget.style.boxShadow = "0 0 0 2px rgba(151,69,62,0.15)";
-                      }}
-                      onBlur={(e: React.FocusEvent<HTMLSelectElement>) => {
-                        e.currentTarget.style.background = C.surfaceContainerHighest;
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
-                      {options.map((o) => <option key={o}>{o}</option>)}
-                    </select>
-                    <ChevronRight
-                      size={18}
-                      style={{
-                        position: "absolute",
-                        right: "1rem",
-                        top: "50%",
-                        transform: "translateY(-50%) rotate(90deg)",
-                        pointerEvents: "none",
-                        color: C.onSurfaceVariant,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SectionCard>
-
-          {/* ── Legal & Support ────────────────────────────────────────────── */}
+{/* ── Legal & Support ────────────────────────────────────────────── */}
           <SectionCard icon={<HelpCircle size={22} color={C.primary} />} title="Legal & Support">
             <div>
               <LegalLink icon={<HeadphonesIcon size={18} />} label="Help Center" />

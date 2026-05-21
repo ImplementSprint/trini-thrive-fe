@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, Suspense } from "react";
+import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { C, AuthShell, SubmitBtn, MobileLogo } from "@/donor-components/auth-shared";
@@ -62,11 +62,35 @@ function OTPForm() {
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [resendTimer, setResendTimer] = useState(45);
-  
+  const [resendTimer, setResendTimer] = useState(300); // 5 minutes
+  const [resending, setResending] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const inputRefs = useRef<Array<React.RefObject<HTMLInputElement | null>>>(
     Array.from({ length: OTP_LENGTH }, () => React.createRef<HTMLInputElement>())
   );
+
+  // Start countdown on mount
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) { clearInterval(timerRef.current!); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const startCountdown = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setResendTimer(300);
+    timerRef.current = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) { clearInterval(timerRef.current!); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
 
   const handleChange = useCallback((index: number, val: string) => {
     const digit = val.replace(/\D/g, "").slice(-1);
@@ -99,7 +123,7 @@ function OTPForm() {
     setErrorMessage('');
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/verify-numeric-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/auth/verify-numeric-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: fullCode })
@@ -117,29 +141,22 @@ function OTPForm() {
   };
 
   const handleResend = async () => {
-    if (!email || resendTimer > 0) return;
-    
+    if (!email || resendTimer > 0 || resending) return;
+    setResending(true);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/generate-otp`, {
+      await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/auth/generate-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
-      setResendTimer(45);
+      setDigits(Array(OTP_LENGTH).fill(''));
       setErrorMessage('');
-      // Start countdown
-      const interval = setInterval(() => {
-        setResendTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } catch (err) {
-      console.error(err);
-      setErrorMessage('Failed to resend code');
+      startCountdown();
+      inputRefs.current[0].current?.focus();
+    } catch {
+      setErrorMessage('Failed to resend code. Please try again.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -255,35 +272,48 @@ function OTPForm() {
             </button>
 
             <div style={{ textAlign: "center" }}>
-              <p style={{ color: C.onSurfaceVariant, fontWeight: 500, fontSize: "0.875rem", margin: "0 0 0.25rem", fontFamily: "Manrope, sans-serif" }}>
-                Didn't receive the code?
-              </p>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendTimer > 0}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: resendTimer > 0 ? "not-allowed" : "pointer",
-                  color: resendTimer > 0 ? C.onSurfaceVariant : C.coralRose,
-                  fontWeight: 700,
-                  fontSize: "0.875rem",
-                  fontFamily: "Manrope, sans-serif",
-                  opacity: resendTimer > 0 ? 0.5 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (resendTimer === 0) e.currentTarget.style.textDecoration = "underline";
-                }}
-                onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-              >
-                Resend Code{" "}
-                {resendTimer > 0 && (
-                  <span style={{ color: C.onSurfaceVariant, fontWeight: 400, marginLeft: "0.25rem" }}>
-                    (00:{resendTimer.toString().padStart(2, '0')})
-                  </span>
-                )}
-              </button>
+              {resendTimer > 0 ? (
+                <>
+                  <p style={{ color: C.onSurfaceVariant, fontWeight: 500, fontSize: "0.875rem", margin: "0 0 0.25rem", fontFamily: "Manrope, sans-serif" }}>
+                    Didn't receive the code?
+                  </p>
+                  <p style={{ color: C.onSurfaceVariant, fontWeight: 600, fontSize: "0.875rem", margin: 0, fontFamily: "Manrope, sans-serif" }}>
+                    Resend Code{" "}
+                    <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                      ({String(Math.floor(resendTimer / 60)).padStart(2, '0')}:{String(resendTimer % 60).padStart(2, '0')})
+                    </span>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p style={{ color: C.onSurfaceVariant, fontWeight: 500, fontSize: "0.875rem", margin: "0 0 0.75rem", fontFamily: "Manrope, sans-serif" }}>
+                    Code expired. Request a new one.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resending}
+                    style={{
+                      width: "100%",
+                      padding: "1rem",
+                      borderRadius: "1rem",
+                      background: "none",
+                      border: `2px solid ${C.coralRose}`,
+                      color: C.coralRose,
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 700,
+                      fontSize: "1rem",
+                      cursor: resending ? "not-allowed" : "pointer",
+                      transition: "background 0.15s, color 0.15s",
+                      opacity: resending ? 0.6 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (!resending) { e.currentTarget.style.background = C.coralRose; e.currentTarget.style.color = "#fff"; } }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = C.coralRose; }}
+                  >
+                    {resending ? 'Sending…' : 'Resend OTP'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </form>

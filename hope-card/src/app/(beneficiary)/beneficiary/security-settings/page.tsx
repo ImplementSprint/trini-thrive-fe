@@ -1,11 +1,13 @@
-﻿﻿﻿"use client";
+﻿"use client";
+import { BeneficiaryNotificationBell } from "@/app/(beneficiary)/beneficiary/shared/BeneficiaryNotificationBell";
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
-  Menu, Bell, LayoutDashboard, CreditCard,
+  Menu, LayoutDashboard, CreditCard,
   Landmark, IdCard, User, ShieldCheck,
   HelpCircle, Vibrate, Fingerprint, LockKeyhole, Info,
+  LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 import { createClient } from "@/beneficiary-utils/supabase/client";
@@ -358,34 +360,7 @@ const SecuritySettings: React.FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{
-              padding: "0.5rem",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#78716c",
-              borderRadius: "999px",
-              display: "flex",
-              position: "relative",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span
-              style={{
-                position: "absolute",
-                top: "0.5rem",
-                right: "0.5rem",
-                width: "0.5rem",
-                height: "0.5rem",
-                background: S.error,
-                borderRadius: "999px",
-              }}
-            />
-          </button>
+          <BeneficiaryNotificationBell />
 
           <div style={{ position: "relative" }}>
             <button
@@ -547,9 +522,15 @@ const SecuritySettings: React.FC = () => {
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>

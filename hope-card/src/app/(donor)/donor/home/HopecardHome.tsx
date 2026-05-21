@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Menu, X, BadgeCheck, Home, Compass, BookOpen, Wallet,
   History, Receipt, CreditCard, Settings, LogOut,
-  Search, Bell, ShoppingCart, User, ArrowRight,
+  Search, ShoppingCart, User, ArrowRight,
   Heart, Globe, ShieldCheck, HandHeart,
 } from "lucide-react";
+import NotificationBell from "@/donor-components/NotificationBell";
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────────
 const C = {
@@ -258,6 +259,25 @@ export default function HopecardHome() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>("All");
+  const [livesTouched, setLivesTouched] = useState<string>('—');
+
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL;
+    if (!base) return;
+    fetch(`${base}/api/v1/hopecard/donor/global-stats`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error) {
+          const n = Math.round(data.livesImpacted);
+          setLivesTouched(
+            n >= 1000
+              ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(n) + '+'
+              : n.toString()
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const toggleSidebar = useCallback(() => setSidebarOpen((prev) => !prev), []);
 
@@ -585,30 +605,7 @@ export default function HopecardHome() {
 
             {/* Right: Icons */}
             <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-              <button
-                style={{ position: "relative", background: "none", border: "none", cursor: "pointer", color: "#fb7185" }}
-              >
-                <Bell size={24} />
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "-0.25rem",
-                    right: "-0.25rem",
-                    width: "1rem",
-                    height: "1rem",
-                    background: "#7f1d1d",
-                    color: "#fff",
-                    fontSize: "0.625rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "999px",
-                    border: `2px solid ${C.surface}`,
-                  }}
-                >
-                  3
-                </span>
-              </button>
+              <NotificationBell />
 
               <button
                 style={{ position: "relative", background: "none", border: "none", cursor: "pointer", color: "#fb7185" }}
@@ -699,44 +696,6 @@ export default function HopecardHome() {
                 Fuel verified local initiatives and start your journey of compassion today. Every contribution is a heartbeat for change.
               </p>
 
-              <div style={{ display: "flex", gap: "1rem", paddingTop: "1rem" }}>
-                <button
-                  style={{
-                    padding: "1rem 2rem",
-                    background: C.primaryContainer,
-                    color: C.onPrimaryContainer,
-                    fontFamily: "Plus Jakarta Sans, sans-serif",
-                    fontWeight: 600,
-                    borderRadius: "1rem",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "transform 0.15s",
-                    fontSize: "1rem",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                >
-                  Start Impact
-                </button>
-                <button
-                  style={{
-                    padding: "1rem 2rem",
-                    background: `${C.secondary}1a`,
-                    color: C.secondary,
-                    fontFamily: "Plus Jakarta Sans, sans-serif",
-                    fontWeight: 600,
-                    borderRadius: "1rem",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "background 0.15s",
-                    fontSize: "1rem",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = `${C.secondary}33`)}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = `${C.secondary}1a`)}
-                >
-                  Our Vision
-                </button>
-              </div>
             </div>
 
             {/* Right image */}
@@ -786,7 +745,7 @@ export default function HopecardHome() {
                     margin: "0 0 0.25rem",
                   }}
                 >
-                  12k+
+                  {livesTouched}
                 </p>
                 <p
                   style={{
@@ -1116,7 +1075,7 @@ export default function HopecardHome() {
               opacity: 0.8,
             }}
           >
-            <span style={{ color: "#78716c" }}>© 2024 HOPECARD. Every card holds a heart.</span>
+            <span style={{ color: "#78716c" }}>© 2026 HOPECARD. Every card holds a heart.</span>
             <span
               style={{
                 fontSize: "0.7rem",

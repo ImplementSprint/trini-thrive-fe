@@ -8,6 +8,7 @@ const PERSONA_MAP: Record<string, string> = {
 };
 
 const PUBLIC_SUFFIXES = [
+  '',
   '/login',
   '/register',
   '/forgot-password',

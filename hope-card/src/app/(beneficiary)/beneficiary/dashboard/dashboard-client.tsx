@@ -1,12 +1,12 @@
-﻿﻿"use client";
+"use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Menu, Bell, LayoutDashboard, CreditCard,
   Landmark, IdCard, User, ShieldCheck,
   HelpCircle, TrendingUp, ArrowRight,
-  X, AlertCircle, AlertTriangle, Search, Receipt, Info,
+  X, AlertCircle, AlertTriangle, Search, Receipt, Info, LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 
@@ -118,7 +118,6 @@ const NAV_ITEMS = [
   { icon: <Landmark size={20} />,        label: "Banking",    active: false, href: "/beneficiary/banking-details" },
   { icon: <IdCard size={20} />,          label: "Identity",   active: false, href: "/beneficiary/identity-verification" },
   { icon: <User size={20} />,            label: "Profile",    active: false, href: "/beneficiary/profile-settings" },
-  { icon: <ShieldCheck size={20} />,     label: "Security",   active: false, href: "/beneficiary/security-settings" },
 ];
 
 
@@ -141,9 +140,33 @@ export function DashboardClient({
   const [toastOpen, setToastOpen] = useState(!hasBankDetails);
   const [search, setSearch] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [notifications, setNotifications] = useState<{ id: string; type: string; title: string; message: string; created_at: string }[]>([]);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   const toggleSidebar = useCallback(() => setCollapsed((p) => !p), []);
   const sidebarW = collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W_EXPANDED;
+
+  useEffect(() => {
+    async function fetchNotifs() {
+      try {
+        const res = await fetch('/beneficiary/api/notifications');
+        if (res.ok) { const d = await res.json(); setNotifications(d.notifications ?? []); }
+      } catch { /* ignore */ }
+    }
+    fetchNotifs();
+    const id = setInterval(fetchNotifs, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (!bellOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [bellOpen]);
 
   return (
     <div style={{ background: S.surface, minHeight: "100vh", color: S.onSurface, fontFamily: "Plus Jakarta Sans, sans-serif" }}>
@@ -186,14 +209,76 @@ export function DashboardClient({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span style={{ position: "absolute", top: "0.5rem", right: "0.5rem", width: "0.5rem", height: "0.5rem", background: S.error, borderRadius: "999px" }} />
-          </button>
+          <div ref={bellRef} style={{ position: "relative" }}>
+            <button
+              onClick={() => setBellOpen(v => !v)}
+              style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <Bell size={22} />
+              {notifications.length > 0 && (
+                <span style={{
+                  position: "absolute", top: "0.25rem", right: "0.25rem",
+                  minWidth: "1rem", height: "1rem", padding: "0 0.2rem",
+                  background: S.error, color: "#fff",
+                  fontSize: "0.55rem", fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  borderRadius: "999px", border: "2px solid #fff",
+                }}>
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
+            </button>
+
+            {bellOpen && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 0.75rem)", right: 0,
+                width: "340px", background: "#fff", borderRadius: "1.25rem",
+                boxShadow: "0 20px 50px rgba(27,28,27,0.12)",
+                border: `1px solid ${S.outlineVariant}33`, zIndex: 200, overflow: "hidden",
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 1.25rem", borderBottom: `1px solid ${S.outlineVariant}22` }}>
+                  <span style={{ fontFamily: "Plus Jakarta Sans, sans-serif", fontWeight: 700, fontSize: "0.9rem", color: S.onSurface }}>Notifications</span>
+                  <button onClick={() => setBellOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#78716c", fontSize: "1rem" }}>✕</button>
+                </div>
+                <div style={{ maxHeight: "380px", overflowY: "auto" }}>
+                  {notifications.length === 0 ? (
+                    <p style={{ padding: "2rem", textAlign: "center", color: "#78716c", fontSize: "0.875rem", margin: 0 }}>No notifications</p>
+                  ) : notifications.map(n => (
+                    <a
+                      key={n.id}
+                      href={n.type === 'invitation' ? '/beneficiary/campaigns/invitations' : '/beneficiary/fund-management'}
+                      onClick={() => setBellOpen(false)}
+                      style={{
+                        display: "flex", gap: "0.875rem", padding: "0.875rem 1.25rem",
+                        background: "transparent", borderBottom: `1px solid ${S.outlineVariant}22`,
+                        textDecoration: "none", transition: "background 0.12s", alignItems: "flex-start",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerLow)}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <div style={{
+                        flexShrink: 0, width: "2.25rem", height: "2.25rem", borderRadius: "999px",
+                        background: n.type === 'disbursement' ? "#d1fae5" : `${S.primaryContainer}22`,
+                        color: n.type === 'disbursement' ? "#065f46" : S.primary,
+                        display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.875rem", fontWeight: 700,
+                      }}>
+                        {n.type === 'disbursement' ? '₱' : '✉'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: 0, fontFamily: "Plus Jakarta Sans, sans-serif", fontWeight: 700, fontSize: "0.8125rem", color: S.onSurface }}>{n.title}</p>
+                        <p style={{ margin: "0.2rem 0 0", fontFamily: "Manrope, sans-serif", fontSize: "0.75rem", color: "#78716c", lineHeight: 1.4 }}>{n.message}</p>
+                        <p style={{ margin: "0.25rem 0 0", fontFamily: "Manrope, sans-serif", fontSize: "0.65rem", color: "#78716c", opacity: 0.6 }}>
+                          {(() => { const d = Math.floor((Date.now() - new Date(n.created_at).getTime()) / 1000); return d < 60 ? 'just now' : d < 3600 ? `${Math.floor(d/60)}m ago` : d < 86400 ? `${Math.floor(d/3600)}h ago` : `${Math.floor(d/86400)}d ago`; })()}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           
           <div style={{ position: "relative" }}>
             <button
@@ -339,9 +424,15 @@ export function DashboardClient({
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>
@@ -436,10 +527,6 @@ export function DashboardClient({
                   </h3>
                   <span style={{ fontSize: "1.125rem", color: S.onSurfaceVariant, fontWeight: 500, opacity: 0.6 }}>PHP</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", color: S.primary, gap: "0.375rem" }}>
-                  <TrendingUp size={16} />
-                  <span style={{ fontSize: "0.8125rem", fontWeight: 600 }}>+12% from last month</span>
-                </div>
               </div>
 
               {/* Last Payment */}
@@ -463,27 +550,28 @@ export function DashboardClient({
                 <h3 style={{ fontSize: "3rem", color: S.onSurface, fontWeight: 700, margin: "0 0 1.25rem", fontFamily: "Plus Jakarta Sans, sans-serif", lineHeight: 1, letterSpacing: "-0.02em" }}>
                   {String(totalTransfers).padStart(2, "0")}
                 </h3>
-                <button 
-                  type="button"
-                  style={{ 
-                    background: "none", 
-                    border: "none", 
-                    cursor: "pointer", 
-                    color: S.primary, 
-                    fontSize: "0.8125rem", 
-                    fontWeight: 600, 
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: "0.375rem", 
-                    padding: 0, 
+                <a
+                  href="/beneficiary/fund-management"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: S.primary,
+                    fontSize: "0.8125rem",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.375rem",
+                    padding: 0,
                     fontFamily: "Plus Jakarta Sans, sans-serif",
-                    transition: "opacity 0.15s"
+                    transition: "opacity 0.15s",
+                    textDecoration: "none",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                   onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                 >
                   View all history <ArrowRight size={16} />
-                </button>
+                </a>
               </div>
             </div>
 

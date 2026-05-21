@@ -183,7 +183,7 @@ export default function CreateCampaignUI({
 
   const toggleBeneficiary = (id: string) => {
     setSelectedBeneficiaries(prev =>
-      prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]
+      prev.includes(id) ? [] : [id]
     );
   };
 
@@ -316,10 +316,10 @@ export default function CreateCampaignUI({
               <h2 className="text-[18px] font-extrabold text-[#382b28]">Campaign Basics</h2>
 
               <div className="mt-6 space-y-6">
-                <InputBlock label="Campaign Name" placeholder="e.g. Clean Water Initiative for Mali Village" value={title} onChange={(e) => setTitle(e.target.value)} />
+                <InputBlock label="Campaign Name" placeholder="e.g. Clean Water Initiative for Mali Village" value={title} onChange={(e) => setTitle(e.target.value)} required />
 
                 <div>
-                  <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Category</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Category<span className="ml-0.5 text-[#b55247]">*</span></label>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {categories.map(({ label, icon: Icon }) => {
                       const active = activeCategory === label;
@@ -343,7 +343,7 @@ export default function CreateCampaignUI({
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Tell Your Story</label>
+                  <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Tell Your Story<span className="ml-0.5 text-[#b55247]">*</span></label>
                   <div className="mt-3 overflow-hidden rounded-[24px] bg-[#f7f4f3]">
                     <div className="flex items-center gap-4 px-4 py-3 text-[#786863]">
                       <button type="button">
@@ -421,12 +421,12 @@ export default function CreateCampaignUI({
               <h2 className="text-[18px] font-extrabold text-[#382b28]">Financial Objectives</h2>
 
               <div className="mt-6 grid gap-5 md:grid-cols-2">
-                <InputBlock label="Monetary Goal" placeholder="0.00" icon={BadgeDollarSign} iconColor="text-[#b79d45]" type="number" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} />
+                <InputBlock label="Monetary Goal" placeholder="0.00" icon={BadgeDollarSign} iconColor="text-[#b79d45]" type="number" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} required />
                 <InputBlock label="Minimum Donation" placeholder="5.00" icon={HandCoins} type="number" value={minDonation} onChange={(e) => setMinDonation(e.target.value)} />
               </div>
 
               <div className="mt-5">
-                <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Goal Deadline</label>
+                <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">Goal Deadline<span className="ml-0.5 text-[#b55247]">*</span></label>
                 <div className="relative mt-3 flex h-[52px] items-center justify-between rounded-full bg-[#f7f4f3] px-5 group">
                   <div className="flex w-full items-center gap-3">
                     <CalendarDays size={16} className="relative z-10 pointer-events-none text-[#9a8d88]" />
@@ -443,31 +443,6 @@ export default function CreateCampaignUI({
               </div>
             </section>
 
-            <section className="rounded-[30px] bg-white p-6 shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8] sm:p-8">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-[18px] font-extrabold text-[#382b28]">Campaign Milestones</h2>
-                <button type="button" className="text-[12px] font-bold text-[#c96a5b]">
-                  + Add Milestone
-                </button>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                {[
-                  ['Launch Phase Complete', 'Reach first 10% of goal to unlock matching donor funds.'],
-                  ['First Distribution', 'Purchase and delivery of primary learning materials.'],
-                ].map(([title, copy]) => (
-                  <div key={title} className="flex items-center gap-4 rounded-[22px] bg-[#f7f4f3] px-5 py-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff7de] text-[#b99933]">
-                      <Flag size={16} />
-                    </div>
-                    <div>
-                      <h3 className="text-[14px] font-bold text-[#433330]">{title}</h3>
-                      <p className="mt-1 text-[12px] text-[#8d7d78]">{copy}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
           </>
         ) : null}
 
@@ -478,9 +453,9 @@ export default function CreateCampaignUI({
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f8eae7] text-[#b55247]">
                   <HeartHandshake size={16} />
                 </div>
-                <h2 className="text-[18px] font-extrabold text-[#382b28]">Select Beneficiaries</h2>
+                <h2 className="text-[18px] font-extrabold text-[#382b28]">Select Beneficiaries<span className="ml-1 text-[#b55247]">*</span></h2>
               </div>
-              <p className="mt-2 text-[13px] text-[#84716b]">Choose one or more approved beneficiaries to invite to this campaign.</p>
+              <p className="mt-2 text-[13px] text-[#84716b]">Choose one approved beneficiary to invite to this campaign.</p>
 
               <div className="mt-6 space-y-4">
                 {beneficiaries.length === 0 ? (
@@ -540,6 +515,7 @@ export default function CreateCampaignUI({
                   icon={FileCheck2}
                   onFileSelect={(file) => setManagerId(file)}
                   selectedFile={managerId}
+                  required
                 />
                 <DocumentUpload
                   label="Proof of Address"
@@ -548,6 +524,7 @@ export default function CreateCampaignUI({
                   icon={MapPin}
                   onFileSelect={(file) => setProofOfAddress(file)}
                   selectedFile={proofOfAddress}
+                  required
                 />
               </div>
 
@@ -564,7 +541,7 @@ export default function CreateCampaignUI({
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f8eae7] text-[#b55247]">
                   <ReceiptText size={16} />
                 </div>
-                <h2 className="text-[18px] font-extrabold text-[#382b28]">Agreements &amp; Terms</h2>
+                <h2 className="text-[18px] font-extrabold text-[#382b28]">Agreements &amp; Terms<span className="ml-1 text-[#b55247]">*</span></h2>
               </div>
 
               <div className="mt-6 space-y-4">
@@ -916,6 +893,7 @@ function InputBlock({
   type = 'text',
   value,
   onChange,
+  required,
 }: {
   label: string;
   placeholder: string;
@@ -924,10 +902,13 @@ function InputBlock({
   type?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean;
 }) {
   return (
     <div>
-      <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</label>
+      <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">
+        {label}{required && <span className="ml-0.5 text-[#b55247]">*</span>}
+      </label>
       <div className="mt-3 flex h-[52px] items-center gap-3 rounded-full bg-[#f7f4f3] px-5">
         {Icon ? <Icon size={16} className={iconColor} /> : null}
         <input
@@ -951,6 +932,7 @@ function DocumentUpload({
   icon: Icon,
   onFileSelect,
   selectedFile,
+  required,
 }: {
   label: string;
   title: string;
@@ -958,10 +940,13 @@ function DocumentUpload({
   icon: typeof FileText;
   onFileSelect?: (file: File) => void;
   selectedFile?: File | null;
+  required?: boolean;
 }) {
   return (
     <div>
-      <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">{label}</label>
+      <label className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#8e7f7a]">
+        {label}{required && <span className="ml-0.5 text-[#b55247]">*</span>}
+      </label>
       <DragDropUploader
         onFileSelect={onFileSelect}
         className="mt-3 flex min-h-[220px] w-full flex-col items-center justify-center rounded-[28px] border border-dashed border-[#e9c9c3] bg-[#fdfbfa] px-6 text-center hover:bg-[#fff9f8]"

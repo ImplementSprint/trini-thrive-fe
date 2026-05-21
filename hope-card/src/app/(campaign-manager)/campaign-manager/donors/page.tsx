@@ -7,7 +7,7 @@ import { getDonorsData } from '@/app/(campaign-manager)/campaign-manager/actions
 export default async function DonorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; search?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -33,8 +33,9 @@ export default async function DonorsPage({
 
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page ?? '1', 10));
+  const search = params.search?.trim() ?? '';
 
-  const { statCards, donors, totalCount } = await getDonorsData(user.id, currentPage);
+  const { statCards, donors, totalCount } = await getDonorsData(user.id, currentPage, search);
 
   return (
     <DonorsUI
@@ -43,6 +44,7 @@ export default async function DonorsPage({
       totalCount={totalCount}
       currentPage={currentPage}
       managerName={managerName}
+      search={search}
     />
   );
 }

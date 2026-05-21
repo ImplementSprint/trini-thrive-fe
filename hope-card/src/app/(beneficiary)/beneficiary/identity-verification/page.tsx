@@ -1,11 +1,13 @@
-﻿﻿﻿﻿"use client";
+﻿﻿"use client";
+import { BeneficiaryNotificationBell } from "@/app/(beneficiary)/beneficiary/shared/BeneficiaryNotificationBell";
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
-  Menu, Bell, LayoutDashboard, CreditCard,
+  Menu, LayoutDashboard, CreditCard,
   Landmark, IdCard, User, ShieldCheck,
   HelpCircle, MoreVertical, ZoomIn, UploadCloud, ArrowRight, Shield, HelpCircleIcon,
+  LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 import { createClient } from "@/beneficiary-utils/supabase/client";
@@ -15,6 +17,7 @@ import { createClient } from "@/beneficiary-utils/supabase/client";
 type VerificationStatus = "Approved" | "Pending" | "Rejected";
 
 interface VerificationEntry {
+  id?: string;
   date: string;
   docType: string;
   docIcon: React.ReactNode;
@@ -64,9 +67,13 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 
 interface VerificationRowProps {
   entry: VerificationEntry;
+  onDelete?: (id: string) => void;
+  menuOpen: boolean;
+  onMenuToggle: () => void;
+  onMenuClose: () => void;
 }
 
-const VerificationRow: React.FC<VerificationRowProps> = ({ entry }) => (
+const VerificationRow: React.FC<VerificationRowProps> = ({ entry, onDelete, menuOpen, onMenuToggle, onMenuClose }) => (
   <tr
     style={{
       borderBottom: `1px solid ${S.outlineVariant}1a`,
@@ -86,28 +93,74 @@ const VerificationRow: React.FC<VerificationRowProps> = ({ entry }) => (
       <StatusBadge status={entry.status} />
     </td>
     <td style={{ padding: "1.25rem 2rem", textAlign: "right" }}>
-      <button
-        style={{
-          color: S.onSurfaceVariant,
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: "0.5rem",
-          borderRadius: "999px",
-          display: "inline-flex",
-          transition: "color 0.15s, background 0.15s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = S.primary;
-          e.currentTarget.style.background = `${S.primary}0d`;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = S.onSurfaceVariant;
-          e.currentTarget.style.background = "transparent";
-        }}
-      >
-        <MoreVertical size={20} />
-      </button>
+      <div style={{ position: "relative", display: "inline-flex" }}>
+        {menuOpen && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={onMenuClose} />
+        )}
+        <button
+          onClick={onMenuToggle}
+          style={{
+            color: S.onSurfaceVariant,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "0.5rem",
+            borderRadius: "999px",
+            display: "inline-flex",
+            transition: "color 0.15s, background 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = S.primary;
+            e.currentTarget.style.background = `${S.primary}0d`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = S.onSurfaceVariant;
+            e.currentTarget.style.background = "transparent";
+          }}
+        >
+          <MoreVertical size={20} />
+        </button>
+        {menuOpen && entry.status === "Pending" && entry.id && (
+          <div
+            style={{
+              position: "absolute",
+              top: "2.5rem",
+              right: 0,
+              background: S.surfaceContainerLowest,
+              borderRadius: "0.5rem",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+              border: `1px solid ${S.outlineVariant}33`,
+              zIndex: 50,
+              minWidth: "9rem",
+              overflow: "hidden",
+            }}
+          >
+            <button
+              onClick={() => { onDelete?.(entry.id!); onMenuClose(); }}
+              style={{
+                width: "100%",
+                padding: "0.75rem 1rem",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                color: S.error,
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                fontFamily: "Plus Jakarta Sans, sans-serif",
+                textAlign: "left",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = `${S.errorContainer}33`)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
     </td>
   </tr>
 );
@@ -172,7 +225,6 @@ const NAV_ITEMS = [
   { icon: <Landmark size={20} />, label: "Banking", active: false, href: "/beneficiary/banking-details" },
   { icon: <IdCard size={20} />, label: "Identity", active: true, href: "/beneficiary/identity-verification" },
   { icon: <User size={20} />, label: "Profile", active: false, href: "/beneficiary/profile-settings" },
-  { icon: <ShieldCheck size={20} />, label: "Security", active: false, href: "/beneficiary/security-settings" },
 ];
 
 const SIDEBAR_W_EXPANDED = 220;
@@ -185,6 +237,7 @@ const IdentityVerification: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState<boolean>(false);
   const [history, setHistory] = useState<VerificationEntry[]>([]);
   const [allDocuments, setAllDocuments] = useState<ProfileDoc[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [activeSince, setActiveSince] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -275,6 +328,7 @@ const IdentityVerification: React.FC = () => {
 
       // Build history for the table (keep existing functionality)
       const entries: VerificationEntry[] = (docs ?? []).map((d: any) => ({
+        id: d.id,
         date: new Date(d.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         docType: d.document_label || "Identity Document",
         docIcon: <IdCard size={20} />,
@@ -328,6 +382,7 @@ const IdentityVerification: React.FC = () => {
 
       // Also add to history table
       const newEntry: VerificationEntry = {
+        id: json.documentId,
         date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
         docType: json.documentLabel || file.name,
         docIcon: <IdCard size={20} />,
@@ -340,6 +395,22 @@ const IdentityVerification: React.FC = () => {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!confirm("Delete this pending document? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`/beneficiary/api/identity-documents/${documentId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        alert(json.message || "Failed to delete document");
+        return;
+      }
+      setHistory((prev) => prev.filter((e) => e.id !== documentId));
+      setAllDocuments((prev) => prev.filter((d) => d.id !== documentId));
+    } catch {
+      alert("Failed to delete document. Please try again.");
     }
   };
 
@@ -395,34 +466,7 @@ const IdentityVerification: React.FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{
-              padding: "0.5rem",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#78716c",
-              borderRadius: "999px",
-              display: "flex",
-              position: "relative",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span
-              style={{
-                position: "absolute",
-                top: "0.5rem",
-                right: "0.5rem",
-                width: "0.5rem",
-                height: "0.5rem",
-                background: S.error,
-                borderRadius: "999px",
-              }}
-            />
-          </button>
+          <BeneficiaryNotificationBell />
 
           <div style={{ position: "relative" }}>
             <button
@@ -584,9 +628,15 @@ const IdentityVerification: React.FC = () => {
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>
@@ -892,9 +942,19 @@ const IdentityVerification: React.FC = () => {
                           No additional documents uploaded yet
                         </td>
                       </tr>
-                    ) : history.map((entry, i) => (
-                      <VerificationRow key={`${entry.date}-${entry.docType}-${i}`} entry={entry} />
-                    ))}
+                    ) : history.map((entry, i) => {
+                      const menuKey = entry.id ?? `${entry.date}-${i}`;
+                      return (
+                        <VerificationRow
+                          key={menuKey}
+                          entry={entry}
+                          onDelete={handleDeleteDocument}
+                          menuOpen={openMenuId === menuKey}
+                          onMenuToggle={() => setOpenMenuId((prev) => prev === menuKey ? null : menuKey)}
+                          onMenuClose={() => setOpenMenuId(null)}
+                        />
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

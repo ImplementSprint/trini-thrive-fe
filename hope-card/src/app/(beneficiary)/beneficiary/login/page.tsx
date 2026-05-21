@@ -33,7 +33,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               Welcome back
             </h1>
             <p style={{ fontSize: "1rem", fontWeight: 500, color: "#554240", opacity: 0.8, margin: 0 }}>
-              Enter your beneficiary credentials to continue.
+              Sign in to your account
             </p>
           </div>
 

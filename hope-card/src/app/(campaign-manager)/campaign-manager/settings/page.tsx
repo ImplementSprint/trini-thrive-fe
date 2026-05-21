@@ -16,7 +16,7 @@ export default async function SettingsPage() {
         first_name: profile.first_name ?? '',
         last_name: profile.last_name ?? '',
         email: profile.email ?? '',
-        bio: profile.bio ?? '',
+        bio: '',
         organization_name: profile.organization_name ?? '',
         phone: profile.phone ?? '',
       }}

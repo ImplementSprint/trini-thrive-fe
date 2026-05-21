@@ -1,14 +1,18 @@
-﻿'use client';
+'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   CircleDollarSign,
   Download,
   Filter,
-  MoreVertical,
+  Mail,
+  MapPin,
+  Phone,
+  Search,
   UserPlus,
   Users,
+  X,
 } from 'lucide-react';
 import AppShell from '@/campaign-manager-components/AppShell';
 import type { DonorStatCards, DonorRow } from '@/app/(campaign-manager)/campaign-manager/actions/reports';
@@ -43,29 +47,127 @@ const TIER_COLOR: Record<string, string> = {
   STANDARD: 'text-[#8f817d]',
 };
 
+function DonorProfileModal({ donor, onClose }: { donor: DonorRow; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-[28px] bg-white shadow-[0_24px_60px_rgba(87,55,48,0.18)] ring-1 ring-[#f0e7e3]">
+        <div className="flex items-start justify-between border-b border-[#f4ebea] px-6 py-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fde8e5] text-[14px] font-extrabold text-[#c86a5d]">
+              {getInitials(donor.name)}
+            </div>
+            <div>
+              <h2 className="text-[17px] font-extrabold text-[#2e2523]">{donor.name}</h2>
+              <p className={`text-[11px] font-extrabold uppercase tracking-[0.05em] ${TIER_COLOR[donor.tier] ?? 'text-[#8f817d]'}`}>
+                {donor.tier}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f7f4f3] text-[#9d8f8a] hover:bg-[#f0e7e3] transition"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-4 px-6 py-5">
+          <div className="flex items-center gap-3 text-[14px] text-[#6f605c]">
+            <Mail size={15} className="shrink-0 text-[#c86a5d]" />
+            <span>{donor.email || '—'}</span>
+          </div>
+          {donor.phone && (
+            <div className="flex items-center gap-3 text-[14px] text-[#6f605c]">
+              <Phone size={15} className="shrink-0 text-[#c86a5d]" />
+              <span>{donor.phone}</span>
+            </div>
+          )}
+          {donor.address && (
+            <div className="flex items-center gap-3 text-[14px] text-[#6f605c]">
+              <MapPin size={15} className="shrink-0 text-[#c86a5d]" />
+              <span>{donor.address}</span>
+            </div>
+          )}
+
+          <div className="mt-2 grid grid-cols-3 gap-3 rounded-[18px] bg-[#faf7f5] p-4">
+            <div className="text-center">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#9b8d88]">Contributed</p>
+              <p className="mt-1 text-[14px] font-extrabold text-[#c86a5d]">{formatCurrency(donor.totalContributed)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#9b8d88]">Donations</p>
+              <p className="mt-1 text-[14px] font-extrabold text-[#382b28]">{donor.donationCount}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.04em] text-[#9b8d88]">Last Gift</p>
+              <p className="mt-1 text-[12px] font-bold text-[#6f605c]">{formatDate(donor.lastDonationDate)}</p>
+            </div>
+          </div>
+
+          {donor.campaignTags.length > 0 && (
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#9b8d88]">Last Campaign</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {donor.campaignTags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-[#fde8e5] px-3 py-1 text-[11px] font-bold text-[#c86a5d]">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {donor.preferredPaymentMethod && (
+            <div className="flex items-center justify-between text-[13px] text-[#6f605c]">
+              <span className="font-semibold text-[#9b8d88]">Preferred Payment</span>
+              <span className="font-bold text-[#382b28]">{donor.preferredPaymentMethod}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DonorsUI({
   statCards,
   donors,
   totalCount,
   currentPage,
   managerName,
+  search: initialSearch = '',
 }: {
   statCards: DonorStatCards;
   donors: DonorRow[];
   totalCount: number;
   currentPage: number;
   managerName?: string;
+  search?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [selectedDonor, setSelectedDonor] = useState<DonorRow | null>(null);
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
 
-  function handlePage(p: number) {
+  function navigate(params: Record<string, string>) {
     const next = new URLSearchParams(searchParams.toString());
-    next.set('page', p.toString());
-    startTransition(() => router.push(`/donors?${next.toString()}`));
+    for (const [k, v] of Object.entries(params)) {
+      if (v) next.set(k, v); else next.delete(k);
+    }
+    startTransition(() => router.push(`/campaign-manager/donors?${next.toString()}`));
+  }
+
+  function handlePage(p: number) {
+    navigate({ page: p.toString() });
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    navigate({ search: searchInput, page: '1' });
   }
 
   const statCardData = [
@@ -149,9 +251,21 @@ export default function DonorsUI({
         <section className="rounded-[28px] bg-white shadow-[0_16px_42px_rgba(87,55,48,0.07)] ring-1 ring-[#f5ece8]">
           <div className="flex flex-col gap-3 border-b border-[#f4ebea] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
             <h2 className="text-[18px] font-extrabold text-[#382b28]">Community Database</h2>
-            <div className="flex items-center gap-2 text-[12px] font-medium text-[#8c7c77]">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#c85d50]" />
-              Live sync active
+            <div className="flex items-center gap-4">
+              <form onSubmit={handleSearch} className="flex h-10 items-center gap-2 rounded-full bg-[#faf7f5] px-4 ring-1 ring-[#f0e7e3]">
+                <Search size={14} className="text-[#b5a8a4]" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search by name or email..."
+                  className="w-[200px] bg-transparent text-[13px] text-[#7b6c68] outline-none placeholder:text-[#b8aca8]"
+                />
+              </form>
+              <div className="flex items-center gap-2 text-[12px] font-medium text-[#8c7c77]">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#c85d50]" />
+                Live sync active
+              </div>
             </div>
           </div>
 
@@ -171,12 +285,12 @@ export default function DonorsUI({
                 {donors.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-7 py-10 text-center text-[14px] text-[#84716b]">
-                      No donors found.
+                      {initialSearch ? `No donors found matching "${initialSearch}".` : 'No donors found.'}
                     </td>
                   </tr>
                 ) : (
                   donors.map((donor) => (
-                    <tr key={donor.id} className="border-b border-[#f4ebea]">
+                    <tr key={donor.id} className="border-b border-[#f4ebea] hover:bg-[#fdfaf9] transition-colors">
                       <td className="px-7 py-5">
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fde8e5] text-[11px] font-extrabold text-[#c86a5d]">
@@ -214,8 +328,12 @@ export default function DonorsUI({
                         </div>
                       </td>
                       <td className="px-4 py-5">
-                        <button type="button" className="text-[#9d8f8a]">
-                          <MoreVertical size={16} />
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDonor(donor)}
+                          className="rounded-full bg-[#fde8e5] px-3 py-1.5 text-[11px] font-bold text-[#c86a5d] hover:bg-[#fbd0cc] transition"
+                        >
+                          View
                         </button>
                       </td>
                     </tr>
@@ -278,6 +396,10 @@ export default function DonorsUI({
           (c) 2023 HOPECARD Mission Management System. All rights reserved.
         </div>
       </div>
+
+      {selectedDonor && (
+        <DonorProfileModal donor={selectedDonor} onClose={() => setSelectedDonor(null)} />
+      )}
     </AppShell>
   );
 }

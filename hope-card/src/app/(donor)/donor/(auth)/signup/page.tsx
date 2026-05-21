@@ -75,7 +75,7 @@ export default function HopecardSignUp() {
           formData.append('file', file);
           formData.append('userId', tempUserId);
 
-          const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/upload-id`, {
+          const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/auth/upload-id`, {
             method: 'POST',
             body: formData,
           });
@@ -93,7 +93,7 @@ export default function HopecardSignUp() {
       }
 
       // Step 2: Create the account and donor profile with the storage path
-      const signupRes = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/auth/signup`, {
+      const signupRes = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -3,9 +3,10 @@
 import React, { useState, useCallback } from "react";
 import {
   Home, Compass, BookOpen, HandHeart, Wallet,
-  Bell, ShoppingCart, User, GraduationCap,
+  ShoppingCart, User, GraduationCap,
   Star, Info, ArrowRight, X,
 } from "lucide-react";
+import NotificationBell from "@/donor-components/NotificationBell";
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────────
 const C = {
@@ -224,18 +225,11 @@ export default function HopecardDonation() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 3rem", fontFamily: "Plus Jakarta Sans, sans-serif", fontSize: "0.875rem" }}>
               <span style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.05em", textTransform: "uppercase", color: C.primaryContainer }}>HOPECARD</span>
               <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-                {[
-                  { icon: <Bell size={24} />, badge: "3" },
-                  { icon: <ShoppingCart size={24} />, badge: null },
-                ].map(({ icon, badge }, i) => (
-                  <button key={i} style={{ position: "relative", background: "none", border: "none", cursor: "pointer", color: C.primaryContainer }}>
-                    {icon}
-                    {badge && (
-                      <span style={{ position: "absolute", top: "-0.25rem", right: "-0.25rem", width: "1rem", height: "1rem", background: "#7f1d1d", color: "#fff", fontSize: "0.625rem", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "999px", border: `2px solid ${C.surface}` }}>{badge}</span>
-                    )}
-                    {!badge && <span style={{ position: "absolute", top: "-0.25rem", right: "-0.25rem", width: "0.5rem", height: "0.5rem", background: "#dc2626", borderRadius: "999px" }} />}
-                  </button>
-                ))}
+                <NotificationBell />
+                <button style={{ position: "relative", background: "none", border: "none", cursor: "pointer", color: C.primaryContainer }}>
+                  <ShoppingCart size={24} />
+                  <span style={{ position: "absolute", top: "-0.25rem", right: "-0.25rem", width: "0.5rem", height: "0.5rem", background: "#dc2626", borderRadius: "999px" }} />
+                </button>
                 <button style={{ background: "none", border: "none", cursor: "pointer", color: C.primaryContainer }}><User size={24} /></button>
               </div>
             </div>

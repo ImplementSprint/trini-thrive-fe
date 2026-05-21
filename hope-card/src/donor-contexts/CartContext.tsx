@@ -28,7 +28,7 @@ interface CartContextType {
   loading: boolean;
   processingFee: number;
   apiTotal: number;
-  checkout: (paymentMethod: string) => Promise<void>;
+  checkout: () => Promise<string>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -99,7 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setAccessToken(donorToken);
       setLoading(true);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart?authUserId=${session.user.id}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/cart?authUserId=${session.user.id}`, {
           headers: { Authorization: `Bearer ${donorToken}` },
         });
         const data: ApiCartResponse = await parseJsonResponse(res);
@@ -149,7 +149,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     imageSrc: string; imageAlt: string; category?: string;
   }) => {
     if (!authUserId) throw new Error('Please log in to manage your cart');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/cart`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removeFromCart = useCallback(async (cartItemId: string) => {
     if (!authUserId) throw new Error('Please log in to manage your cart');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/cart`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -184,7 +184,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = useCallback(async (cartItemId: string, quantity: number) => {
     if (!authUserId) throw new Error('Please log in to manage your cart');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/cart`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/cart`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -203,53 +203,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setProcessingFee(0);
   }, []);
 
-  const checkout = useCallback(async (paymentMethod: string) => {
+  const checkout = useCallback(async (): Promise<string> => {
     if (!authUserId) throw new Error('Not authenticated');
     if (cart.length === 0) throw new Error('Cart is empty');
 
-    // Map frontend method names to DB enum values
-    const methodMap: Record<string, string> = { card: 'card', wallet: 'gcash', bank: 'bank' };
-    const method = methodMap[paymentMethod] ?? 'card';
-    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-
-    // Insert purchase records (one per cart item)
-    const purchases = cart.map((item) => ({
-      buyer_auth_id: authUserId,
-      hopecard_id: item.campaign_id,
-      amount_paid: item.price * item.quantity,
-      payment_method: method,
-      payment_reference: `${method.slice(0, 3).toUpperCase()}-HC-${datePart}-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
-      status: 'paid',
-      purchased_at: new Date().toISOString(),
-    }));
-
-    const { error: purchaseErr } = await supabase.from('hopecard_purchases').insert(purchases);
-    if (purchaseErr) throw new Error(purchaseErr.message || 'Failed to record purchase');
-
-    // Atomically increment collected_amount via RPC (bypasses RLS safely)
-    for (const item of cart) {
-      const { error: rpcErr } = await supabase.rpc('increment_campaign_collected_amount', {
-        campaign_id: item.campaign_id,
-        amount: item.price * item.quantity,
-      });
-      if (rpcErr) console.error('Failed to update collected_amount:', rpcErr.message);
-    }
-
-    // Remove purchased items from cart in DB
-    const { data: cartRows } = await supabase
-      .from('carts')
-      .select('id')
-      .eq('auth_user_id', authUserId)
-      .eq('status', 'active')
-      .limit(1);
-    const cartId = (cartRows as any)?.[0]?.id;
-    if (cartId) {
-      const campaignIds = cart.map((item) => item.campaign_id);
-      await supabase.from('cart_items').delete().eq('cart_id', cartId).in('campaign_id', campaignIds);
-    }
-
-    clearCart();
-  }, [authUserId, cart, clearCart]);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/purchases/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({
+        buyerAuthId: authUserId,
+        checkoutItems: cart.map((item) => ({
+          cardId: item.campaign_id,
+          title: item.title,
+          amount: item.price,
+          quantity: item.quantity,
+        })),
+      }),
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error((data as any).message ?? (data as any).error ?? 'Failed to create checkout session');
+    const { checkoutUrl } = data as { checkoutUrl: string };
+    if (!checkoutUrl) throw new Error('No checkout URL returned from server');
+    return checkoutUrl;
+  }, [authUserId, accessToken, cart]);
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);

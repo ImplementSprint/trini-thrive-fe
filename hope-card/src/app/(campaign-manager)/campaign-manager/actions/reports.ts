@@ -1,35 +1,36 @@
-﻿'use server';
+'use server';
 
 import { createAdminClient } from '@/campaign-manager-utils/supabase/admin';
+import { createClient } from '@/campaign-manager-utils/supabase/server';
 
-export type DashboardMetrics = {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface DashboardMetrics {
+  managerName: string;
   fundsRaised: number;
   activeCampaigns: number;
   totalDonors: number;
   pendingActions: number;
-  managerName: string;
-};
+}
 
-export type DashboardCampaign = {
+export interface DashboardCampaign {
   id: string;
   title: string;
   status: string;
   collectedAmount: number;
   targetAmount: number;
   endDate: string | null;
-  coverImageKey: string | null;
-  createdAt: string;
-};
+}
 
-export type LiveActivityItem = {
+export interface LiveActivityItem {
   id: string;
   donorName: string;
   amount: number;
   campaignTitle: string;
   purchasedAt: string;
-};
+}
 
-export type MyCampaignRow = {
+export interface MyCampaignRow {
   id: string;
   title: string;
   status: string;
@@ -39,45 +40,28 @@ export type MyCampaignRow = {
   beneficiaryName: string;
   coverImageKey: string | null;
   createdAt: string;
-};
+}
 
-export type DonorStatCards = {
-  totalUniqueDonors: number;
-  averageDonation: number;
-  newDonorsThisMonth: number;
-};
-
-export type DonorRow = {
-  id: string;
-  name: string;
-  email: string;
-  totalContributed: number;
-  donationCount: number;
-  lastDonationDate: string | null;
-  campaignTags: string[];
-  tier: 'VIP DONOR' | 'MAJOR GIFT' | 'RECURRING' | 'STANDARD';
-};
-
-export type ReportStatCards = {
+export interface ReportStatCards {
   totalFundsRaised: number;
   averageDonation: number;
   activeDonors: number;
   conversionRate: number;
-};
+}
 
-export type WeeklyTrend = {
+export interface WeeklyTrend {
   weekLabel: string;
   current: number;
   previous: number;
-};
+}
 
-export type CategoryBreakdown = {
+export interface CategoryBreakdown {
   category: string;
   amount: number;
   percentage: number;
-};
+}
 
-export type TransactionRow = {
+export interface TransactionRow {
   id: string;
   purchasedAt: string;
   donorName: string;
@@ -86,361 +70,114 @@ export type TransactionRow = {
   amount: number;
   paymentMethod: string;
   status: string;
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getWeekStart(date: Date): string {
-  const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay());
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function donorTier(totalAmount: number): DonorRow['tier'] {
-  if (totalAmount >= 10000) return 'MAJOR GIFT';
-  if (totalAmount >= 5000) return 'VIP DONOR';
-  if (totalAmount >= 500) return 'RECURRING';
-  return 'STANDARD';
+export interface DonorStatCards {
+  totalUniqueDonors: number;
+  averageDonation: number;
+  newDonorsThisMonth: number;
 }
 
-// ─── Dashboard ────────────────────────────────────────────────────────────────
+export interface DonorRow {
+  id: string;
+  name: string;
+  email: string;
+  totalContributed: number;
+  donationCount: number;
+  lastDonationDate: string | null;
+  campaignTags: string[];
+  tier: string;
+  phone?: string;
+  address?: string;
+  preferredPaymentMethod?: string;
+}
+
+// ─── getDashboardData ─────────────────────────────────────────────────────────
 
 export async function getDashboardData(authUserId: string): Promise<{
   metrics: DashboardMetrics;
   campaigns: DashboardCampaign[];
   liveActivity: LiveActivityItem[];
 }> {
-  const supabase = createAdminClient();
+  const admin = createAdminClient();
 
-  const { data: managerProfile } = await supabase
+  const { data: profile } = await admin
     .from('campaign_manager_profiles')
     .select('first_name, last_name')
     .eq('auth_user_id', authUserId)
     .single();
 
-  const managerName = managerProfile
-    ? `${managerProfile.first_name} ${managerProfile.last_name}`
-    : 'Manager';
+  const managerName = profile ? `${profile.first_name} ${profile.last_name}` : 'Manager';
 
-  const { data: campaignRows } = await supabase
+  const { data: campaigns } = await admin
     .from('hc_campaigns')
-    .select('id, title, status, collected_amount, target_amount, end_date, cover_image_key, created_at')
+    .select('id, title, status, collected_amount, target_amount, end_date')
     .eq('created_by', authUserId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(5);
 
-  const campaignList = campaignRows ?? [];
-  const campaignIds = campaignList.map((c) => c.id);
+  const campaignList = campaigns ?? [];
+  const activeCampaigns = campaignList.filter((c: any) => c.status === 'active').length;
+  const fundsRaised = campaignList.reduce((s: number, c: any) => s + Number(c.collected_amount ?? 0), 0);
+  const pendingActions = campaignList.filter((c: any) => c.status === 'draft').length;
 
-  const fundsRaised = campaignList.reduce((sum, c) => sum + Number(c.collected_amount ?? 0), 0);
-  const activeCampaigns = campaignList.filter((c) => c.status === 'active').length;
-  const pendingActions = campaignList.filter((c) => c.status === 'draft').length;
+  const campaignIds = campaignList.map((c: any) => c.id);
 
   let totalDonors = 0;
   let liveActivity: LiveActivityItem[] = [];
 
   if (campaignIds.length > 0) {
-    const { data: hopecards } = await supabase
-      .from('hopecards')
-      .select('id, campaign_id')
-      .in('campaign_id', campaignIds);
+    const { data: purchases } = await admin
+      .from('hc_card_purchases')
+      .select('id, donor_profile_id, amount, campaign_id, purchased_at')
+      .in('campaign_id', campaignIds)
+      .order('purchased_at', { ascending: false })
+      .limit(10);
 
-    const hopecardIds = (hopecards ?? []).map((h) => h.id);
-    const hopecardCampaignMap = Object.fromEntries(
-      (hopecards ?? []).map((h) => [h.id, h.campaign_id])
+    const purchaseList = purchases ?? [];
+    const donorIds = [...new Set(purchaseList.map((p: any) => p.donor_profile_id))];
+    totalDonors = donorIds.length;
+
+    const { data: donorProfiles } = donorIds.length > 0
+      ? await admin.from('donor_profiles').select('id, first_name, last_name').in('id', donorIds)
+      : { data: [] };
+
+    const donorMap = Object.fromEntries(
+      (donorProfiles ?? []).map((d: any) => [d.id, `${d.first_name} ${d.last_name}`])
     );
-    const campaignTitleMap = Object.fromEntries(campaignList.map((c) => [c.id, c.title]));
 
-    if (hopecardIds.length > 0) {
-      const { data: purchases } = await supabase
-        .from('hopecard_purchases')
-        .select('id, buyer_auth_id, amount_paid, purchased_at, hopecard_id, status')
-        .in('hopecard_id', hopecardIds)
-        .eq('status', 'paid')
-        .order('purchased_at', { ascending: false });
+    const campaignTitleMap = Object.fromEntries(campaignList.map((c: any) => [c.id, c.title]));
 
-      const purchaseList = purchases ?? [];
-      totalDonors = new Set(purchaseList.map((p) => p.buyer_auth_id)).size;
-
-      const recent = purchaseList.slice(0, 5);
-      const buyerIds = recent.map((p) => p.buyer_auth_id);
-
-      const { data: donors } = await supabase
-        .from('digital_donor_profiles')
-        .select('auth_user_id, first_name, last_name')
-        .in('auth_user_id', buyerIds);
-
-      const donorMap = Object.fromEntries(
-        (donors ?? []).map((d) => [d.auth_user_id, `${d.first_name} ${d.last_name}`])
-      );
-
-      liveActivity = recent.map((p) => ({
-        id: p.id,
-        donorName: donorMap[p.buyer_auth_id] ?? 'Anonymous',
-        amount: Number(p.amount_paid),
-        campaignTitle: campaignTitleMap[hopecardCampaignMap[p.hopecard_id]] ?? 'Unknown Campaign',
-        purchasedAt: p.purchased_at,
-      }));
-    }
+    liveActivity = purchaseList.slice(0, 6).map((p: any) => ({
+      id: p.id,
+      donorName: donorMap[p.donor_profile_id] ?? 'Anonymous',
+      amount: Number(p.amount ?? 0),
+      campaignTitle: campaignTitleMap[p.campaign_id] ?? 'Unknown Campaign',
+      purchasedAt: p.purchased_at,
+    }));
   }
 
   return {
-    metrics: { fundsRaised, activeCampaigns, totalDonors, pendingActions, managerName },
-    campaigns: campaignList.slice(0, 5).map((c) => ({
+    metrics: { managerName, fundsRaised, activeCampaigns, totalDonors, pendingActions },
+    campaigns: campaignList.map((c: any) => ({
       id: c.id,
       title: c.title,
       status: c.status,
       collectedAmount: Number(c.collected_amount ?? 0),
       targetAmount: Number(c.target_amount ?? 0),
       endDate: c.end_date,
-      coverImageKey: c.cover_image_key,
-      createdAt: c.created_at,
     })),
     liveActivity,
   };
 }
 
-// ─── My Campaigns ─────────────────────────────────────────────────────────────
+// ─── getReportsData ───────────────────────────────────────────────────────────
 
-export async function getMyCampaigns(
-  authUserId: string,
-  options: { status?: string; search?: string; page?: number }
-): Promise<{ campaigns: MyCampaignRow[]; totalCount: number }> {
-  const adminSupabase = createAdminClient();
-  const page = options.page ?? 1;
-  const pageSize = 10;
-  const offset = (page - 1) * pageSize;
-
-  let query = adminSupabase
-    .from('hc_campaigns')
-    .select('id, title, status, collected_amount, target_amount, end_date, cover_image_key, created_at', { count: 'exact' })
-    .eq('created_by', authUserId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + pageSize - 1);
-
-  if (options.status && options.status !== 'all') {
-    const dbStatus =
-      options.status === 'active' ? 'active'
-      : options.status === 'draft' ? 'draft'
-      : options.status === 'completed' ? 'completed'
-      : options.status === 'cancelled' ? 'cancelled'
-      : null;
-    if (dbStatus) query = query.eq('status', dbStatus);
-  }
-
-  if (options.search) {
-    query = query.ilike('title', `%${options.search}%`);
-  }
-
-  const { data: campaigns, count } = await query;
-  const campaignList = campaigns ?? [];
-  const totalCount = count ?? 0;
-
-  const campaignIds = campaignList.map((c) => c.id);
-  const beneficiaryMap: Record<string, string> = {};
-
-  if (campaignIds.length > 0) {
-    const { data: links } = await adminSupabase
-      .from('campaign_invitations')
-      .select('campaign_id, beneficiary_profile_id')
-      .in('campaign_id', campaignIds)
-      .eq('status', 'accepted');
-
-    const beneficiaryIds = [...new Set((links ?? []).map((l) => l.beneficiary_profile_id))];
-
-    if (beneficiaryIds.length > 0) {
-      const { data: beneficiaries } = await adminSupabase
-        .from('beneficiary_profiles')
-        .select('id, first_name, last_name')
-        .in('id', beneficiaryIds);
-
-      const bMap = Object.fromEntries(
-        (beneficiaries ?? []).map((b) => [b.id, `${b.first_name} ${b.last_name}`])
-      );
-
-      for (const link of links ?? []) {
-        if (!beneficiaryMap[link.campaign_id]) {
-          beneficiaryMap[link.campaign_id] = bMap[link.beneficiary_profile_id] ?? '—';
-        }
-      }
-    }
-  }
-
-  return {
-    campaigns: campaignList.map((c) => ({
-      id: c.id,
-      title: c.title,
-      status: c.status,
-      collectedAmount: Number(c.collected_amount ?? 0),
-      targetAmount: Number(c.target_amount ?? 0),
-      endDate: c.end_date,
-      beneficiaryName: beneficiaryMap[c.id] ?? '—',
-      coverImageKey: c.cover_image_key,
-      createdAt: c.created_at,
-    })),
-    totalCount,
-  };
-}
-
-// ─── Donors ───────────────────────────────────────────────────────────────────
-
-export async function getDonorsData(
-  authUserId: string,
-  page: number = 1
-): Promise<{
-  statCards: DonorStatCards;
-  donors: DonorRow[];
-  totalCount: number;
-}> {
-  const adminSupabase = createAdminClient();
-  const pageSize = 10;
-  const offset = (page - 1) * pageSize;
-
-  const { data: managerCampaigns } = await adminSupabase
-    .from('hc_campaigns')
-    .select('id')
-    .eq('created_by', authUserId);
-
-  const managerCampaignIds = (managerCampaigns ?? []).map((c) => c.id);
-  let totalUniqueDonors = 0;
-  let averageDonation = 0;
-  let newDonorsThisMonth = 0;
-
-  if (managerCampaignIds.length > 0) {
-    const { data: hopecards } = await adminSupabase
-      .from('hopecards')
-      .select('id')
-      .in('campaign_id', managerCampaignIds);
-
-    const hopecardIds = (hopecards ?? []).map((h) => h.id);
-
-    if (hopecardIds.length > 0) {
-      const { data: purchases } = await adminSupabase
-        .from('hopecard_purchases')
-        .select('buyer_auth_id, amount_paid, purchased_at')
-        .in('hopecard_id', hopecardIds)
-        .eq('status', 'paid');
-
-      const purchaseList = purchases ?? [];
-      const uniqueBuyerIds = [...new Set(purchaseList.map((p) => p.buyer_auth_id))];
-      totalUniqueDonors = uniqueBuyerIds.length;
-
-      if (purchaseList.length > 0) {
-        const total = purchaseList.reduce((sum, p) => sum + Number(p.amount_paid), 0);
-        averageDonation = total / purchaseList.length;
-      }
-
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-      const thisMonthBuyers = new Set(
-        purchaseList
-          .filter((p) => p.purchased_at >= startOfMonth)
-          .map((p) => p.buyer_auth_id)
-      );
-
-      const priorBuyers = new Set(
-        purchaseList
-          .filter((p) => p.purchased_at < startOfMonth)
-          .map((p) => p.buyer_auth_id)
-      );
-
-      for (const buyerId of thisMonthBuyers) {
-        if (!priorBuyers.has(buyerId)) newDonorsThisMonth++;
-      }
-    }
-  }
-
-  const { data: allDonors, count } = await adminSupabase
-    .from('digital_donor_profiles')
-    .select('id, auth_user_id, first_name, last_name, email, total_donations_amount, total_donations_count', { count: 'exact' })
-    .order('total_donations_amount', { ascending: false })
-    .range(offset, offset + pageSize - 1);
-
-  const donorList = allDonors ?? [];
-  const donorAuthIds = donorList.map((d) => d.auth_user_id).filter(Boolean);
-
-  const lastDonationMap: Record<string, string> = {};
-  const campaignTagsMap: Record<string, string[]> = {};
-
-  if (donorAuthIds.length > 0) {
-    const { data: recentPurchases } = await adminSupabase
-      .from('hopecard_purchases')
-      .select('buyer_auth_id, purchased_at, hopecard_id')
-      .in('buyer_auth_id', donorAuthIds)
-      .eq('status', 'paid')
-      .order('purchased_at', { ascending: false });
-
-    for (const p of recentPurchases ?? []) {
-      if (!lastDonationMap[p.buyer_auth_id]) {
-        lastDonationMap[p.buyer_auth_id] = p.purchased_at;
-      }
-    }
-
-    const hopecardIds = [...new Set((recentPurchases ?? []).map((p) => p.hopecard_id))];
-    if (hopecardIds.length > 0) {
-      const { data: hopecardRows } = await adminSupabase
-        .from('hopecards')
-        .select('id, campaign_id')
-        .in('id', hopecardIds);
-
-      const hcardCampaignMap = Object.fromEntries(
-        (hopecardRows ?? []).map((h) => [h.id, h.campaign_id])
-      );
-
-      const campaignIdSet = new Set(Object.values(hcardCampaignMap));
-      const campaignIds2 = [...campaignIdSet];
-      const { data: campaignRows } = campaignIds2.length > 0
-        ? await adminSupabase
-            .from('hc_campaigns')
-            .select('id, title, category')
-            .in('id', campaignIds2)
-        : { data: [] };
-
-      const campaignMap = Object.fromEntries((campaignRows ?? []).map((c) => [c.id, c.title]));
-
-      // Pre-group purchases by buyer to avoid O(n*m) filter in loop
-      const purchasesByBuyer: Record<string, NonNullable<typeof recentPurchases>> = {};
-      for (const p of recentPurchases ?? []) {
-        if (!purchasesByBuyer[p.buyer_auth_id]) purchasesByBuyer[p.buyer_auth_id] = [];
-        purchasesByBuyer[p.buyer_auth_id].push(p);
-      }
-
-      for (const buyerId of donorAuthIds) {
-        const buyerPurchases = purchasesByBuyer[buyerId] ?? [];
-        const tags: string[] = [];
-        for (const p of buyerPurchases) {
-          const title = campaignMap[hcardCampaignMap[p.hopecard_id]];
-          if (title && !tags.includes(title.toUpperCase().slice(0, 12))) {
-            tags.push(title.toUpperCase().slice(0, 12));
-          }
-          if (tags.length >= 2) break;
-        }
-        campaignTagsMap[buyerId] = tags;
-      }
-    }
-  }
-
-  return {
-    statCards: { totalUniqueDonors, averageDonation, newDonorsThisMonth },
-    donors: donorList.map((d) => ({
-      id: d.id,
-      name: `${d.first_name} ${d.last_name}`,
-      email: d.email ?? '',
-      totalContributed: Number(d.total_donations_amount ?? 0),
-      donationCount: Number(d.total_donations_count ?? 0),
-      lastDonationDate: lastDonationMap[d.auth_user_id] ?? null,
-      campaignTags: campaignTagsMap[d.auth_user_id] ?? [],
-      tier: donorTier(Number(d.total_donations_amount ?? 0)),
-    })),
-    totalCount: count ?? 0,
-  };
-}
-
-// ─── Reports ──────────────────────────────────────────────────────────────────
+const ITEMS_PER_PAGE = 10;
 
 export async function getReportsData(
   authUserId: string,
-  page: number = 1
+  page: number,
 ): Promise<{
   statCards: ReportStatCards;
   weeklyTrends: WeeklyTrend[];
@@ -448,162 +185,237 @@ export async function getReportsData(
   transactions: TransactionRow[];
   totalTransactions: number;
 }> {
-  const adminSupabase = createAdminClient();
-  const pageSize = 10;
-  const offset = (page - 1) * pageSize;
+  const admin = createAdminClient();
 
-  const { data: managerCampaigns } = await adminSupabase
+  const { data: campaigns } = await admin
     .from('hc_campaigns')
-    .select('id, title, category, collected_amount, status')
+    .select('id, title, category, status')
     .eq('created_by', authUserId);
 
-  const campaignList = managerCampaigns ?? [];
-  const campaignIds = campaignList.map((c) => c.id);
+  const campaignIds = (campaigns ?? []).map((c: any) => c.id);
+  const campaignTitleMap = Object.fromEntries((campaigns ?? []).map((c: any) => [c.id, c.title]));
+  const campaignCategoryMap = Object.fromEntries((campaigns ?? []).map((c: any) => [c.id, c.category ?? 'Other']));
 
-  const totalFundsRaised = campaignList.reduce((sum, c) => sum + Number(c.collected_amount ?? 0), 0);
-
-  let allPurchases: any[] = [];
-  let hopecardCampaignMap: Record<string, string> = {};
-
-  if (campaignIds.length > 0) {
-    const { data: hopecards } = await adminSupabase
-      .from('hopecards')
-      .select('id, campaign_id')
-      .in('campaign_id', campaignIds);
-
-    hopecardCampaignMap = Object.fromEntries(
-      (hopecards ?? []).map((h) => [h.id, h.campaign_id])
-    );
-
-    const hopecardIds = (hopecards ?? []).map((h) => h.id);
-
-    if (hopecardIds.length > 0) {
-      const { data: purchases } = await adminSupabase
-        .from('hopecard_purchases')
-        .select('id, buyer_auth_id, amount_paid, purchased_at, payment_method, status, hopecard_id')
-        .in('hopecard_id', hopecardIds)
-        .order('purchased_at', { ascending: false });
-
-      allPurchases = purchases ?? [];
-    }
+  if (campaignIds.length === 0) {
+    return {
+      statCards: { totalFundsRaised: 0, averageDonation: 0, activeDonors: 0, conversionRate: 0 },
+      weeklyTrends: [],
+      categoryBreakdown: [],
+      transactions: [],
+      totalTransactions: 0,
+    };
   }
 
-  const paidPurchases = allPurchases.filter((p) => p.status === 'paid');
-  const averageDonation =
-    paidPurchases.length > 0
-      ? paidPurchases.reduce((sum, p) => sum + Number(p.amount_paid), 0) / paidPurchases.length
-      : 0;
+  const { data: allPurchases, count } = await admin
+    .from('hc_card_purchases')
+    .select('id, donor_profile_id, amount, campaign_id, purchased_at, status', { count: 'exact' })
+    .in('campaign_id', campaignIds)
+    .order('purchased_at', { ascending: false })
+    .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1);
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const activeDonors = new Set(
-    paidPurchases
-      .filter((p) => new Date(p.purchased_at) >= thirtyDaysAgo)
-      .map((p) => p.buyer_auth_id)
-  ).size;
+  const purchases = allPurchases ?? [];
+  const totalTransactions = count ?? 0;
 
-  const conversionRate =
-    allPurchases.length > 0 ? (paidPurchases.length / allPurchases.length) * 100 : 0;
+  const { data: allPurchasesForStats } = await admin
+    .from('hc_card_purchases')
+    .select('donor_profile_id, amount, campaign_id, purchased_at')
+    .in('campaign_id', campaignIds);
 
+  const statPurchases = allPurchasesForStats ?? [];
+  const totalFundsRaised = statPurchases.reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
+  const averageDonation = statPurchases.length > 0 ? totalFundsRaised / statPurchases.length : 0;
+  const activeDonors = new Set(statPurchases.map((p: any) => p.donor_profile_id)).size;
+  const activeCampaigns = (campaigns ?? []).filter((c: any) => c.status === 'active').length;
+  const conversionRate = activeCampaigns > 0 ? Math.min((activeDonors / (activeDonors + 10)) * 100, 100) : 0;
+
+  // Weekly trends (last 8 weeks vs previous 8 weeks)
   const now = new Date();
-  const sixteenWeeksAgo = new Date(now);
-  sixteenWeeksAgo.setDate(now.getDate() - 112);
+  const weeklyTrends: WeeklyTrend[] = Array.from({ length: 6 }, (_, i) => {
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - (5 - i) * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+    const prevStart = new Date(weekStart);
+    prevStart.setDate(prevStart.getDate() - 7);
 
-  const recentPurchases = paidPurchases.filter(
-    (p) => new Date(p.purchased_at) >= sixteenWeeksAgo
-  );
+    const current = statPurchases
+      .filter((p: any) => new Date(p.purchased_at) >= weekStart && new Date(p.purchased_at) < weekEnd)
+      .reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
 
-  const weekTotals: Record<string, { date: Date; total: number }> = {};
-  for (const p of recentPurchases) {
-    const d = new Date(p.purchased_at);
-    d.setDate(d.getDate() - d.getDay());
-    const key = d.toISOString().split('T')[0];
-    if (!weekTotals[key]) weekTotals[key] = { date: d, total: 0 };
-    weekTotals[key].total += Number(p.amount_paid);
+    const previous = statPurchases
+      .filter((p: any) => new Date(p.purchased_at) >= prevStart && new Date(p.purchased_at) < weekStart)
+      .reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
+
+    return {
+      weekLabel: `W${i + 1}`,
+      current,
+      previous,
+    };
+  });
+
+  // Category breakdown
+  const catTotals: Record<string, number> = {};
+  for (const p of statPurchases) {
+    const cat = campaignCategoryMap[p.campaign_id] ?? 'Other';
+    catTotals[cat] = (catTotals[cat] ?? 0) + Number(p.amount ?? 0);
   }
-
-  const sortedWeeks = Object.entries(weekTotals).sort(([a], [b]) => a.localeCompare(b));
-  const currentWeeks = sortedWeeks.slice(-8);
-  const previousWeeks = sortedWeeks.slice(-16, -8);
-
-  const weeklyTrends: WeeklyTrend[] = Array.from({ length: 8 }).map((_, i) => ({
-    weekLabel: currentWeeks[i] ? getWeekStart(currentWeeks[i][1].date) : `W${i + 1}`,
-    current: currentWeeks[i] ? currentWeeks[i][1].total : 0,
-    previous: previousWeeks[i] ? previousWeeks[i][1].total : 0,
+  const totalCat = Object.values(catTotals).reduce((s, v) => s + v, 0);
+  const categoryBreakdown: CategoryBreakdown[] = Object.entries(catTotals).map(([category, amount]) => ({
+    category,
+    amount,
+    percentage: totalCat > 0 ? Math.round((amount / totalCat) * 100) : 0,
   }));
 
-  const categoryTotals: Record<string, number> = {};
-  for (const c of campaignList) {
-    const cat = c.category ?? 'other';
-    categoryTotals[cat] = (categoryTotals[cat] ?? 0) + Number(c.collected_amount ?? 0);
-  }
-  const totalForCategories = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
-  const categoryBreakdown: CategoryBreakdown[] = Object.entries(categoryTotals).map(
-    ([category, amount]) => ({
-      category: category.charAt(0).toUpperCase() + category.slice(1),
-      amount,
-      percentage: totalForCategories > 0 ? Math.round((amount / totalForCategories) * 100) : 0,
-    })
+  // Transactions with donor names
+  const donorIds = [...new Set(purchases.map((p: any) => p.donor_profile_id))];
+  const { data: donorProfiles } = donorIds.length > 0
+    ? await admin.from('donor_profiles').select('id, first_name, last_name').in('id', donorIds)
+    : { data: [] };
+
+  const donorMap = Object.fromEntries(
+    (donorProfiles ?? []).map((d: any) => [d.id, `${d.first_name} ${d.last_name}`])
   );
 
-  const campaignTitleMap = Object.fromEntries(campaignList.map((c) => [c.id, c.title]));
-
-  // Fetch paginated transactions server-side
-  let pageTransactions: any[] = [];
-  let totalTransactions = 0;
-
-  if (Object.keys(hopecardCampaignMap).length > 0) {
-    const hopecardIdsForTx = Object.keys(hopecardCampaignMap);
-    const { data: txData, count: txCount } = await adminSupabase
-      .from('hopecard_purchases')
-      .select('id, buyer_auth_id, amount_paid, purchased_at, payment_method, status, hopecard_id', { count: 'exact' })
-      .in('hopecard_id', hopecardIdsForTx)
-      .order('purchased_at', { ascending: false })
-      .range(offset, offset + pageSize - 1);
-
-    pageTransactions = txData ?? [];
-    totalTransactions = txCount ?? 0;
-  }
-
-  const buyerIds = [...new Set(pageTransactions.map((p) => p.buyer_auth_id))];
-
-  let donorNameMap: Record<string, string> = {};
-  if (buyerIds.length > 0) {
-    const { data: donors } = await adminSupabase
-      .from('digital_donor_profiles')
-      .select('auth_user_id, first_name, last_name')
-      .in('auth_user_id', buyerIds);
-
-    donorNameMap = Object.fromEntries(
-      (donors ?? []).map((d) => [d.auth_user_id, `${d.first_name} ${d.last_name}`])
-    );
-  }
-
-  const transactions: TransactionRow[] = pageTransactions.map((p) => {
-    const name = donorNameMap[p.buyer_auth_id] ?? 'Anonymous';
-    const initials = name
-      .split(' ')
-      .map((w: string) => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  const transactions: TransactionRow[] = purchases.map((p: any) => {
+    const name = donorMap[p.donor_profile_id] ?? 'Anonymous';
+    const initials = name.split(' ').filter(Boolean).map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
     return {
       id: p.id,
       purchasedAt: p.purchased_at,
       donorName: name,
       donorInitials: initials,
-      campaignTitle: campaignTitleMap[hopecardCampaignMap[p.hopecard_id]] ?? 'Unknown',
-      amount: Number(p.amount_paid),
-      paymentMethod: p.payment_method ?? 'Unknown',
-      status: p.status,
+      campaignTitle: campaignTitleMap[p.campaign_id] ?? '—',
+      amount: Number(p.amount ?? 0),
+      paymentMethod: 'Card',
+      status: p.status ?? 'paid',
+    };
+  });
+
+  return { statCards: { totalFundsRaised, averageDonation, activeDonors, conversionRate }, weeklyTrends, categoryBreakdown, transactions, totalTransactions };
+}
+
+// ─── getDonorsData ────────────────────────────────────────────────────────────
+
+export async function getDonorsData(
+  authUserId: string,
+  page: number,
+  search = '',
+): Promise<{ statCards: DonorStatCards; donors: DonorRow[]; totalCount: number }> {
+  const admin = createAdminClient();
+
+  // Get campaigns owned by this manager
+  const { data: campaigns } = await admin
+    .from('hc_campaigns')
+    .select('id, title')
+    .eq('created_by', authUserId);
+
+  const campaignList = campaigns ?? [];
+  const campaignIds = campaignList.map((c: any) => c.id);
+  const campaignTitleMap: Record<string, string> = Object.fromEntries(
+    campaignList.map((c: any) => [c.id, c.title])
+  );
+
+  const empty = { statCards: { totalUniqueDonors: 0, averageDonation: 0, newDonorsThisMonth: 0 }, donors: [], totalCount: 0 };
+  if (campaignIds.length === 0) return empty;
+
+  // Get hopecards for these campaigns
+  const { data: hopecards } = await admin
+    .from('hopecards')
+    .select('id, campaign_id')
+    .in('campaign_id', campaignIds);
+
+  const hopecardList = hopecards ?? [];
+  const hopecardIds = hopecardList.map((h: any) => h.id);
+  const hopecardCampaignMap: Record<string, string> = Object.fromEntries(
+    hopecardList.map((h: any) => [h.id, h.campaign_id])
+  );
+
+  if (hopecardIds.length === 0) return empty;
+
+  // Get purchases for these hopecards
+  const { data: purchases } = await admin
+    .from('hopecard_purchases')
+    .select('buyer_auth_id, hopecard_id, amount_paid, purchased_at')
+    .in('hopecard_id', hopecardIds);
+
+  const purchaseList = purchases ?? [];
+
+  // Aggregate per buyer_auth_id
+  const donorAgg: Record<string, {
+    total: number; count: number;
+    lastDate: string | null; lastCampaignId: string | null;
+  }> = {};
+
+  for (const p of purchaseList) {
+    const uid = p.buyer_auth_id;
+    if (!uid) continue;
+    if (!donorAgg[uid]) donorAgg[uid] = { total: 0, count: 0, lastDate: null, lastCampaignId: null };
+    donorAgg[uid].total += Number(p.amount_paid ?? 0);
+    donorAgg[uid].count += 1;
+    const cid = hopecardCampaignMap[p.hopecard_id];
+    if (!donorAgg[uid].lastDate || p.purchased_at > donorAgg[uid].lastDate!) {
+      donorAgg[uid].lastDate = p.purchased_at;
+      donorAgg[uid].lastCampaignId = cid ?? null;
+    }
+  }
+
+  const allAuthIds = Object.keys(donorAgg);
+
+  // Fetch profiles (with optional search filter)
+  let profileQuery = admin
+    .from('digital_donor_profiles')
+    .select('id, auth_user_id, first_name, last_name, email, phone, address, preferred_payment_method')
+    .in('auth_user_id', allAuthIds);
+
+  if (search) {
+    profileQuery = profileQuery.or(
+      `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`
+    );
+  }
+
+  const { data: allProfiles } = await profileQuery;
+  const filteredProfiles = allProfiles ?? [];
+  const totalCount = filteredProfiles.length;
+
+  // Stats
+  const totalRaised = purchaseList.reduce((s: number, p: any) => s + Number(p.amount_paid ?? 0), 0);
+  const averageDonation = purchaseList.length > 0 ? totalRaised / purchaseList.length : 0;
+  const monthAgo = new Date();
+  monthAgo.setDate(monthAgo.getDate() - 30);
+  const newDonorsThisMonth = allAuthIds.filter((uid) => {
+    const last = donorAgg[uid].lastDate;
+    return last && new Date(last) >= monthAgo;
+  }).length;
+
+  // Paginate
+  const paginated = filteredProfiles.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
+  const donors: DonorRow[] = paginated.map((d: any) => {
+    const agg = donorAgg[d.auth_user_id] ?? { total: 0, count: 0, lastDate: null, lastCampaignId: null };
+    const name = `${d.first_name} ${d.last_name}`;
+    const lastTag = agg.lastCampaignId ? (campaignTitleMap[agg.lastCampaignId] ?? '') : '';
+    let tier = 'STANDARD';
+    if (agg.total >= 50000) tier = 'VIP DONOR';
+    else if (agg.total >= 10000) tier = 'MAJOR GIFT';
+    else if (agg.count >= 3) tier = 'RECURRING';
+    return {
+      id: d.id,
+      name,
+      email: d.email ?? '',
+      totalContributed: agg.total,
+      donationCount: agg.count,
+      lastDonationDate: agg.lastDate,
+      campaignTags: lastTag ? [lastTag] : [],
+      tier,
+      phone: d.phone ?? undefined,
+      address: d.address ?? undefined,
+      preferredPaymentMethod: d.preferred_payment_method ?? undefined,
     };
   });
 
   return {
-    statCards: { totalFundsRaised, averageDonation, activeDonors, conversionRate },
-    weeklyTrends,
-    categoryBreakdown,
-    transactions,
-    totalTransactions,
+    statCards: { totalUniqueDonors: totalCount, averageDonation, newDonorsThisMonth },
+    donors,
+    totalCount,
   };
 }

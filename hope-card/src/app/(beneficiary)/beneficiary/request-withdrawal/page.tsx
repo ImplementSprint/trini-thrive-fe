@@ -1,11 +1,13 @@
-﻿﻿﻿"use client";
+﻿"use client";
+import { BeneficiaryNotificationBell } from "@/app/(beneficiary)/beneficiary/shared/BeneficiaryNotificationBell";
 
 import React, { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from "@/beneficiary-utils/supabase/client";
 import {
-  Menu, Bell, LayoutDashboard, CreditCard,
-  Landmark, IdCard, User, ShieldCheck, HelpCircle, ChevronDown, Clock, Info
+  Menu, LayoutDashboard, CreditCard,
+  Landmark, IdCard, User, ShieldCheck, HelpCircle, ChevronDown, Clock, Info,
+  LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 
@@ -99,7 +101,6 @@ const NAV_ITEMS = [
   { icon: <Landmark size={20} />, label: "Banking", active: true, href: "/beneficiary/banking-details" },
   { icon: <IdCard size={20} />, label: "Identity", active: false, href: "/beneficiary/identity-verification" },
   { icon: <User size={20} />, label: "Profile", active: false, href: "/beneficiary/profile-settings" },
-  { icon: <ShieldCheck size={20} />, label: "Security", active: false, href: "/beneficiary/security-settings" },
 ];
 
 const SIDEBAR_W_EXPANDED = 220;
@@ -141,21 +142,20 @@ export default function RequestWithdrawal() {
       if (!profile || !beneficiary) return;
       setActiveSince(new Date((profile as any).created_at).getFullYear());
 
-      // Build bank options
+      // Fetch approved bank accounts via proxy (bypasses RLS)
       const opts: BankOption[] = [];
-      if (profile.account_number) {
-        opts.push({ value: "profile", label: `${profile.bank_name || "Bank"} •••• ${String(profile.account_number).slice(-4)} (Initial)` });
-      }
-
-      const { data: additional } = await supabase
-        .from("beneficiary_bank_accounts")
-        .select("id, bank_name, account_number, is_primary")
-        .eq("beneficiary_profile_id", profile.id)
-        .eq("is_active", true);
-
-      (additional ?? []).forEach((a: any) => {
-        opts.push({ value: a.id, label: `${a.bank_name} •••• ${String(a.account_number).slice(-4)}${a.is_primary ? " (Primary)" : ""}` });
-      });
+      try {
+        const bankRes = await fetch("/beneficiary/api/bank-accounts");
+        if (bankRes.ok) {
+          const bankData = await bankRes.json();
+          (bankData.accounts ?? []).forEach((a: any) => {
+            opts.push({
+              value: a.id,
+              label: `${a.bank_name} •••• ${String(a.account_number).slice(-4)}${a.is_primary ? " (Primary)" : ""}`,
+            });
+          });
+        }
+      } catch { /* ignore */ }
       setBankOptions(opts);
       if (opts.length > 0) setForm((f) => ({ ...f, bank: opts[0].value }));
 
@@ -247,14 +247,7 @@ export default function RequestWithdrawal() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{ padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#78716c", borderRadius: "999px", display: "flex", position: "relative", transition: "background 0.15s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span style={{ position: "absolute", top: "0.5rem", right: "0.5rem", width: "0.5rem", height: "0.5rem", background: S.error, borderRadius: "999px" }} />
-          </button>
+          <BeneficiaryNotificationBell />
 
           <div style={{ position: "relative" }}>
             <button
@@ -405,9 +398,15 @@ export default function RequestWithdrawal() {
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>

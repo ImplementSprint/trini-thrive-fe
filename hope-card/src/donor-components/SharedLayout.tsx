@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/donor-contexts/CartContext';
 import { useProfile } from '@/donor-hooks/useProfile';
 import { supabase } from '@/donor-lib/supabase-client';
+import DonationModal from '@/donor-components/DonationModal';
 import {
   Menu,
   Search,
-  Bell,
   ShoppingCart,
   User,
   Heart,
@@ -28,6 +28,7 @@ import {
   LogOut,
   HandHeart,
 } from "lucide-react";
+import NotificationBell from "@/donor-components/NotificationBell";
 
 // Design Tokens
 const colors = {
@@ -115,12 +116,66 @@ const SideNavItem = React.memo<SideNavItemProps>(
 );
 SideNavItem.displayName = "SideNavItem";
 
+interface SearchCampaign {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  cover_image_url: string | null;
+}
+
 export default function SharedLayout({ children, currentPage = 'home' }: SharedLayoutProps) {
   const router = useRouter();
   const { cartCount } = useCart();
   const { profile, loading: profileLoading } = useProfile();
   const [searchFocused, setSearchFocused] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchCampaign[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [donationCampaign, setDonationCampaign] = useState<SearchCampaign | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchSearch = useCallback(async (q: string) => {
+    if (q.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
+    setSearchLoading(true);
+    try {
+      const base = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL ?? '';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('donor_token') : null;
+      const res = await fetch(
+        `${base}/api/v1/hopecard/donor/campaigns?search=${encodeURIComponent(q)}`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResults((data.campaigns ?? []).slice(0, 6));
+        setSearchOpen(true);
+      }
+    } catch { /* silently fail */ }
+    finally { setSearchLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchQuery.length < 2) { setSearchResults([]); setSearchOpen(false); return; }
+    debounceRef.current = setTimeout(() => fetchSearch(searchQuery), 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQuery, fetchSearch]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const fullName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : '';
 
@@ -290,27 +345,15 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
             active={currentPage === 'home'}
             onClick={() => { router.push('/donor/home'); setSidebarOpen(false); }}
           />
-          <SideNavItem 
-            icon={<Compass size={20} />} 
-            label="Explore" 
-            active={currentPage === 'explore'}
-            onClick={() => { router.push('/donor/explore'); setSidebarOpen(false); }}
-          />
-          <SideNavItem 
-            icon={<BookOpen size={20} />} 
-            label="Stories" 
-            active={currentPage === 'stories'}
-            onClick={() => { router.push('/donor/stories'); setSidebarOpen(false); }}
-          />
-          <SideNavItem 
-            icon={<HandHeart size={20} />} 
-            label="Impact" 
+          <SideNavItem
+            icon={<HandHeart size={20} />}
+            label="Impact"
             active={currentPage === 'transactions'}
             onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
           />
-          <SideNavItem 
-            icon={<Wallet size={20} />} 
-            label="Wallet" 
+          <SideNavItem
+            icon={<Wallet size={20} />}
+            label="Wallet"
             onClick={() => { router.push('/donor/profile'); setSidebarOpen(false); }}
           />
         </nav>
@@ -331,28 +374,36 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
           >
             Account
           </p>
-          <SideNavItem 
-            icon={<History size={20} />} 
-            label="Donation History" 
-            secondary 
-            onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
-          />
-          <SideNavItem 
-            icon={<Receipt size={20} />} 
-            label="Tax Receipts" 
-            secondary 
-            onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
-          />
-          <SideNavItem 
-            icon={<CreditCard size={20} />} 
-            label="Payment Methods" 
-            secondary 
+          <SideNavItem
+            icon={<User size={20} />}
+            label="Profile & Security"
+            secondary
+            active={currentPage === 'profile'}
             onClick={() => { router.push('/donor/profile'); setSidebarOpen(false); }}
           />
-          <SideNavItem 
-            icon={<Settings size={20} />} 
-            label="Settings" 
-            secondary 
+          <SideNavItem
+            icon={<History size={20} />}
+            label="Donation History"
+            secondary
+            active={currentPage === 'transactions'}
+            onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
+          />
+          <SideNavItem
+            icon={<Receipt size={20} />}
+            label="Tax Receipts"
+            secondary
+            onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
+          />
+          <SideNavItem
+            icon={<CreditCard size={20} />}
+            label="Payment Methods"
+            secondary
+            onClick={() => { router.push('/donor/profile'); setSidebarOpen(false); }}
+          />
+          <SideNavItem
+            icon={<Settings size={20} />}
+            label="Settings"
+            secondary
             active={currentPage === 'settings'}
             onClick={() => { router.push('/donor/settings'); setSidebarOpen(false); }}
           />
@@ -429,19 +480,22 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
               <Menu size={24} />
             </button>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <img 
-                src="/donor/logo_h.png" 
-                alt="Hopecard Logo" 
-                style={{ 
-                  height: "2rem", 
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer" }}
+              onClick={() => router.push('/donor/home')}
+            >
+              <img
+                src="/donor/logo_h.png"
+                alt="Hopecard Logo"
+                style={{
+                  height: "3rem",
                   width: "auto",
                   objectFit: "contain"
-                }} 
+                }}
               />
               <span
                 style={{
-                  fontSize: "1.5rem",
+                  fontSize: "2rem",
                   fontWeight: 800,
                   letterSpacing: "-0.05em",
                   textTransform: "uppercase",
@@ -453,56 +507,10 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
               </span>
             </div>
 
-            <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-              {[
-                { label: "Home", path: "/donor/home", page: "home" },
-                { label: "Explore", path: "/donor/explore", page: "explore" },
-                { label: "Stories", path: "/donor/stories", page: "stories" },
-                { label: "Basket", path: "/donor/basket", page: "basket" }
-              ].map((item) => {
-                const isActive = currentPage === item.page || (item.page === "basket" && currentPage === "basket");
-                return (
-                  <button
-                    key={item.label}
-                    onClick={() => router.push(item.path)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: isActive ? colors.primary : "#78716c",
-                      transition: "color 0.15s",
-                      cursor: "pointer",
-                      fontFamily: "Plus Jakarta Sans, sans-serif",
-                      fontSize: "0.875rem",
-                      fontWeight: isActive ? 700 : 400,
-                      position: "relative",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) e.currentTarget.style.color = "#e11d48";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.color = "#78716c";
-                    }}
-                  >
-                    {item.label}
-                    {isActive && (
-                      <span style={{
-                        position: "absolute",
-                        bottom: "-0.5rem",
-                        left: 0,
-                        right: 0,
-                        height: "2px",
-                        background: colors.primary,
-                        borderRadius: "999px",
-                      }} />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           {/* Search */}
-          <div style={{ flex: 1, maxWidth: "28rem", margin: "0 2rem", position: "relative" }}>
+          <div ref={searchRef} style={{ flex: 1, maxWidth: "48rem", margin: "0 2rem", position: "relative" }}>
             <Search
               size={18}
               style={{
@@ -511,60 +519,108 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "#a8a29e",
+                zIndex: 1,
+                pointerEvents: "none",
               }}
             />
             <input
               type="text"
               autoComplete="off"
               placeholder="Find a cause to support..."
-              onFocus={() => setSearchFocused(true)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => { setSearchFocused(true); if (searchResults.length > 0) setSearchOpen(true); }}
               onBlur={() => setSearchFocused(false)}
+              onKeyDown={(e) => { if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery(''); } }}
               style={{
                 width: "100%",
                 background: "#f5f5f4",
                 border: "none",
-                borderRadius: "999px",
+                borderRadius: searchOpen ? "1rem 1rem 0 0" : "999px",
                 padding: "0.625rem 1rem 0.625rem 2.75rem",
                 fontSize: "0.875rem",
                 outline: "none",
                 boxShadow: searchFocused ? `0 0 0 2px ${colors.primaryContainer}33` : "none",
                 fontFamily: "Manrope, sans-serif",
+                transition: "border-radius 0.15s",
               }}
             />
+            {/* Dropdown */}
+            {searchOpen && (
+              <div style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: colors.surfaceContainerLowest,
+                borderRadius: "0 0 1rem 1rem",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+                border: `1px solid ${colors.outlineVariant}44`,
+                borderTop: "none",
+                zIndex: 200,
+                overflow: "hidden",
+                maxHeight: "360px",
+                overflowY: "auto",
+              }}>
+                {searchLoading && (
+                  <div style={{ padding: "1rem 1.25rem", fontSize: "0.875rem", color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
+                    Searching…
+                  </div>
+                )}
+                {!searchLoading && searchResults.length === 0 && (
+                  <div style={{ padding: "1rem 1.25rem", fontSize: "0.875rem", color: colors.onSurfaceVariant, fontFamily: "Manrope, sans-serif" }}>
+                    No campaigns found for "{searchQuery}"
+                  </div>
+                )}
+                {!searchLoading && searchResults.map((c) => (
+                  <button
+                    key={c.id}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSearchOpen(false);
+                      setSearchQuery('');
+                      setDonationCampaign(c);
+                    }}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.875rem",
+                      padding: "0.75rem 1.25rem",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      borderBottom: `1px solid ${colors.outlineVariant}22`,
+                      textAlign: "left",
+                      transition: "background 0.12s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = colors.surfaceContainerLow)}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  >
+                    {c.cover_image_url && (
+                      <img
+                        src={c.cover_image_url}
+                        alt={c.title}
+                        style={{ width: "2.5rem", height: "2.5rem", borderRadius: "0.5rem", objectFit: "cover", flexShrink: 0 }}
+                      />
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: 0, fontFamily: "Plus Jakarta Sans, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: colors.onSurface, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {c.title}
+                      </p>
+                      <p style={{ margin: "0.125rem 0 0", fontFamily: "Manrope, sans-serif", fontSize: "0.75rem", color: colors.onSurfaceVariant, textTransform: "capitalize" }}>
+                        {c.category}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Icons */}
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-            <button
-              style={{
-                position: "relative",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: colors.primaryContainer,
-              }}
-            >
-              <Bell size={24} />
-              <span
-                style={{
-                  position: "absolute",
-                  top: "-0.25rem",
-                  right: "-0.25rem",
-                  width: "1rem",
-                  height: "1rem",
-                  background: "#7f1d1d",
-                  color: "#fff",
-                  fontSize: "0.625rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "999px",
-                  border: `2px solid ${colors.surface}`,
-                }}
-              >
-                3
-              </span>
-            </button>
+            <NotificationBell />
             <button
               onClick={() => router.push('/donor/basket')}
               style={{
@@ -617,6 +673,21 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
       <main style={{ paddingTop: "5rem" }}>
         {children}
       </main>
+
+      {/* Search → Donation Modal */}
+      {donationCampaign && (
+        <DonationModal
+          isOpen
+          onClose={() => setDonationCampaign(null)}
+          campaign={{
+            id: donationCampaign.id,
+            title: donationCampaign.title,
+            description: donationCampaign.description,
+            category: donationCampaign.category,
+            imageSrc: donationCampaign.cover_image_url ?? 'https://placehold.co/400x300?text=Campaign',
+          }}
+        />
+      )}
 
       {/* Footer */}
       <footer
@@ -755,7 +826,7 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
             opacity: 0.8,
           }}
         >
-          <span style={{ color: "#78716c" }}>© 2024 HOPECARD. Every card holds a heart.</span>
+          <span style={{ color: "#78716c" }}>© 2026 HOPECARD. Every card holds a heart.</span>
           <span
             style={{
               fontSize: "0.7rem",

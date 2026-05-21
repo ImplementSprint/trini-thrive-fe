@@ -38,7 +38,16 @@
       "Bash(npm run *)",
       "Bash(Select-String \"prefer-const\")",
       "PowerShell(head *)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Backend\\\\trini-thrive-be\\\\apps\\\\hopecard-beneficiary-service\" -Recurse | ForEach-Object { $_.FullName })"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Backend\\\\trini-thrive-be\\\\apps\\\\hopecard-beneficiary-service\" -Recurse | ForEach-Object { $_.FullName })",
+      "Bash(Get-ChildItem -Recurse -Directory)",
+      "Bash(Select-Object -First 30)",
+      "Bash(Format-Table FullName)",
+      "Bash(rm \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\\\\src\\\\app\\\\\\(donor\\)\\\\donor\\\\api\\\\notifications\\\\[id]\\\\read\\\\route.ts\")",
+      "Bash(rm \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\\\\src\\\\app\\\\\\(beneficiary\\)\\\\beneficiary\\\\api\\\\bank-accounts\\\\[id]\\\\route.ts\")",
+      "Bash(rm \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\\\\src\\\\app\\\\\\(beneficiary\\)\\\\beneficiary\\\\api\\\\campaigns\\\\[id]\\\\route.ts\")",
+      "Bash(rm \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\\\\src\\\\app\\\\\\(beneficiary\\)\\\\beneficiary\\\\api\\\\campaigns\\\\invitations\\\\[id]\\\\accept\\\\route.ts\")",
+      "Bash(rm \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\\\\src\\\\app\\\\\\(beneficiary\\)\\\\beneficiary\\\\api\\\\campaigns\\\\invitations\\\\[id]\\\\decline\\\\route.ts\")",
+      "Bash(xargs sed -i 's/© 2024/© 2026/g')"
     ]
   }
 }

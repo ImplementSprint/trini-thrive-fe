@@ -1,11 +1,12 @@
-﻿﻿﻿"use client";
+﻿"use client";
+import { BeneficiaryNotificationBell } from "@/app/(beneficiary)/beneficiary/shared/BeneficiaryNotificationBell";
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
-  Menu, Bell, LayoutDashboard, CreditCard,
-  Landmark, IdCard, User, ShieldCheck,
-  HelpCircle, BadgeCheck, Shield as ShieldIcon, Vibrate, Fingerprint, Calendar,
+  Menu, LayoutDashboard, CreditCard,
+  Landmark, IdCard, User, BadgeCheck,
+  HelpCircle, LogOut, LockKeyhole, Info,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 import { createClient } from "@/beneficiary-utils/supabase/client";
@@ -19,52 +20,11 @@ interface PersonalInfo {
   dob: string;
 }
 
-interface SecurityPreference {
-  id: string;
-  icon: React.ReactNode;
-  label: string;
-  description: string;
-  enabled: boolean;
+interface PasswordForm {
+  current: string;
+  next: string;
+  confirm: string;
 }
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-interface TogglePillProps {
-  enabled: boolean;
-  onToggle: () => void;
-}
-
-const TogglePill: React.FC<TogglePillProps> = ({ enabled, onToggle }) => (
-  <button
-    onClick={onToggle}
-    style={{
-      width: "3rem",
-      height: "1.5rem",
-      background: enabled ? S.primary : S.outlineVariant,
-      borderRadius: "999px",
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      padding: "0.25rem",
-      transition: "background 0.15s",
-      border: "none",
-      cursor: "pointer",
-    }}
-    aria-pressed={enabled}
-  >
-    <div
-      style={{
-        width: "1rem",
-        height: "1rem",
-        background: S.surfaceContainerLowest,
-        borderRadius: "999px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-        transition: "margin-left 0.15s",
-        marginLeft: enabled ? "auto" : 0,
-      }}
-    />
-  </button>
-);
 
 interface FieldProps {
   label: string;
@@ -72,9 +32,10 @@ interface FieldProps {
   type?: React.HTMLInputTypeAttribute;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   icon?: React.ReactNode;
+  disabled?: boolean;
 }
 
-const Field: React.FC<FieldProps> = ({ label, value, type = "text", onChange, icon }) => (
+const Field: React.FC<FieldProps> = ({ label, value, type = "text", onChange, icon, disabled }) => (
   <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
     <label
       style={{
@@ -82,7 +43,7 @@ const Field: React.FC<FieldProps> = ({ label, value, type = "text", onChange, ic
         fontWeight: 700,
         textTransform: "uppercase",
         letterSpacing: "0.15em",
-        color: S.primary,
+        color: disabled ? S.onSurfaceVariant : S.primary,
         paddingLeft: "0.25rem",
       }}
     >
@@ -92,21 +53,24 @@ const Field: React.FC<FieldProps> = ({ label, value, type = "text", onChange, ic
       <input
         style={{
           width: "100%",
-          background: S.surfaceContainerLow,
+          background: disabled ? `${S.surfaceContainerLow}80` : S.surfaceContainerLow,
           border: "none",
           borderRadius: "0.75rem",
           padding: "0.875rem 1.5rem",
           outline: "none",
           transition: "box-shadow 0.15s",
-          color: S.onSurface,
+          color: disabled ? S.onSurfaceVariant : S.onSurface,
           fontSize: "0.875rem",
           fontFamily: "Plus Jakarta Sans, sans-serif",
           boxSizing: "border-box",
+          cursor: disabled ? "not-allowed" : "text",
+          opacity: disabled ? 0.6 : 1,
         }}
         type={type}
         value={value}
         onChange={onChange}
-        onFocus={(e) => (e.currentTarget.style.boxShadow = `0 0 0 2px ${S.primaryContainer}66`)}
+        disabled={disabled}
+        onFocus={(e) => { if (!disabled) e.currentTarget.style.boxShadow = `0 0 0 2px ${S.primaryContainer}66`; }}
         onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
       />
       {icon && (
@@ -187,7 +151,6 @@ const NAV_ITEMS = [
   { icon: <Landmark size={20} />, label: "Banking", active: false, href: "/beneficiary/banking-details" },
   { icon: <IdCard size={20} />, label: "Identity", active: false, href: "/beneficiary/identity-verification" },
   { icon: <User size={20} />, label: "Profile", active: true, href: "/beneficiary/profile-settings" },
-  { icon: <ShieldCheck size={20} />, label: "Security", active: false, href: "/beneficiary/security-settings" },
 ];
 
 const SIDEBAR_W_EXPANDED = 220;
@@ -199,7 +162,13 @@ const ProfileSettings: React.FC = () => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [profileOpen, setProfileOpen] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [activeSince, setActiveSince] = useState<number | null>(null);
+  const [pwForm, setPwForm] = useState<PasswordForm>({ current: "", next: "", confirm: "" });
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState<boolean>(false);
+  const [pwLoading, setPwLoading] = useState<boolean>(false);
   const supabase = createClient();
 
   const [info, setInfo] = useState<PersonalInfo>({
@@ -208,23 +177,6 @@ const ProfileSettings: React.FC = () => {
     phone: "",
     dob: "",
   });
-
-  const [prefs, setPrefs] = useState<SecurityPreference[]>([
-    {
-      id: "mfa",
-      icon: <Vibrate size={24} />,
-      label: "Multi-Factor Authentication",
-      description: "Add an extra layer of security to your account access",
-      enabled: true,
-    },
-    {
-      id: "bio",
-      icon: <Fingerprint size={24} />,
-      label: "Biometric Login",
-      description: "Use FaceID or Fingerprint for faster sign-in",
-      enabled: false,
-    },
-  ]);
 
   // Fetch user profile on mount
   useEffect(() => {
@@ -269,11 +221,65 @@ const ProfileSettings: React.FC = () => {
     (field: keyof PersonalInfo) => (e: React.ChangeEvent<HTMLInputElement>) =>
       setInfo((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const togglePref = (id: string) =>
-    setPrefs((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
+  const handlePwChange = (field: keyof PasswordForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setPwForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const handleSave = () => {
-    // save handler
+  const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(false);
+    if (pwForm.next.length < 8 || !/\d/.test(pwForm.next)) {
+      setPwError("New password must be at least 8 characters and contain one number.");
+      return;
+    }
+    if (pwForm.next !== pwForm.confirm) {
+      setPwError("New passwords do not match.");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) { setPwError("Could not identify your account."); return; }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: pwForm.current });
+      if (signInError) { setPwError("Current password is incorrect."); return; }
+      const { error: updateError } = await supabase.auth.updateUser({ password: pwForm.next });
+      if (updateError) { setPwError(updateError.message); return; }
+      setPwSuccess(true);
+      setPwForm({ current: "", next: "", confirm: "" });
+    } catch {
+      setPwError("Something went wrong. Please try again.");
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/beneficiary/login";
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveSuccess(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const nameParts = info.fullName.trim().split(" ");
+      const firstName = nameParts[0] ?? "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+      const { error } = await supabase
+        .from("beneficiary_profiles")
+        .update({ first_name: firstName, last_name: lastName, phone: info.phone })
+        .eq("auth_user_id", user.id);
+      if (error) { alert(error.message); return; }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save changes. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const sidebarW = collapsed ? SIDEBAR_W_COLLAPSED : SIDEBAR_W_EXPANDED;
@@ -330,34 +336,7 @@ const ProfileSettings: React.FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{
-              padding: "0.5rem",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#78716c",
-              borderRadius: "999px",
-              display: "flex",
-              position: "relative",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-          >
-            <Bell size={22} />
-            <span
-              style={{
-                position: "absolute",
-                top: "0.5rem",
-                right: "0.5rem",
-                width: "0.5rem",
-                height: "0.5rem",
-                background: S.error,
-                borderRadius: "999px",
-              }}
-            />
-          </button>
+          <BeneficiaryNotificationBell />
 
           <div style={{ position: "relative" }}>
             <button
@@ -519,9 +498,15 @@ const ProfileSettings: React.FC = () => {
               }}
               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              onClick={async () => {
+                const { createClient } = await import("@/beneficiary-utils/supabase/client");
+                await createClient().auth.signOut();
+                document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
+                window.location.href = "/beneficiary/login";
+              }}
             >
-              <HelpCircle size={18} />
-              {!collapsed && "Request Support"}
+              <LogOut size={18} />
+              {!collapsed && "Log Out"}
             </button>
           </div>
         </aside>
@@ -599,20 +584,45 @@ const ProfileSettings: React.FC = () => {
                 ) : (
                   <>
                     <Field label="Full Name" value={info.fullName} onChange={handleInfoChange("fullName")} />
-                    <Field label="Email Address" value={info.email} type="email" onChange={handleInfoChange("email")} />
+                    <Field label="Email Address" value={info.email} type="email" onChange={handleInfoChange("email")} disabled />
                     <Field label="Phone Number" value={info.phone} type="tel" onChange={handleInfoChange("phone")} />
-                    <Field
-                      label="Date of Birth"
-                      value={info.dob}
-                      type="date"
-                      onChange={handleInfoChange("dob")}
-                    />
+                    <Field label="Date of Birth" value={info.dob} type="date" onChange={handleInfoChange("dob")} />
+                    <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "1rem", paddingTop: "0.5rem" }}>
+                      {saveSuccess && (
+                        <span style={{ fontSize: "0.875rem", color: "#166534", fontWeight: 600 }}>
+                          Changes saved successfully!
+                        </span>
+                      )}
+                      <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        style={{
+                          padding: "0.875rem 2.5rem",
+                          background: saving ? S.outlineVariant : S.primary,
+                          color: S.onPrimary,
+                          borderRadius: "999px",
+                          fontWeight: 700,
+                          fontSize: "0.875rem",
+                          border: "none",
+                          cursor: saving ? "not-allowed" : "pointer",
+                          transition: "transform 0.15s, opacity 0.15s",
+                          boxShadow: saving ? "none" : `0 4px 16px ${S.primary}33`,
+                          fontFamily: "Plus Jakarta Sans, sans-serif",
+                          opacity: saving ? 0.7 : 1,
+                        }}
+                        onMouseEnter={(e) => { if (!saving) e.currentTarget.style.transform = "scale(1.02)"; }}
+                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                      >
+                        {saving ? "Saving…" : "Apply Changes"}
+                      </button>
+                    </div>
                   </>
                 )}
               </div>
             </section>
 
-            {/* Security Preferences */}
+
+            {/* Change Password */}
             <section
               style={{
                 background: S.surfaceContainerLowest,
@@ -622,54 +632,111 @@ const ProfileSettings: React.FC = () => {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
-                <ShieldIcon size={20} style={{ color: S.primary }} />
+                <div
+                  style={{
+                    width: "3rem", height: "3rem", borderRadius: "0.75rem",
+                    background: S.surfaceContainerHigh, display: "flex",
+                    alignItems: "center", justifyContent: "center", color: S.primary,
+                  }}
+                >
+                  <LockKeyhole size={20} />
+                </div>
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: S.onSurface, margin: 0 }}>
-                  Security Preferences
+                  Change Password
                 </h2>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {prefs.map((pref) => (
-                  <div
-                    key={pref.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "1.5rem",
-                      background: S.surfaceContainerLow,
-                      borderRadius: "0.75rem",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = S.surfaceContainerHigh)}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = S.surfaceContainerLow)}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-                      <div
-                        style={{
-                          width: "3rem",
-                          height: "3rem",
-                          borderRadius: "999px",
-                          background: `${S.primary}1a`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: S.primary,
-                        }}
-                      >
-                        {pref.icon}
-                      </div>
-                      <div>
-                        <p style={{ fontWeight: 700, color: S.onSurface, margin: "0 0 0.125rem" }}>{pref.label}</p>
-                        <p style={{ fontSize: "0.75rem", color: S.onSurfaceVariant, margin: 0 }}>{pref.description}</p>
-                      </div>
-                    </div>
-                    <TogglePill enabled={pref.enabled} onToggle={() => togglePref(pref.id)} />
+              <form
+                onSubmit={handlePasswordSubmit}
+                style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1.5rem" }}
+              >
+                {(
+                  [
+                    { label: "Current Password", field: "current" },
+                    { label: "New Password", field: "next", hint: "At least 8 characters with one number." },
+                    { label: "Confirm New Password", field: "confirm" },
+                  ] as { label: string; field: keyof PasswordForm; hint?: string }[]
+                ).map(({ label, field, hint }) => (
+                  <div key={field} style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+                    <label style={{ fontSize: "0.625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: S.primary, paddingLeft: "0.25rem" }}>
+                      {label}
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={pwForm[field]}
+                      onChange={handlePwChange(field)}
+                      style={{
+                        background: S.surfaceContainerLow, border: "none", borderRadius: "0.75rem",
+                        padding: "0.875rem 1.5rem", outline: "none", fontSize: "0.875rem",
+                        fontFamily: "Plus Jakarta Sans, sans-serif", boxSizing: "border-box", width: "100%",
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.boxShadow = `0 0 0 2px ${S.primaryContainer}66`)}
+                      onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
+                    />
+                    {hint && <p style={{ fontSize: "0.625rem", color: S.onSurfaceVariant, margin: 0, paddingLeft: "0.25rem" }}>{hint}</p>}
                   </div>
                 ))}
-              </div>
+                <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  {pwError && (
+                    <p style={{ borderRadius: "0.75rem", background: S.errorContainer, padding: "0.75rem 1rem", fontSize: "0.875rem", color: S.onErrorContainer, margin: 0 }}>
+                      {pwError}
+                    </p>
+                  )}
+                  {pwSuccess && (
+                    <p style={{ borderRadius: "0.75rem", background: "#dcfce7", padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#166534", margin: 0 }}>
+                      Password updated successfully.
+                    </p>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: "1rem", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.75rem", color: S.onSurfaceVariant }}>
+                      <Info size={16} style={{ color: S.primary, flexShrink: 0 }} />
+                      <span>Changing your password will log you out of all other active sessions.</span>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={pwLoading}
+                      style={{
+                        padding: "0.875rem 2.5rem", background: pwLoading ? S.outlineVariant : S.primary,
+                        color: S.onPrimary, borderRadius: "999px", fontWeight: 700, fontSize: "0.875rem",
+                        border: "none", cursor: pwLoading ? "not-allowed" : "pointer",
+                        transition: "transform 0.15s, opacity 0.15s", opacity: pwLoading ? 0.7 : 1,
+                        boxShadow: pwLoading ? "none" : `0 4px 16px ${S.primary}33`,
+                        fontFamily: "Plus Jakarta Sans, sans-serif", whiteSpace: "nowrap",
+                      }}
+                      onMouseEnter={(e) => { if (!pwLoading) e.currentTarget.style.transform = "scale(1.02)"; }}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    >
+                      {pwLoading ? "Updating…" : "Update Password"}
+                    </button>
+                  </div>
+                </div>
+              </form>
             </section>
 
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <button
+                onClick={handleLogout}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "1rem 2rem",
+                  background: "transparent",
+                  color: S.primary,
+                  borderRadius: "999px",
+                  fontWeight: 700,
+                  fontSize: "0.875rem",
+                  border: `2px solid ${S.primary}`,
+                  cursor: "pointer",
+                  transition: "transform 0.15s, background 0.15s",
+                  fontFamily: "Plus Jakarta Sans, sans-serif",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.02)"; e.currentTarget.style.background = `${S.primary}10`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "transparent"; }}
+              >
+                <LogOut size={16} />
+                Log Out
+              </button>
               <button
                 onClick={handleSave}
                 style={{

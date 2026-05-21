@@ -21,7 +21,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onSuccess }: Crea
     e.preventDefault();
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CM_BACKEND_URL}/api/v1/campaigns`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_CM_BACKEND_URL}/api/v1/hopecard/cm/campaigns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

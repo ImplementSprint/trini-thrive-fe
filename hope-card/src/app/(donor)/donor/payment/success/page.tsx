@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useMemo, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useCallback, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SharedLayout from "@/donor-components/SharedLayout";
 import { Download, Share2, Sparkles, Heart, Home } from "lucide-react";
 import { useCart } from "@/donor-contexts/CartContext";
@@ -39,32 +39,58 @@ const FALLBACK_IMAGE = "https://lh3.googleusercontent.com/aida-public/AB6AXuB4F4
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
-  const { cart: liveCart, cartTotal: liveCartTotal, processingFee: liveProcessingFee, apiTotal: liveApiTotal } = useCart();
+  const searchParams = useSearchParams();
+  const { clearCart } = useCart();
   const { profile } = useProfile();
 
-  // Use live cart if still populated, otherwise fall back to snapshot saved before checkout cleared it
+  const referenceId = searchParams.get('ref') ?? '';
+  const buyerAuthId = searchParams.get('buyerAuthId') ?? '';
+
+  const [confirming, setConfirming] = useState(true);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  // Order snapshot saved before redirecting to PayMongo
   const { cart, cartTotal, processingFee, apiTotal } = React.useMemo(() => {
-    if (liveCart.length > 0) {
-      return { cart: liveCart, cartTotal: liveCartTotal, processingFee: liveProcessingFee, apiTotal: liveApiTotal };
-    }
     try {
       const saved = sessionStorage.getItem('lastOrder');
       if (saved) return JSON.parse(saved);
     } catch {}
-    return { cart: liveCart, cartTotal: liveCartTotal, processingFee: liveProcessingFee, apiTotal: liveApiTotal };
-  }, [liveCart, liveCartTotal, liveProcessingFee, liveApiTotal]);
+    return { cart: [], cartTotal: 0, processingFee: 0, apiTotal: 0 };
+  }, []);
+
+  useEffect(() => {
+    if (!referenceId || !buyerAuthId) {
+      setConfirmError('Missing payment reference. Please contact support.');
+      setConfirming(false);
+      return;
+    }
+    const token = localStorage.getItem('donor_token') ?? '';
+    fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/purchases/confirm`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ referenceId, buyerAuthId }),
+    })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data?.message ?? data?.error ?? 'Payment confirmation failed');
+        clearCart();
+        sessionStorage.removeItem('lastOrder');
+      })
+      .catch((err) => setConfirmError(err.message))
+      .finally(() => setConfirming(false));
+  }, [referenceId, buyerAuthId, clearCart]);
 
   const donorName = profile?.first_name || "Friend";
   const total = apiTotal > 0 ? apiTotal : cartTotal;
   const causes = cart.length > 0 ? cart.map((i: any) => i.title).join(" & ") : "Your selected campaigns";
   const impactImageSrc = cart[0]?.imageSrc || FALLBACK_IMAGE;
 
-  const [transactionId, setTransactionId] = useState<string>("");
   const [date, setDate] = useState<string>("");
 
   useEffect(() => {
-    const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
-    setTransactionId(`#HC-${suffix}`);
     setDate(new Date().toLocaleDateString("en-PH", {
       year: "numeric", month: "long", day: "numeric",
     }));
@@ -79,9 +105,35 @@ export default function PaymentSuccessPage() {
   const detailFields = [
     { label: "Cause Supported", value: causes, large: false },
     { label: "Amount", value: `₱${total.toLocaleString()}`, large: true },
-    { label: "Transaction ID", value: transactionId, large: false },
+    { label: "Transaction ID", value: referenceId ? `#${referenceId}` : "—", large: false },
     { label: "Date", value: date, large: false },
   ];
+
+  if (confirming) {
+    return (
+      <SharedLayout>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: "1rem" }}>
+          <Heart size={48} color={colors.primaryContainer} fill={colors.primaryContainer} style={{ animation: "pulse 1.5s ease-in-out infinite" }} />
+          <p style={{ fontSize: "1.25rem", fontWeight: 700, color: colors.onSurface, fontFamily: "Plus Jakarta Sans, sans-serif" }}>Confirming your donation…</p>
+          <p style={{ color: colors.onSurfaceVariant }}>Please wait while we verify your payment.</p>
+        </div>
+      </SharedLayout>
+    );
+  }
+
+  if (confirmError) {
+    return (
+      <SharedLayout>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: "1rem", textAlign: "center" }}>
+          <p style={{ fontSize: "1.25rem", fontWeight: 700, color: colors.secondary, fontFamily: "Plus Jakarta Sans, sans-serif" }}>Payment Confirmation Failed</p>
+          <p style={{ color: colors.onSurfaceVariant, maxWidth: "480px" }}>{confirmError}</p>
+          <button onClick={() => router.push('/donor/basket')} style={{ marginTop: "1rem", padding: "0.75rem 2rem", background: colors.primaryContainer, color: colors.onPrimaryContainer, borderRadius: "0.75rem", border: "none", fontWeight: 700, cursor: "pointer", fontFamily: "Plus Jakarta Sans, sans-serif" }}>
+            Return to Basket
+          </button>
+        </div>
+      </SharedLayout>
+    );
+  }
 
   return (
     <SharedLayout>
@@ -346,7 +398,7 @@ export default function PaymentSuccessPage() {
                 <p style={{ fontFamily: "Plus Jakarta Sans, sans-serif", fontWeight: 700, color: colors.onSurface, marginBottom: "0.25rem" }}>Impact Milestone Reached</p>
                 <p style={{ fontSize: "0.875rem", color: colors.onSurfaceVariant }}>
                   {cart.length > 0
-                    ? `You've just supported ${cart.length} cause${cart.length > 1 ? "s" : ""} with a total of ₱${total.toLocaleString()}.`
+                    ? `You've just supported ${cart.length} cause${cart.length > 1 ? "s" : ""} with a total of ₱${cartTotal.toLocaleString()}.`
                     : "Your generosity creates ripples of change across communities."}
                 </p>
               </div>

@@ -26,19 +26,19 @@ export default function ForgotPassword() {
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.loginContainer}>
-        
+
         <div className={styles.logoSection}>
           <div className={styles.logoMark}>
-            <Image 
-              src="/admin/HopeCard%20Logo.png" 
-              alt="HopeCard Logo" 
-              width={60} 
-              height={60} 
+            <Image
+              src="/admin/HopeCard%20Logo.png"
+              alt="HopeCard Logo"
+              width={60}
+              height={60}
               priority
               style={{ objectFit: "contain" }}
             />
           </div>
-          <h1 className={styles.logoText}>HopeCard</h1>
+          <h1 className={styles.logoText}>HOPECARD</h1>
         </div>
 
         <div className={styles.card}>
@@ -72,10 +72,10 @@ export default function ForgotPassword() {
               <label>Email Address</label>
               <div className={styles.inputWrapper}>
                 <Mail size={18} className={styles.inputIcon} />
-                <input 
-                  type="email" 
-                  placeholder="admin@hopecard.com" 
-                  required 
+                <input
+                  type="email"
+                  placeholder="admin@hopecard.com"
+                  required
                   className={styles.input}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -84,8 +84,8 @@ export default function ForgotPassword() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className={styles.loginBtn}
               disabled={loading}
             >
@@ -94,7 +94,7 @@ export default function ForgotPassword() {
           </form>
 
           <div className={styles.forgotPassword}>
-            <button 
+            <button
               type="button"
               onClick={() => router.push("/admin/login")}
               style={{

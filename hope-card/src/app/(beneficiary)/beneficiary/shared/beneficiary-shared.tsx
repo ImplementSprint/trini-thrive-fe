@@ -270,7 +270,7 @@ export const BeneficiaryFooter = React.memo(() => (
         margin: 0,
       }}
     >
-      © 2024 HOPECARD Beneficiary. All rights reserved.
+      © 2026 HOPECARD Beneficiary. All rights reserved.
     </p>
   </footer>
 ));
