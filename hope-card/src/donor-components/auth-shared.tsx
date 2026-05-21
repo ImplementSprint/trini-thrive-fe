@@ -210,7 +210,7 @@ export const AuthFooter = React.memo(() => (
     }}
   >
     <p style={{ fontSize: "0.875rem", lineHeight: 1.6, color: "rgba(27,28,27,0.5)", margin: 0, fontFamily: "Manrope, sans-serif" }}>
-      © 2024 HOPECARD. Every gift is a human embrace.
+      © 2026 HOPECARD. Every gift is a human embrace.
     </p>
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "2rem" }}>
       {FOOTER_LINKS.map((label) => (
@@ -326,36 +326,40 @@ export const AuthShell = React.memo<AuthShellProps>(({ children }) => (
 AuthShell.displayName = "AuthShell";
 
 // ─── Social Login Buttons (shared) ────────────────────────────────────────────
+async function handleGoogleLogin() {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/auth/google/url`
+  );
+  if (!res.ok) return;
+  const { url } = await res.json();
+  if (url) window.location.href = url;
+}
+
 export const SocialButtons = React.memo(() => (
-  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "2.5rem" }}>
-    {[
-      { label: "Google", icon: <GoogleIcon /> },
-      { label: "Apple",  icon: <AppleIcon /> },
-    ].map(({ label, icon }) => (
-      <button
-        key={label}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "0.75rem",
-          padding: "1rem",
-          borderRadius: "1rem",
-          background: C.surfaceContainerLow,
-          border: "none",
-          cursor: "pointer",
-          fontWeight: 700,
-          fontSize: "0.875rem",
-          color: C.onSurface,
-          fontFamily: "Manrope, sans-serif",
-          transition: "background 0.15s",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceContainerHigh)}
-        onMouseLeave={(e) => (e.currentTarget.style.background = C.surfaceContainerLow)}
-      >
-        {icon} {label}
-      </button>
-    ))}
+  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1rem", marginBottom: "2.5rem" }}>
+    <button
+      onClick={handleGoogleLogin}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0.75rem",
+        padding: "1rem",
+        borderRadius: "1rem",
+        background: C.surfaceContainerLow,
+        border: "none",
+        cursor: "pointer",
+        fontWeight: 700,
+        fontSize: "0.875rem",
+        color: C.onSurface,
+        fontFamily: "Manrope, sans-serif",
+        transition: "background 0.15s",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceContainerHigh)}
+      onMouseLeave={(e) => (e.currentTarget.style.background = C.surfaceContainerLow)}
+    >
+      <GoogleIcon /> Google
+    </button>
   </div>
 ));
 SocialButtons.displayName = "SocialButtons";
