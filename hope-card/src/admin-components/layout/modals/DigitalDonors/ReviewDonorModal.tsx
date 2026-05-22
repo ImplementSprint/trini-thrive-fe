@@ -15,7 +15,7 @@ interface ReviewDonorModalProps {
 function getSupabaseImageUrl(filePath: string): string {
   if (!filePath) return "";
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://hycsbfugiboutvgbvueg.supabase.co";
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const bucketName = "donor-ids";
   
   // If filePath is already a full URL, return it

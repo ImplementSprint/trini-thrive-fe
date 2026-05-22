@@ -2,7 +2,7 @@ import { supabaseServer } from './supabase/server';
 import { jwtVerify, SignJWT } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'hopecard-admin-secret-key-change-in-production'
+  process.env.JWT_SECRET ?? ''
 );
 
 /**

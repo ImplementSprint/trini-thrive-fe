@@ -8,7 +8,7 @@ import styles from "./ReviewBeneficiaryApprovalModal.module.css";
 function getSupabaseImageUrl(filePath: string): string {
   if (!filePath) return "";
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://hycsbfugiboutvgbvueg.supabase.co";
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const bucketName = "beneficiary-ids";
   
   if (filePath.startsWith("http")) return filePath;
