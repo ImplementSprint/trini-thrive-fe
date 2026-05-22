@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState, useEffect } from "react";
+import React, { Suspense, useCallback, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SharedLayout from "@/donor-components/SharedLayout";
 import { Download, Share2, Sparkles, Heart, Home } from "lucide-react";
@@ -37,7 +37,7 @@ const colors = {
 
 const FALLBACK_IMAGE = "https://lh3.googleusercontent.com/aida-public/AB6AXuB4F4ziaG0nqvRN4iqeFgPi3jU3IArnD6AwPZ_AsYXtgIFov6ojCwFJ1BMEbGSJL16Ga_986o0GhyN9lOXKWU5jGuKf9s8DEb8NuSgbsfFgr0rCpEkhsy-xq1uizloHBcU293QQcm60A9e4tV5VvXEhqP4YmFl1-k2WXhtkoB_YFbigY8-wXEeKJh7BuEUk4q0rqNWYQYujdrfll0AELYEpVVztJlxjx8uSsCRUnA56cor3w5hsKZIvUueVAutpFCTWqea7nFJ_HE6M";
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
@@ -419,5 +419,13 @@ export default function PaymentSuccessPage() {
         )}
       </div>
     </SharedLayout>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
