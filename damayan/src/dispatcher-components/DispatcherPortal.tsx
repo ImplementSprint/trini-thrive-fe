@@ -704,7 +704,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
                       <button
                         className="dp-btn dp-btn-sm"
                         style={{ flex: 1, background: isAss ? "var(--d-green)" : c, color: "#fff", border: "none" }}
-                        onClick={() => window.__dpAssign(u.id)}
+                        onClick={() => window.__dpAssign?.(u.id)}
                       >
                         {isAss ? "✓ Assigned" : "Assign"}
                       </button>
@@ -746,7 +746,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
               filterType={filterType}
               selectedIncident={selInc}
               assignedUnits={assigned}
-              onUnitAssign={uid => window.__dpAssign(uid)}
+              onUnitAssign={uid => window.__dpAssign?.(uid)}
               onIncidentClick={i => setSelInc(i)}
               height="100%"
             />
