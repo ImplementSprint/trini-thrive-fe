@@ -3,7 +3,7 @@
 import React, {
   createContext, useContext, useState, useCallback, useEffect, ReactNode
 } from 'react';
-import { supabase } from '@/donor-lib/supabase-client';
+import { supabase, getDonorTokenPayload } from '@/donor-lib/supabase-client';
 
 export interface CartItem {
   id: string;           // cart_items.id (DB row id)
@@ -118,11 +118,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await fetchCart(session);
-      } else {
-        setAuthUserId(null);
-        setAccessToken(null);
-        setLoading(false);
+        return;
       }
+
+      // Supabase session gone (e.g. expired during PayMongo redirect).
+      // Recover from our custom 24-hour donor_token JWT.
+      const payload = getDonorTokenPayload();
+      if (payload?.sub) {
+        const donorToken = localStorage.getItem('donor_token')!;
+        setAuthUserId(payload.sub);
+        setAccessToken(donorToken);
+        setLoading(true);
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/cart?authUserId=${payload.sub}`,
+            { headers: { Authorization: `Bearer ${donorToken}` } },
+          );
+          const data: ApiCartResponse = await parseJsonResponse(res);
+          if (res.ok) applyCartResponse(data);
+          else { setCart([]); setApiTotal(0); setProcessingFee(0); }
+        } catch { /* silently fail */ }
+        finally { setLoading(false); }
+        return;
+      }
+
+      setAuthUserId(null);
+      setAccessToken(null);
+      setLoading(false);
     }
 
     init();
@@ -207,6 +229,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!authUserId) throw new Error('Not authenticated');
     if (cart.length === 0) throw new Error('Cart is empty');
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/purchases/checkout`, {
       method: 'POST',
       headers: {
@@ -215,12 +238,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       },
       body: JSON.stringify({
         buyerAuthId: authUserId,
-        checkoutItems: cart.map((item) => ({
-          cardId: item.campaign_id,
-          title: item.title,
-          amount: item.price,
-          quantity: item.quantity,
-        })),
+        successBaseUrl: `${appUrl}/donor/payment/success`,
+        cancelUrl: `${appUrl}/donor/payment/cancel`,
       }),
     });
     const data = await parseJsonResponse(res);
