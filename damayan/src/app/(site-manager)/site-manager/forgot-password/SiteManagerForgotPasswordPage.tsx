@@ -24,7 +24,7 @@ export default function SiteManagerForgotPasswordPage() {
             <span className="auth-badge">Password Reset</span>
             <h2 className="auth-form-title">Forgot your<br />password?</h2>
             <p className="auth-form-sub">
-              Enter your registered email or phone number. We'll send a secure
+              Enter your registered email or phone number. We&apos;ll send a secure
               reset link immediately.
             </p>
           </header>
@@ -49,7 +49,7 @@ export default function SiteManagerForgotPasswordPage() {
             </div>
 
             <div className="auth-info-box">
-              <span className="material-symbols-outlined" style={{fontSize:"1rem",verticalAlign:"middle",marginRight:"0.35rem"}}>tips_and_updates</span> We'll deliver your reset link via email or SMS to the contact
+              <span className="material-symbols-outlined" style={{fontSize:"1rem",verticalAlign:"middle",marginRight:"0.35rem"}}>tips_and_updates</span> We&apos;ll deliver your reset link via email or SMS to the contact
               registered under your Site Manager account.
             </div>
 

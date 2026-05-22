@@ -70,7 +70,7 @@ export default function SiteManagerProfilePage({ onBack, primaryColor }: SiteMan
                 onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
                 disabled={!isEditing}
                 className="w-full px-6 py-4 rounded-2xl border-2 border-[#dadad5] dark:border-[#3b3b3b] bg-[#f4f4ef] dark:bg-[#2e312d] text-[#1a1c19] dark:text-white font-bold focus:outline-none transition-colors disabled:opacity-70 disabled:bg-transparent" 
-                style={{ outlineColor: primaryColor } as any}
+                style={{ outlineColor: primaryColor } as React.CSSProperties}
               />
             </div>
             <div className="space-y-1.5">
@@ -98,7 +98,7 @@ export default function SiteManagerProfilePage({ onBack, primaryColor }: SiteMan
                 onChange={(e) => setProfileData({...profileData, email: e.target.value})}
                 disabled={!isEditing}
                 className="w-full px-6 py-4 rounded-2xl border-2 border-[#dadad5] dark:border-[#3b3b3b] bg-[#f4f4ef] dark:bg-[#2e312d] text-[#1a1c19] dark:text-white font-bold focus:outline-none transition-colors disabled:opacity-70 disabled:bg-transparent" 
-                style={{ outlineColor: primaryColor } as any}
+                style={{ outlineColor: primaryColor } as React.CSSProperties}
               />
             </div>
             <div className="space-y-1.5">
@@ -108,7 +108,7 @@ export default function SiteManagerProfilePage({ onBack, primaryColor }: SiteMan
                 onChange={(e) => setProfileData({...profileData, mobile: e.target.value})}
                 disabled={!isEditing}
                 className="w-full px-6 py-4 rounded-2xl border-2 border-[#dadad5] dark:border-[#3b3b3b] bg-[#f4f4ef] dark:bg-[#2e312d] text-[#1a1c19] dark:text-white font-bold focus:outline-none transition-colors disabled:opacity-70 disabled:bg-transparent" 
-                style={{ outlineColor: primaryColor } as any}
+                style={{ outlineColor: primaryColor } as React.CSSProperties}
               />
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function SiteManagerProfilePage({ onBack, primaryColor }: SiteMan
                 onChange={(e) => setProfileData({...profileData, emergencyContactName: e.target.value})}
                 disabled={!isEditing}
                 className="w-full px-6 py-4 rounded-2xl border-2 border-[#dadad5] dark:border-[#3b3b3b] bg-[#f4f4ef] dark:bg-[#2e312d] text-[#1a1c19] dark:text-white font-bold focus:outline-none transition-colors disabled:opacity-70 disabled:bg-transparent" 
-                style={{ outlineColor: primaryColor } as any}
+                style={{ outlineColor: primaryColor } as React.CSSProperties}
               />
             </div>
             <div className="space-y-1.5">
@@ -138,7 +138,7 @@ export default function SiteManagerProfilePage({ onBack, primaryColor }: SiteMan
                 onChange={(e) => setProfileData({...profileData, emergencyContactMobile: e.target.value})}
                 disabled={!isEditing}
                 className="w-full px-6 py-4 rounded-2xl border-2 border-[#dadad5] dark:border-[#3b3b3b] bg-[#f4f4ef] dark:bg-[#2e312d] text-[#1a1c19] dark:text-white font-bold focus:outline-none transition-colors disabled:opacity-70 disabled:bg-transparent" 
-                style={{ outlineColor: primaryColor } as any}
+                style={{ outlineColor: primaryColor } as React.CSSProperties}
               />
             </div>
           </div>

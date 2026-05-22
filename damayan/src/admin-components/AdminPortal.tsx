@@ -1003,7 +1003,7 @@ function ApprovalsPage({
         >
           <div className="admin-alert warning" style={{ marginBottom: "1rem" }}>
             <span className="admin-alert-icon">⚠️</span>
-            <div>Rejecting <strong>{rejectTarget.name}</strong>'s application for <strong>{rejectTarget.role}</strong>. The rejection reason will be sent to the applicant.</div>
+            <div>Rejecting <strong>{rejectTarget.name}</strong>&apos;s application for <strong>{rejectTarget.role}</strong>. The rejection reason will be sent to the applicant.</div>
           </div>
           <div className="admin-form-group">
             <label className="admin-form-label">Rejection Reason (required)</label>
@@ -1815,10 +1815,10 @@ function AfterCalamityPage({
                     margin: 0,
                   }}
                 >
-                  "The calamity event has ended and it is now safe to return to
+                  &quot;The calamity event has ended and it is now safe to return to
                   your homes. Evacuation corridors are open. Relief distribution
                   is ongoing at designated centers. Please proceed in an orderly
-                  manner and follow guidance from local authorities."
+                  manner and follow guidance from local authorities.&quot;
                 </p>
               </div>
               <div
@@ -2808,7 +2808,7 @@ function EarlyWarningPage({
                       fontSize: "0.8rem", fontStyle: "italic",
                       lineHeight: 1.7, color: "var(--admin-text-muted)",
                     }}>
-                      "{config.message}"
+                      &quot;{config.message}&quot;
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "0.6rem" }}>

@@ -42,13 +42,26 @@ function CitizenAvatarChip() {
   );
 }
 
+interface HouseholdMember {
+  name: string;
+  age: string;
+  relationship: string;
+  accessibilityNeeds: string[];
+}
+
+interface Animal {
+  name: string;
+  species: string;
+  needsCage: boolean;
+}
+
 export default function CitizenBeforeCalamityPage() {
   const [activeSidebarItem, setActiveSidebarItem] = useState("home");
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
   const [activeAlert, setActiveAlert] = useState<string | null>(
     "FLASH FLOOD WARNING: Sector 4 expects 20cm surge within 120mins. Acknowledge to receive evacuation route."
   );
-  
+
   // New Registration Flow State
   const [registrationType, setRegistrationType] = useState<"Individual" | "Household" | null>(null);
   const [registrationStep, setRegistrationStep] = useState(1);
@@ -63,11 +76,11 @@ export default function CitizenBeforeCalamityPage() {
     consent: false
   });
 
-  const [householdMembers, setHouseholdMembers] = useState<any[]>([
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([
     { name: "", age: "", relationship: "", accessibilityNeeds: [] }
   ]);
 
-  const [animals, setAnimals] = useState<any[]>([
+  const [animals, setAnimals] = useState<Animal[]>([
     { name: "", species: "", needsCage: false }
   ]);
 
@@ -81,13 +94,13 @@ export default function CitizenBeforeCalamityPage() {
     }
   };
 
-  const handleMemberChange = (index: number, field: string, value: any) => {
+  const handleMemberChange = (index: number, field: keyof HouseholdMember, value: string | string[]) => {
     const newMembers = [...householdMembers];
-    if (field === "age") {
+    if (field === "age" && typeof value === "string") {
       const val = parseInt(value);
-      newMembers[index][field] = isNaN(val) ? "" : Math.max(0, val).toString();
+      newMembers[index] = { ...newMembers[index], [field]: isNaN(val) ? "" : Math.max(0, val).toString() };
     } else {
-      newMembers[index][field] = value;
+      newMembers[index] = { ...newMembers[index], [field]: value };
     }
     setHouseholdMembers(newMembers);
   };
@@ -102,9 +115,9 @@ export default function CitizenBeforeCalamityPage() {
     }
   };
 
-  const handleAnimalChange = (index: number, field: string, value: any) => {
+  const handleAnimalChange = (index: number, field: keyof Animal, value: string | boolean) => {
     const newAnimals = [...animals];
-    newAnimals[index][field] = value;
+    newAnimals[index] = { ...newAnimals[index], [field]: value };
     setAnimals(newAnimals);
   };
 

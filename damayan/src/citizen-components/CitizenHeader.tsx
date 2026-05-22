@@ -11,14 +11,10 @@ interface CitizenHeaderProps {
 const CitizenHeader: React.FC<CitizenHeaderProps> = ({ phase, onProfileClick }) => {
   const isEmergency = phase === "during";
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  );
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (document.documentElement.classList.contains("dark")) {
-      setIsDarkMode(true);
-    }
-  }, []);
 
   const toggleDarkMode = () => {
     if (document.documentElement.classList.contains("dark")) {
@@ -49,7 +45,7 @@ const CitizenHeader: React.FC<CitizenHeaderProps> = ({ phase, onProfileClick }) 
             type="text" 
             placeholder="Search resources, shelters..." 
             className="bg-[#eeeeea] dark:bg-[#232622] dark:text-[#e2e3dd] border-none rounded-2xl px-6 py-3 text-sm w-72 focus:ring-2 transition-all outline-none"
-            style={{ ringColor: isEmergency ? "#FFB300" : "#2E7D32" } as any}
+            style={{ "--ring-color": isEmergency ? "#FFB300" : "#2E7D32" } as React.CSSProperties}
           />
           <span className="material-symbols-outlined absolute right-4 top-3 text-[#707a6c] dark:text-[#c4c7c0] opacity-50">search</span>
         </div>

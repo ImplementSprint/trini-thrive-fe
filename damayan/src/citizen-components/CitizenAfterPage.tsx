@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type AStep = "relief_claim" | "all_clear";
 
@@ -9,10 +9,6 @@ interface Props {
 
 export default function CitizenAfterPage({ initialStep = "relief_claim" }: Props) {
   const [step, setStep] = useState<AStep>(initialStep);
-
-  useEffect(() => {
-    if (initialStep) setStep(initialStep);
-  }, [initialStep]);
   const [showCheckout, setShowCheckout] = useState(false);
 
   return (

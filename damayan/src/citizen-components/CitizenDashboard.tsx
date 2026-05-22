@@ -54,16 +54,16 @@ export default function CitizenDashboard({ initialPhase = "auth" }: Props) {
   return (
     <div className="flex min-h-screen bg-[#fafaf5] dark:bg-[#1a1c19] text-[#1a1c19] dark:text-[#e2e3dd] font-['Public_Sans'] transition-colors duration-300">
       {/* Persistent Sidebar */}
-      <CitizenSidebar 
-        phase={phase as any} 
-        setPhase={(p) => { setPhase(p as Phase); setActiveNav("Overview"); }} 
+      <CitizenSidebar
+        phase={phase as "before" | "during" | "after"}
+        setPhase={(p) => { setPhase(p as Phase); setActiveNav("Overview"); }}
         onNavigate={handleNavigate}
         activeNav={activeNav}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Persistent Header */}
-        <CitizenHeader phase={phase as any} onProfileClick={() => handleNavigate("Profile")} />
+        <CitizenHeader phase={phase as "before" | "during" | "after"} onProfileClick={() => handleNavigate("Profile")} />
 
         {/* Dynamic Content Area */}
         <main className="flex-1 overflow-y-auto px-10 py-12 scroll-smooth">
