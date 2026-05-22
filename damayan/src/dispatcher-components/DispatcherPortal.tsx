@@ -9,6 +9,15 @@ import {
 } from "./data";
 import LiveMap, { MapMode } from "./LiveMap";
 
+declare global {
+  interface Window {
+    __dpAssign?: (uid: string) => void;
+    __dpMsg?: (uid: string) => void;
+    __dpBackup?: (id: string) => void;
+    __dpEscalate?: (id: string) => void;
+  }
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // MINI COMPONENTS
 // ══════════════════════════════════════════════════════════════════════════════
@@ -50,7 +59,7 @@ function addMins(timeStr: string, mins: number): string {
   try {
     const [time, period] = timeStr.split(" ");
     const [h, m] = time.split(":").map(Number);
-    let totalMins = (h % 12) * 60 + m + (period === "PM" ? 720 : 0) + mins;
+    const totalMins = (h % 12) * 60 + m + (period === "PM" ? 720 : 0) + mins;
     const newH = Math.floor(totalMins / 60) % 12 || 12;
     const newM = totalMins % 60;
     const newP = Math.floor(totalMins / 60) % 24 >= 12 ? "PM" : "AM";
@@ -106,7 +115,7 @@ function LoginPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: (
             <div>
               <div className="dp-login-intro">
                 <h2>Reset Password</h2>
-                <p>Enter your registered email or phone. We'll send a reset link via Email/SMS.</p>
+                <p>Enter your registered email or phone. We&apos;ll send a reset link via Email/SMS.</p>
               </div>
               {resetSent ? (
                 <div className="dp-alert dp-alert-green" style={{ marginTop: "1.5rem", textAlign: "center" }}>
@@ -151,7 +160,7 @@ function LoginPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: (
                     </div>
                     <button className="dp-btn-primary" onClick={() => { if (user && pass) { setErr(false); onLogin(); } else setErr(true); }}>Sign In →</button>
                   </div>
-                  <p className="dp-login-switch">Don't have an account? <a onClick={() => setMode("register")}>Register here</a></p>
+                  <p className="dp-login-switch">Don&apos;t have an account? <a onClick={() => setMode("register")}>Register here</a></p>
                 </>
               ) : (
                 <>
@@ -171,7 +180,7 @@ function LoginPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: (
                     <div className="dp-field">
                       <label>Upload Valid Government ID *</label>
                       <div className={`dp-id-upload ${idFile ? "uploaded" : ""}`} onClick={() => setIdFile("gov_id.jpg")}>
-                        {idFile ? <><div className="label" style={{ color: "var(--d-green)", fontWeight: 700 }}>{idFile} — uploaded</div></> : <><div className="label">Click to upload Government ID</div><div className="hint">UMID, SSS, Passport, Driver's License</div></>}
+                        {idFile ? <><div className="label" style={{ color: "var(--d-green)", fontWeight: 700 }}>{idFile} — uploaded</div></> : <><div className="label">Click to upload Government ID</div><div className="hint">UMID, SSS, Passport, Driver&apos;s License</div></>}
                       </div>
                     </div>
                     <button className="dp-btn-primary" disabled={!user || !pass || !idFile} onClick={onRegister}>Register & Submit for Verification</button>
@@ -197,7 +206,7 @@ function AwaitingPage({ onProceed }: { onProceed: () => void }) {
       <div className="dp-verify-card">
         <div className="dp-verify-icon" style={{ background: "var(--d-primary)", color: "white", width: 48, height: 48, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.5rem", fontSize: "1.2rem", fontWeight: 800 }}>T</div>
         <h2>Waiting for Verification</h2>
-        <p>Your account and government ID have been submitted. An administrator will verify your documents. You'll be notified via email/SMS once approved.</p>
+        <p>Your account and government ID have been submitted. An administrator will verify your documents. You&apos;ll be notified via email/SMS once approved.</p>
         <div className="dp-verify-steps">
           <div className="dp-verify-step">Account created with username & password</div>
           <div className="dp-verify-step">Government ID uploaded successfully</div>
@@ -571,16 +580,18 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
 
   // When a new dispatchTarget comes in from Shell, switch to dispatch mode
   useEffect(() => {
-    if (dispatchTarget) {
-      setSelInc(dispatchTarget);
-      setAssigned(dispatchTarget.assignedUnits ?? []);
+    if (!dispatchTarget) return;
+    const target = dispatchTarget;
+    queueMicrotask(() => {
+      setSelInc(target);
+      setAssigned(target.assignedUnits ?? []);
       setMapMode("dispatch");
       setMapKey(k => k + 1);
-    }
-  }, [dispatchTarget?.id]);
+    });
+  }, [dispatchTarget?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    (window as any).__dpAssign = (uid: string) => {
+    window.__dpAssign = (uid: string) => {
       setAssigned(p => p.includes(uid) ? p : [...p, uid]);
       if (selInc) {
         onUpdate(selInc.id, {
@@ -592,8 +603,8 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
         setMapKey(k => k + 1);
       }
     };
-    (window as any).__dpMsg = (uid: string) => toast.show(`Message sent to ${uid}`);
-    return () => { delete (window as any).__dpAssign; delete (window as any).__dpMsg; };
+    window.__dpMsg = (uid: string) => toast.show(`Message sent to ${uid}`);
+    return () => { delete window.__dpAssign; delete window.__dpMsg; };
   }, [selInc]);
 
   const confirmDispatch = () => {
@@ -694,7 +705,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
                       <button
                         className="dp-btn dp-btn-sm"
                         style={{ flex: 1, background: isAss ? "var(--d-green)" : c, color: "#fff", border: "none" }}
-                        onClick={() => (window as any).__dpAssign(u.id)}
+                        onClick={() => window.__dpAssign(u.id)}
                       >
                         {isAss ? "✓ Assigned" : "Assign"}
                       </button>
@@ -736,7 +747,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
               filterType={filterType}
               selectedIncident={selInc}
               assignedUnits={assigned}
-              onUnitAssign={uid => (window as any).__dpAssign(uid)}
+              onUnitAssign={uid => window.__dpAssign(uid)}
               onIncidentClick={i => setSelInc(i)}
               height="100%"
             />
@@ -785,9 +796,9 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
   const toast = useToast();
 
   useEffect(() => {
-    (window as any).__dpBackup   = (id: string) => { onUpdate(id, { situationType: "Escalating" }); toast.show(`Backup requested for ${id}`); setMapKey(k => k + 1); };
-    (window as any).__dpEscalate = (id: string) => { onUpdate(id, { situationType: "Critical"  }); toast.show(`${id} escalated`); setMapKey(k => k + 1); };
-    return () => { delete (window as any).__dpBackup; delete (window as any).__dpEscalate; };
+    window.__dpBackup   = (id: string) => { onUpdate(id, { situationType: "Escalating" }); toast.show(`Backup requested for ${id}`); setMapKey(k => k + 1); };
+    window.__dpEscalate = (id: string) => { onUpdate(id, { situationType: "Critical"  }); toast.show(`${id} escalated`); setMapKey(k => k + 1); };
+    return () => { delete window.__dpBackup; delete window.__dpEscalate; };
   }, []);
 
   // Only show Dispatched + In Progress
@@ -1907,9 +1918,9 @@ function ProfilePage({ onLogout }: { onLogout: () => void }) {
   const [draft, setDraft]     = useState({ ...MOCK_DISPATCHER });
   const [logoutModal, setLogoutModal] = useState(false);
   const [pwModal, setPwModal]   = useState(false);
-  const [oldPw,setOldPw]=[useState(""),useState("")]as any;
-  const [newPw,setNewPw]=[useState(""),useState("")]as any;
-  const [conPw,setConPw]=[useState(""),useState("")]as any;
+  const [oldPw, setOldPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [conPw, setConPw] = useState("");
   const toast = useToast();
 
   const save = () => { setProfile({...draft}); setEditing(false); toast.show("Profile updated"); };
@@ -1954,16 +1965,16 @@ function ProfilePage({ onLogout }: { onLogout: () => void }) {
               {(["name","username","email","phone"] as const).map(k=>(
                 <div key={k} className="dp-field-display">
                   <div className="dp-field-display-label">{k==="name"?"Full Name":k.charAt(0).toUpperCase()+k.slice(1)}</div>
-                  {editing ? <input className="dp-input" style={{ width:"100%",marginTop:"0.2rem" }} value={(draft as any)[k]} onChange={e=>setDraft(p=>({...p,[k]:e.target.value}))} /> : <div className="dp-field-display-val">{(profile as any)[k]}</div>}
+                  {editing ? <input className="dp-input" style={{ width:"100%",marginTop:"0.2rem" }} value={draft[k]} onChange={e=>setDraft(p=>({...p,[k]:e.target.value}))} /> : <div className="dp-field-display-val">{profile[k]}</div>}
                 </div>
               ))}
             </div>
             <div>
               <div className="dp-profile-section-head">Assignment (Read-only)</div>
-              {[["Badge","badge"],["Rank","rank"],["Cluster","cluster"],["Station","station"]].map(([l,k])=>(
+              {([["Badge","badge"],["Rank","rank"],["Cluster","cluster"],["Station","station"]] as const).map(([l,k])=>(
                 <div key={k} className="dp-field-display">
                   <div className="dp-field-display-label">{l}</div>
-                  <div className="dp-field-display-val" style={{ color:"var(--d-text-muted)" }}>{(profile as any)[k]}</div>
+                  <div className="dp-field-display-val" style={{ color:"var(--d-text-muted)" }}>{profile[k]}</div>
                 </div>
               ))}
             </div>

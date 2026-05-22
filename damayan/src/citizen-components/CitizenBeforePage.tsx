@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type BeforeStep = "registration" | "qr_individual" | "qr_family" | "permissions" | "alert" | "dashboard";
 
@@ -17,10 +17,6 @@ const checklist = [
 
 export default function CitizenBeforePage({ onGoToDuring, initialStep = "registration" }: Props) {
   const [step, setStep] = useState<BeforeStep>(initialStep);
-
-  useEffect(() => {
-    if (initialStep) setStep(initialStep);
-  }, [initialStep]);
   const [type, setType] = useState<"individual" | "family" | null>(null);
   const [items, setItems] = useState(checklist);
   const [familyMembers, setFamilyMembers] = useState<{id: number}[]>([]);

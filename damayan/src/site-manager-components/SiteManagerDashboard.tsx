@@ -9,35 +9,36 @@ interface SiteManagerDashboardProps {
   phase: "before" | "during" | "after";
 }
 
+interface InventoryItem {
+  category: string;
+  stock: string;
+  incoming: string;
+  eta: string;
+  status: string;
+  icon: string;
+  tone: string;
+}
+
 const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [checkInMode, setCheckInMode] = useState<"scan" | "manual">("scan");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  );
   const [showProfile, setShowProfile] = useState(false);
-  const [activeTab, setActiveTab] = useState<"Dashboard" | "Inventory" | "SiteMap">("Dashboard");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
-  
+
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (pathname === "/site-manager" || pathname === "/site-manager/") {
-      setActiveTab("Dashboard");
-    } else if (pathname.startsWith("/site-manager/inventory")) {
-      setActiveTab("Inventory");
-    } else if (pathname.startsWith("/site-manager/sitemap")) {
-      setActiveTab("SiteMap");
-    }
-  }, [pathname]);
-
-
-  useEffect(() => {
-    if (document.documentElement.classList.contains("dark")) {
-      setIsDarkMode(true);
-    }
-  }, []);
+  const activeTab: "Dashboard" | "Inventory" | "SiteMap" =
+    pathname.startsWith("/site-manager/inventory")
+      ? "Inventory"
+      : pathname.startsWith("/site-manager/sitemap")
+        ? "SiteMap"
+        : "Dashboard";
 
   const toggleDarkMode = () => {
     if (document.documentElement.classList.contains("dark")) {
@@ -377,7 +378,7 @@ const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) =>
                       </div>
                     ) : (
                       <div className="space-y-3 animate-in slide-in-from-top-2 duration-300 w-full overflow-hidden">
-                        <input className="w-full bg-white border border-[#dadad5] rounded-xl px-4 py-3 text-sm focus:ring-2" style={{ outlineColor: phaseConfig.primaryColor } as any} placeholder="Citizen Name or ID..." type="text" />
+                        <input className="w-full bg-white border border-[#dadad5] rounded-xl px-4 py-3 text-sm focus:ring-2" style={{ outlineColor: phaseConfig.primaryColor } as React.CSSProperties} placeholder="Citizen Name or ID..." type="text" />
                         <div className="grid grid-cols-2 gap-3">
                           <input className="w-full bg-white border border-[#dadad5] rounded-xl px-4 py-3 text-sm" placeholder="Zone" type="text" />
                           <input className="w-full bg-white border border-[#dadad5] rounded-xl px-4 py-3 text-sm" placeholder="Group Size" type="number" min="0" />
@@ -412,7 +413,7 @@ const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) =>
                 </div>
                 <div className="mt-6 pt-4 border-t border-[#dadad5]">
                   <p className="text-[10px] font-bold text-[#444743] uppercase tracking-widest mb-2">Protocol Note</p>
-                  <p className="text-xs italic text-[#444743]">"All resource reallocations must be synced to the central hub within 5 minutes of physical movement."</p>
+                  <p className="text-xs italic text-[#444743]">&quot;All resource reallocations must be synced to the central hub within 5 minutes of physical movement.&quot;</p>
                 </div>
               </div>
             </div>
@@ -818,7 +819,7 @@ const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) =>
                <div className="space-y-3">
                  <label className="text-xs font-black uppercase tracking-[0.15em] text-[#444743] ml-1">Change Reason</label>
                  <div className="relative group">
-                   <select className="w-full bg-[#f4f4ef] border border-[#dadad5] rounded-2xl h-16 px-6 font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-offset-2 transition-all" style={{ outlineColor: phaseConfig.primaryColor } as any}>
+                   <select className="w-full bg-[#f4f4ef] border border-[#dadad5] rounded-2xl h-16 px-6 font-bold appearance-none cursor-pointer focus:ring-2 focus:ring-offset-2 transition-all" style={{ outlineColor: phaseConfig.primaryColor } as React.CSSProperties}>
                      <option>Distribution Update</option>
                      <option>Damaged Goods</option>
                      <option>Correction/Audit</option>
@@ -833,7 +834,7 @@ const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) =>
                  <textarea 
                     className="w-full bg-[#f4f4ef] border border-[#dadad5] rounded-2xl p-5 text-sm font-medium focus:ring-2 min-h-[100px] transition-all" 
                     placeholder="Provide context for this registry update..."
-                    style={{ outlineColor: phaseConfig.primaryColor } as any}
+                    style={{ outlineColor: phaseConfig.primaryColor } as React.CSSProperties}
                  ></textarea>
                </div>
             </div>

@@ -1,23 +1,22 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type DStep = "decision" | "report" | "internet" | "sms" | "delivered" | "waiting" | "map" | "arrive" | "checkin" | "logged_in";
 
-interface Props { 
-  onGoToAfter: () => void; 
+interface Props {
+  onGoToAfter: () => void;
   initialStep?: DStep;
 }
 
-export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision" }: Props) {
-  const [step, setStep] = useState<DStep>(initialStep);
+interface DuringHeaderProps {
+  title: string;
+  back?: string;
+  backStep?: DStep;
+  setStep: (step: DStep) => void;
+}
 
-  useEffect(() => {
-    if (initialStep) setStep(initialStep);
-  }, [initialStep]);
-  const [needsRescue, setNeedsRescue] = useState(false);
-  const [checkinType, setCheckinType] = useState<"individual"|"family"|null>(null);
-
-  const Header = ({ title, back, backStep }: { title: string; back?: string; backStep?: DStep }) => (
+function DuringHeader({ title, back, backStep, setStep }: DuringHeaderProps) {
+  return (
     <div className="mb-8">
       {back && backStep && (
         <button onClick={() => setStep(backStep)} className="flex items-center gap-2 text-[#444941] dark:text-[#c4c7c0] text-sm font-bold mb-5 hover:text-[#1A1C19] dark:text-white transition-colors">
@@ -27,12 +26,17 @@ export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision
       <h2 className="text-3xl font-black tracking-tight text-[#1A1C19] dark:text-white">{title}</h2>
     </div>
   );
+}
+
+export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision" }: Props) {
+  const [step, setStep] = useState<DStep>(initialStep);
+  const [checkinType, setCheckinType] = useState<"individual"|"family"|null>(null);
 
   return (
     <div className="space-y-10">
       {/* ─ Progress Tracker ─ */}
       <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm p-4 rounded-3xl border border-[#dadad5] dark:border-[#3b3b3b] w-fit mx-auto shadow-sm">
-        {(["decision","report","delivered","waiting","arrive","checkin","logged_in"] as DStep[]).map((s, i) => (
+        {(["decision","report","delivered","waiting","arrive","checkin","logged_in"] as DStep[]).map((s) => (
           <div key={s} className={`h-2 rounded-full transition-all duration-500 ${step === s ? "w-10" : "w-3"}`}
             style={{ background: step === s ? "#FFB300" : "#dadad5" }} />
         ))}
@@ -56,7 +60,7 @@ export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision
                 <p className="text-white/50 font-medium mt-4 text-xl leading-relaxed max-w-xl">Your answer will determine your priority in the emergency response queue.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <button onClick={() => { setNeedsRescue(true); setStep("report"); }}
+                <button onClick={() => { setStep("report"); }}
                   className="group p-10 rounded-[2.5rem] text-left border-2 border-red-500/20 hover:border-red-500 transition-all hover:scale-[1.02] duration-500 shadow-lg"
                   style={{ background: "rgba(186,26,26,0.1)" }}>
                   <div className="w-20 h-20 rounded-3xl bg-red-500/20 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
@@ -65,7 +69,7 @@ export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision
                   <h3 className="text-2xl font-black text-white mb-3">Yes, I need rescue</h3>
                   <p className="text-white/50 text-base font-medium leading-relaxed">Report your incident, attach photos, and alert dispatch to your precise location.</p>
                 </button>
-                <button onClick={() => { setNeedsRescue(false); setStep("map"); }}
+                <button onClick={() => { setStep("map"); }}
                   className="group p-10 rounded-[2.5rem] text-left border-2 border-white/5 hover:border-[#81C784] transition-all hover:scale-[1.02] duration-500 shadow-lg"
                   style={{ background: "rgba(255,255,255,0.03)" }}>
                   <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
@@ -81,7 +85,7 @@ export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision
           {/* REPORT */}
           {step === "report" && (
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-500 max-w-2xl mx-auto">
-              <Header title="Report Emergency" back="Back" backStep="decision" />
+              <DuringHeader title="Report Emergency" back="Back" backStep="decision" setStep={setStep} />
               <div className="space-y-6">
                 <div className="flex items-center gap-5 p-6 rounded-[2rem] bg-red-500/10 border border-red-500/20 shadow-inner">
                   <div className="w-12 h-12 rounded-2xl bg-red-500/20 flex items-center justify-center">
@@ -113,7 +117,7 @@ export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision
           {/* INTERNET CHECK */}
           {step === "internet" && (
             <div className="space-y-10 animate-in fade-in duration-500 max-w-2xl mx-auto">
-              <Header title="Ready to Transmit" back="Back" backStep="report" />
+              <DuringHeader title="Ready to Transmit" back="Back" backStep="report" setStep={setStep} />
               <p className="text-white/70 font-medium text-xl leading-relaxed">Do you have an active internet connection to submit the full photo report online?</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <button onClick={() => setStep("delivered")} className="p-10 rounded-[2rem] text-left border-2 border-white/5 hover:border-[#81C784] transition-all hover:scale-[1.02] duration-500" style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -133,7 +137,7 @@ export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision
           {/* SMS */}
           {step === "sms" && (
             <div className="space-y-10 animate-in fade-in duration-500 max-w-2xl mx-auto text-center">
-              <Header title="Offline Protocol" back="Back" backStep="internet" />
+              <DuringHeader title="Offline Protocol" back="Back" backStep="internet" setStep={setStep} />
               <div className="rounded-[2.5rem] p-12 text-center border-2 border-dashed space-y-6 shadow-inner" style={{ background: "rgba(255,179,0,0.05)", borderColor: "rgba(255,179,0,0.2)" }}>
                 <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FFB300]">Unique Emergency Code</div>
                 <div className="text-6xl font-mono font-black text-white tracking-[0.4em]">DAM-7821</div>
@@ -215,7 +219,7 @@ export default function CitizenDuringPage({ onGoToAfter, initialStep = "decision
           {/* MAP */}
           {step === "map" && (
             <div className="space-y-10 animate-in fade-in duration-500 max-w-2xl mx-auto">
-              <Header title="Live Safe Zones" back="Back" backStep="decision" />
+              <DuringHeader title="Live Safe Zones" back="Back" backStep="decision" setStep={setStep} />
               <p className="text-white/50 font-medium text-xl leading-relaxed">Select the nearest facility. Real-time capacity and route safety are prioritized.</p>
               <div className="space-y-4">
                 {[

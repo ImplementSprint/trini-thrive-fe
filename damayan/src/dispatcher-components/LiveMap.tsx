@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import type { Map as LeafletMap, Layer } from "leaflet";
 import { Incident, Unit, unitStatusColor, unitTypeColor, situationColor } from "./data";
 
 export type MapMode = "monitoring" | "dispatch" | "rescue";
@@ -20,9 +21,9 @@ const PH: [number,number] = [14.604, 120.997];
 
 export default function LiveMap({ mode, incidents, units, filterType="All", selectedIncident, assignedUnits=[], onUnitAssign, onIncidentClick, height=400 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const mapR = useRef<any>(null);
-  const LR   = useRef<any>(null);
-  const mks  = useRef<any[]>([]);
+  const mapR = useRef<LeafletMap | null>(null);
+  const LR   = useRef<typeof import("leaflet") | null>(null);
+  const mks  = useRef<Layer[]>([]);
 
   useEffect(() => {
     if (typeof window==="undefined" || mapR.current) return;
@@ -33,9 +34,9 @@ export default function LiveMap({ mode, incidents, units, filterType="All", sele
       document.head.appendChild(l);
     }
     import("leaflet").then(mod => {
-      const L = (mod as any).default || mod;
+      const L = mod.default ?? mod;
       if (!ref.current || mapR.current) return;
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
         iconUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -55,7 +56,7 @@ export default function LiveMap({ mode, incidents, units, filterType="All", sele
       wrap.appendChild(ico); wrap.appendChild(inp);
       L.DomEvent.disableClickPropagation(wrap);
       L.DomEvent.disableScrollPropagation(wrap);
-      inp.addEventListener("keydown", async (e:any) => {
+      inp.addEventListener("keydown", async (e: KeyboardEvent) => {
         if (e.key!=="Enter") return;
         const q = inp.value.trim(); if (!q) return;
         try {
@@ -84,7 +85,7 @@ export default function LiveMap({ mode, incidents, units, filterType="All", sele
     return `<div style="position:relative;width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.9);box-shadow:0 2px 5px rgba(0,0,0,0.3)">${p}</div>`;
   }
 
-  function draw(L:any, map:any) {
+  function draw(L: typeof import("leaflet"), map: LeafletMap) {
     mks.current.forEach(m=>map.removeLayer(m)); mks.current=[];
 
     if (mode==="monitoring") {
