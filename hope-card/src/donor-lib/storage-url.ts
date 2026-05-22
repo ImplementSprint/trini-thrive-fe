@@ -21,10 +21,5 @@ export function getStorageUrl(bucket: string, key: string | null | undefined): s
 
   const finalUrl = `${url.replace(/\/$/, '')}/storage/v1/object/public/${finalBucket}/${finalPath}`;
   
-  // Only log on server side
-  if (typeof window === 'undefined') {
-    console.log(`[getStorageUrl] bucket:${bucket} -> ${finalBucket}, key:${key} -> ${finalPath}`);
-  }
-
   return finalUrl;
 }

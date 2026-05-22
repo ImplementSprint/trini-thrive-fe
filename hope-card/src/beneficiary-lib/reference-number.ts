@@ -1,11 +1,17 @@
-﻿export function generateTxnRef(): string {
+﻿function cryptoSuffix(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(4)))
+    .map(b => b.toString(36))
+    .join('')
+    .substring(0, 5)
+    .toUpperCase();
+}
+
+export function generateTxnRef(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
-  return `TXN-${date}-${rand}`;
+  return `TXN-${date}-${cryptoSuffix()}`;
 }
 
 export function generateWdRef(): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
-  return `WD-${date}-${rand}`;
+  return `WD-${date}-${cryptoSuffix()}`;
 }

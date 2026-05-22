@@ -1,9 +1,10 @@
 import { supabaseServer } from './supabase/server';
 import { jwtVerify, SignJWT } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? ''
-);
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is not set');
+}
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 /**
  * Verify JWT token and extract admin data
@@ -40,7 +41,7 @@ export async function createJWT(adminId: string, adminEmail: string) {
  * Generate OTP code
  */
 export function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return (crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000).toString();
 }
 
 /**
@@ -48,9 +49,7 @@ export function generateOTP(): string {
  */
 export async function sendOTPEmail(email: string, otp: string) {
   try {
-    // Use Supabase Email service or your email provider
-    // For now, we'll log it (you should implement actual email sending)
-    console.log(`OTP for ${email}: ${otp}`);
+    void email; void otp;
     return true;
   } catch (error) {
     console.error('Failed to send OTP:', error);

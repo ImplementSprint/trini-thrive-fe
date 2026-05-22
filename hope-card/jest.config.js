@@ -13,6 +13,9 @@ const customJestConfig = {
   collectCoverage: true,
   collectCoverageFrom: [
     '<rootDir>/src/lib/**/*.{ts,tsx}',
+    '<rootDir>/src/beneficiary-lib/**/*.{ts,tsx}',
+    '<rootDir>/src/donor-lib/storage-url.ts',
+    '<rootDir>/middleware.ts',
     '!<rootDir>/src/**/*.d.ts',
     '!<rootDir>/src/lib/supabase/**',
   ],
