@@ -234,7 +234,7 @@ export default function CreateCampaignUI({
 
     const res = await createCampaignAction(formData);
     setIsSubmitting(false);
-    if (res.success) setIsSubmitted(true);
+    if (!res?.error) setIsSubmitted(true);
     else alert('Failed to create campaign: ' + res.error);
   };
 

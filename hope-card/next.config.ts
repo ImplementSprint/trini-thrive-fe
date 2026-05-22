@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     },
   },
   turbopack: {
+    root: __dirname,
     resolveAlias: {
       'react-native': 'react-native-web',
     },

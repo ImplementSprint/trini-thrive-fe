@@ -1,4 +1,6 @@
-﻿import { redirect } from 'next/navigation';
+﻿export const dynamic = 'force-dynamic';
+
+import { redirect } from 'next/navigation';
 import { createClient } from '@/campaign-manager-utils/supabase/server';
 import { createAdminClient } from '@/campaign-manager-utils/supabase/admin';
 import MyCampaignsUI from './my-campaigns-ui';

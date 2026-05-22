@@ -64,7 +64,7 @@ export async function getApprovedBeneficiaries(): Promise<{
 
     // Try to fetch bank names
     const ids = (data ?? []).map((b: any) => b.id);
-    let bankMap: Record<string, string> = {};
+    const bankMap: Record<string, string> = {};
     if (ids.length > 0) {
       const { data: banks } = await admin
         .from('beneficiary_bank_accounts')

@@ -81,7 +81,7 @@ export default function MyCampaignsUI({
   async function handleChangeToDraft() {
     if (selectedCampaignId) {
       const res = await changeCampaignToDraftAction(selectedCampaignId);
-      if (res.success) {
+      if (!res) {
         setShowDraftDialog(false);
         setSelectedCampaignId(null);
         router.refresh();
@@ -111,7 +111,7 @@ export default function MyCampaignsUI({
     setInviteLoading(true);
     const res = await inviteBeneficiariesToCampaignAction(inviteCampaignId, selectedBeneficiaryIds);
     setInviteLoading(false);
-    if (res.success) {
+    if (!res) {
       setShowInviteModal(false);
       setInviteCampaignId(null);
       router.refresh();
@@ -244,7 +244,7 @@ export default function MyCampaignsUI({
                                 onClick={async () => {
                                   if (confirm('Are you sure you want to activate this campaign?')) {
                                     const res = await activateCampaignAction(campaign.id.toString());
-                                    if (res.success) router.refresh();
+                                    if (!res) router.refresh();
                                     else alert(res.error || 'Failed to activate');
                                   }
                                 }}
@@ -261,7 +261,7 @@ export default function MyCampaignsUI({
                                   onClick={async () => {
                                     if (confirm('Mark this campaign as completed?')) {
                                       const res = await completeCampaignAction(campaign.id.toString());
-                                      if (res.success) router.refresh();
+                                      if (!res) router.refresh();
                                       else alert(res.error || 'Failed to complete');
                                     }
                                   }}
@@ -275,7 +275,7 @@ export default function MyCampaignsUI({
                                   onClick={async () => {
                                     if (confirm('Are you sure you want to cancel this campaign?')) {
                                       const res = await cancelCampaignAction(campaign.id.toString());
-                                      if (res.success) router.refresh();
+                                      if (!res) router.refresh();
                                       else alert(res.error || 'Failed to cancel');
                                     }
                                   }}

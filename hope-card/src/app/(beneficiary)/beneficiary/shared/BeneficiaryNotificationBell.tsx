@@ -12,6 +12,14 @@ interface Notification {
   created_at: string;
 }
 
+function timeAgo(iso: string) {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (d < 60) return "just now";
+  if (d < 3600) return `${Math.floor(d / 60)}m ago`;
+  if (d < 86400) return `${Math.floor(d / 3600)}h ago`;
+  return `${Math.floor(d / 86400)}d ago`;
+}
+
 export const BeneficiaryNotificationBell: React.FC = () => {
   const [bellOpen, setBellOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -40,14 +48,6 @@ export const BeneficiaryNotificationBell: React.FC = () => {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [bellOpen]);
-
-  function timeAgo(iso: string) {
-    const d = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-    if (d < 60) return "just now";
-    if (d < 3600) return `${Math.floor(d / 60)}m ago`;
-    if (d < 86400) return `${Math.floor(d / 3600)}h ago`;
-    return `${Math.floor(d / 86400)}d ago`;
-  }
 
   return (
     <div ref={bellRef} style={{ position: "relative" }}>
