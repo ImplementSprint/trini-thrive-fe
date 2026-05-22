@@ -1,0 +1,188 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+}
+
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.infoLabel {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.infoValue {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #111;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.bankDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.bankField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bankValue {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #111;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #374151;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: #a32a2a;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.statusIcon {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.textarea {
+  width: 100%;
+  height: 100px;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  resize: none;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #a32a2a;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.approveBtn {
+  background-color: #22c55e;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.approveBtn:hover:not(:disabled) {
+  background-color: #16a34a;
+}
+
+.approveBtn:disabled {
+  background-color: #86efac;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.rejectBtn {
+  background-color: #a32a2a;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.rejectBtn:hover:not(:disabled) {
+  background-color: #8b1a1a;
+}
+
+.rejectBtn:disabled {
+  background-color: #f87171;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.cancelBtn {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.cancelBtn:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
