@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 
-export type NavDestination = "Overview" | "Family & ID" | "Safety Map" | "Relief Status";
+export type NavDestination = "Overview" | "Family & ID" | "Safety Map" | "Relief Status" | "Profile";
 
 interface CitizenSidebarProps {
   phase: "before" | "during" | "after";
