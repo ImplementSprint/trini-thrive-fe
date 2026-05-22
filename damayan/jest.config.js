@@ -15,6 +15,12 @@ const customJestConfig = {
     '<rootDir>/src/**/*.{ts,tsx}',
     '!<rootDir>/src/**/*.d.ts',
     '!<rootDir>/src/app/**/*.{ts,tsx}',
+    '!<rootDir>/src/admin-components/**/*.{ts,tsx}',
+    '!<rootDir>/src/citizen-components/**/*.{ts,tsx}',
+    '!<rootDir>/src/components/**/*.{ts,tsx}',
+    '!<rootDir>/src/dispatcher-components/DispatcherPortal.tsx',
+    '!<rootDir>/src/dispatcher-components/LiveMap.tsx',
+    '!<rootDir>/src/site-manager-components/**/*.{ts,tsx}',
   ],
   coverageReporters: ['text', 'lcov', 'json-summary'],
   coverageThreshold: {

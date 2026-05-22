@@ -1,0 +1,65 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10001; /* Slightly higher than confirm modal */
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: white;
+  width: 450px;
+  border-radius: 12px;
+  padding: 3rem; /* Extra padding to give elements space */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.iconWrapper {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #111;
+}
+
+.infoBox {
+  background-color: #f0fdf4; /* Very light green from mockup */
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2.5rem;
+  font-size: 0.9rem;
+  color: #166534;
+}
+
+.amount {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.closeBtn {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #a32a2a; /* Same red as buttons */
+  border: none;
+  color: white;
+  transition: opacity 0.2s;
+}
+
+.closeBtn:hover {
+  opacity: 0.9;
+}

@@ -1,5 +1,5 @@
 {
-  "name": "system-2",
+  "name": "system-3",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,19 +12,21 @@
     "test:e2e": "tsx tests/e2e/playwright-e2e.ts"
   },
   "dependencies": {
-    "next": "16.2.1",
+    "leaflet": "^1.9.4",
+    "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
+    "@types/leaflet": "^1.9.21",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.0.0",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "16.2.6",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "playwright": "^1.58.2",

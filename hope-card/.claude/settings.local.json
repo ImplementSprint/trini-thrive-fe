@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx eslint *)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(python3 -c \"import sys, re; content=sys.stdin.read\\(\\); text=re.sub\\('<[^>]+>', ' ', content\\); print\\(text[:5000]\\)\")",
+      "Bash(python3 -c \"import sys, re; content=sys.stdin.read\\(\\); text=re.sub\\('<[^>]+>', ' ', content\\); text=re.sub\\(r'\\\\s+', ' ', text\\); print\\(text[5000:15000]\\)\")",
+      "Bash(python3 -c \"import sys, re; content=sys.stdin.read\\(\\); text=re.sub\\('<[^>]+>', ' ', content\\); text=re.sub\\(r'\\\\s+', ' ', text\\); idx=text.find\\('Governance'\\); print\\(text[max\\(0,idx-200\\):idx+3000]\\)\")",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(npx jest *)",
+      "Bash(python3 *)"
+    ]
+  }
+}
