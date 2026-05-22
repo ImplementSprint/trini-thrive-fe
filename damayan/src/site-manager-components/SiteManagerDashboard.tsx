@@ -160,11 +160,12 @@ const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) =>
             <span className="material-symbols-outlined absolute right-3 top-2 text-[#444743]">search</span>
           </div>
           <div className="relative" ref={menuRef}>
-            <button 
+            <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="w-10 h-10 rounded-full overflow-hidden border-2 transition-transform hover:scale-105" 
+              className="w-10 h-10 rounded-full overflow-hidden border-2 transition-transform hover:scale-105"
               style={{ borderColor: phaseConfig.primaryColor }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img alt="Site Manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5o43MJlKk8bFumbe-kD--UwuoZpPYmQe13R3y_AruXj4fEkC5rsNLjsVpCnlJch4n3eAK6DOantbCAO4H0NxLI_QM2cwka9ht_-BobRE4JMDVEZNxPkeB7ETtlrSQKx9a4ZpsTuZCM3W4kfGoLIhLnvbd5PCT9NIjS-OcjyZELEQnYcn6codRevDEiY7M8cQFuMbDgnuEqj_XeYoZuLTlONTm_G7U6hmjKX3dgBjK4En5LrN2MPLVVtDJBbUIusSkbWnK6V5duC-W" />
             </button>
             
@@ -482,6 +483,7 @@ const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) =>
 
             <div className="bg-white dark:bg-[#232622] rounded-3xl p-6 border border-[#dadad5] dark:border-[#3b3b3b] shadow-sm relative overflow-hidden group min-h-[200px]">
               <div className="absolute inset-0 opacity-40 group-hover:opacity-80 transition-opacity">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpSvAOIIisjz13eQiOCstFnz3vVDhXSLsC2wkcR0gzF0aE74mgQ4wHIUPQxpjnjM9rNALymOt0yzw4BUqDzXDmvL68DiBEHgtwXcoRktsaAjW4XF8rQ9xFDqsWjQVCUV3lpc9WdLCHcs9vEn68r458YriOvYDyAOpkuQmDaQXPWqqt7wAiApmtFpPyTHIgyKDI39znTvbgGnTysMQr1Ezpxs0enh_BMJvFIA9nVdUBqndsA8qbD84JSmQa6tncbOhO9dg-xTC8Mwxc" alt="Map" />
               </div>
               <div className="relative z-10 flex flex-col justify-end h-full">
@@ -687,6 +689,7 @@ const SiteManagerDashboard: React.FC<SiteManagerDashboardProps> = ({ phase }) =>
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
             <div className="bg-white dark:bg-[#232622] rounded-3xl p-4 border border-[#dadad5] dark:border-[#3b3b3b] shadow-sm relative overflow-hidden min-h-[500px]">
               <div className="absolute inset-0 opacity-80">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img className="w-full h-full object-cover grayscale-[0.5] contrast-[1.1]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpSvAOIIisjz13eQiOCstFnz3vVDhXSLsC2wkcR0gzF0aE74mgQ4wHIUPQxpjnjM9rNALymOt0yzw4BUqDzXDmvL68DiBEHgtwXcoRktsaAjW4XF8rQ9xFDqsWjQVCUV3lpc9WdLCHcs9vEn68r458YriOvYDyAOpkuQmDaQXPWqqt7wAiApmtFpPyTHIgyKDI39znTvbgGnTysMQr1Ezpxs0enh_BMJvFIA9nVdUBqndsA8qbD84JSmQa6tncbOhO9dg-xTC8Mwxc" alt="Map" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
               </div>

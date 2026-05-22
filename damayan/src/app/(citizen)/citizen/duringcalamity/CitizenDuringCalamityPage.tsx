@@ -76,7 +76,7 @@ export default function CitizenDuringCalamityPage() {
   
   // State data collected during the flow
   const [rescueNeeded, setRescueNeeded] = useState<boolean | null>(null);
-  const [internetAvailable, setInternetAvailable] = useState<boolean | null>(null);
+  const [, setInternetAvailable] = useState<boolean | null>(null);
   const [identityType, setIdentityType] = useState<"INDIVIDUAL" | "FAMILY" | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -165,6 +165,7 @@ export default function CitizenDuringCalamityPage() {
           <div className="wizard-upload-area">
             {selectedFile && previewUrl ? (
               <div className="wizard-image-preview">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={previewUrl} alt="Incident preview" />
                 <button type="button" className="wizard-remove-photo" onClick={() => setSelectedFile(null)}>✕</button>
                 <div className="wizard-photo-badge">✓ Photo Attached</div>
