@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -13,7 +13,7 @@ export default function ForgotPassword() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSendOTP = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSendOTP = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -69,10 +69,11 @@ export default function ForgotPassword() {
 
           <form onSubmit={handleSendOTP} className={styles.form}>
             <div className={styles.inputGroup}>
-              <label>Email Address</label>
+              <label htmlFor="email">Email Address</label>
               <div className={styles.inputWrapper}>
                 <Mail size={18} className={styles.inputIcon} />
                 <input
+                  id="email"
                   type="email"
                   placeholder="admin@hopecard.com"
                   required

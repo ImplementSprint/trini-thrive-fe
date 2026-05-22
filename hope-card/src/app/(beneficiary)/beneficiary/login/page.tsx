@@ -1,9 +1,9 @@
-﻿﻿// app/login/page.tsx
+﻿// app/login/page.tsx
 import { LoginForm } from "@/app/(beneficiary)/beneficiary/login/login-form";
 import { BeneficiaryStyle, BeneficiaryFooter, AmbientCard, CardLogo } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
 
 interface LoginPageProps {
-  searchParams: Promise<{ confirmed?: string; error?: string; reset?: string }>;
+  readonly searchParams: Promise<{ confirmed?: string; error?: string; reset?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {

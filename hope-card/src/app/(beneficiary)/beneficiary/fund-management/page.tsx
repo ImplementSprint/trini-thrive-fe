@@ -6,7 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/beneficiary-utils/supabase/client";
 import {
   Menu, LayoutDashboard, CreditCard,
-  Landmark, IdCard, User, ShieldCheck, HelpCircle,
+  Landmark, IdCard, User,
   LogOut,
 } from "lucide-react";
 import { S, LOGO_SRC, LOGO_WIDTH, LOGO_HEIGHT, BeneficiaryStyle } from "@/app/(beneficiary)/beneficiary/shared/beneficiary-shared";
@@ -107,35 +107,46 @@ interface NavItemProps {
   href: string;
 }
 
-const NavItem = React.memo<NavItemProps>(({ icon, label, active, collapsed, href }) => (
-  <a
-    href={href}
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "0.75rem",
-      padding: collapsed ? "0.75rem" : "0.75rem 1rem 0.75rem 2rem",
-      justifyContent: collapsed ? "center" : "flex-start",
-      borderRadius: active ? "999px 0 0 999px" : "999px",
-      marginLeft: active ? "1rem" : (collapsed ? "0.75rem" : 0),
-      marginRight: active ? 0 : (collapsed ? "0.75rem" : 0),
-      background: active ? S.surfaceContainerLowest : "transparent",
-      color: active ? S.primary : "#78716c",
-      fontWeight: active ? 700 : 500,
-      fontSize: "0.875rem",
-      textDecoration: "none",
-      boxShadow: active ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
-      transition: "color 0.15s, background 0.15s, transform 0.15s",
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-    }}
-    onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = S.primary; e.currentTarget.style.transform = "translateX(4px)"; } }}
-    onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = "#78716c"; e.currentTarget.style.transform = "translateX(0)"; } }}
-  >
-    {icon}
-    {!collapsed && <span style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>{label}</span>}
-  </a>
-));
+const NavItem = React.memo<NavItemProps>(({ icon, label, active, collapsed, href }) => {
+  let marginL: number | string = 0;
+  let marginR: number | string = 0;
+  if (active) {
+    marginL = "1rem";
+  } else if (collapsed) {
+    marginL = "0.75rem";
+    marginR = "0.75rem";
+  }
+
+  return (
+    <a
+      href={href}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        padding: collapsed ? "0.75rem" : "0.75rem 1rem 0.75rem 2rem",
+        justifyContent: collapsed ? "center" : "flex-start",
+        borderRadius: active ? "999px 0 0 999px" : "999px",
+        marginLeft: marginL,
+        marginRight: marginR,
+        background: active ? S.surfaceContainerLowest : "transparent",
+        color: active ? S.primary : "#78716c",
+        fontWeight: active ? 700 : 500,
+        fontSize: "0.875rem",
+        textDecoration: "none",
+        boxShadow: active ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
+        transition: "color 0.15s, background 0.15s, transform 0.15s",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+      }}
+      onMouseEnter={(e) => { if (!active) { e.currentTarget.style.color = S.primary; e.currentTarget.style.transform = "translateX(4px)"; } }}
+      onMouseLeave={(e) => { if (!active) { e.currentTarget.style.color = "#78716c"; e.currentTarget.style.transform = "translateX(0)"; } }}
+    >
+      {icon}
+      {!collapsed && <span style={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>{label}</span>}
+    </a>
+  );
+});
 NavItem.displayName = "NavItem";
 
 const NAV_ITEMS = [
@@ -195,27 +206,45 @@ const FundManagement: React.FC = () => {
         ]);
 
         // Build transactions display
-        const txDisplay: Transaction[] = (txRows ?? []).map((t: any) => ({
-          id: t.id,
-          date: formatDate(t.created_at),
-          campaign: t.hc_campaigns?.title ?? "—",
-          refId: t.reference_number,
-          amount: formatCurrency(t.amount),
-          status: t.status === "approved" ? "Completed" : t.status === "rejected" ? "Rejected" : "Pending",
-        }));
+        const txDisplay: Transaction[] = (txRows ?? []).map((t: any) => {
+          let tStatus: "Completed" | "Rejected" | "Pending" = "Pending";
+          if (t.status === "approved") tStatus = "Completed";
+          else if (t.status === "rejected") tStatus = "Rejected";
+
+          return {
+            id: t.id,
+            date: formatDate(t.created_at),
+            campaign: t.hc_campaigns?.title ?? "—",
+            refId: t.reference_number,
+            amount: formatCurrency(t.amount),
+            status: tStatus,
+          };
+        });
         setTransactions(txDisplay);
 
         // Build withdrawals display
-        const wdDisplay: Withdrawal[] = (wdRows ?? []).map((w: any) => ({
-          id: w.id,
-          date: formatDate(w.created_at),
-          label: w.beneficiary_bank_accounts?.bank_name
-            ? `Transfer to ${w.beneficiary_bank_accounts.bank_name}`
-            : `Withdrawal ${w.reference_number}`,
-          amount: formatCurrency(w.amount),
-          status: w.status === "approved" ? "Successful" : w.status === "rejected" ? "Failed" : "Processing",
-          dotColor: w.status === "approved" ? "#97453e" : w.status === "rejected" ? "#ba1a1a" : "#cda336",
-        }));
+        const wdDisplay: Withdrawal[] = (wdRows ?? []).map((w: any) => {
+          let wStatus: "Successful" | "Processing" | "Failed" = "Processing";
+          let wDotColor = "#cda336";
+          if (w.status === "approved") {
+            wStatus = "Successful";
+            wDotColor = "#97453e";
+          } else if (w.status === "rejected") {
+            wStatus = "Failed";
+            wDotColor = "#ba1a1a";
+          }
+
+          return {
+            id: w.id,
+            date: formatDate(w.created_at),
+            label: w.beneficiary_bank_accounts?.bank_name
+              ? `Transfer to ${w.beneficiary_bank_accounts.bank_name}`
+              : `Withdrawal ${w.reference_number}`,
+            amount: formatCurrency(w.amount),
+            status: wStatus,
+            dotColor: wDotColor,
+          };
+        });
         setWithdrawals(wdDisplay);
 
         // Compute scorecards
@@ -304,11 +333,18 @@ const FundManagement: React.FC = () => {
 
             {profileOpen && (
               <>
-                <div
+                <button
+                  type="button"
+                  aria-label="Close profile menu"
                   style={{
                     position: "fixed",
                     inset: 0,
                     zIndex: 40,
+                    background: "transparent",
+                    border: "none",
+                    width: "100%",
+                    height: "100%",
+                    cursor: "default"
                   }}
                   onClick={() => setProfileOpen(false)}
                 />
@@ -340,7 +376,7 @@ const FundManagement: React.FC = () => {
                         const { createClient } = await import("@/beneficiary-utils/supabase/client");
                         await createClient().auth.signOut();
                         document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
-                        window.location.href = "/beneficiary/login";
+                        globalThis.location.href = "/beneficiary/login";
                       }}
                       style={{
                         width: "100%",
@@ -433,7 +469,7 @@ const FundManagement: React.FC = () => {
                 const { createClient } = await import("@/beneficiary-utils/supabase/client");
                 await createClient().auth.signOut();
                 document.cookie = "persona=; path=/; SameSite=Strict; Max-Age=0";
-                window.location.href = "/beneficiary/login";
+                globalThis.location.href = "/beneficiary/login";
               }}
             >
               <LogOut size={18} />
@@ -470,7 +506,7 @@ const FundManagement: React.FC = () => {
               <span className="material-symbols-outlined">
                 account_balance_wallet
               </span>
-              Request Withdrawal
+              {" "}Request Withdrawal
             </a>
           </div>
 
@@ -539,13 +575,13 @@ const FundManagement: React.FC = () => {
                       <span className="material-symbols-outlined text-sm">
                         calendar_month
                       </span>
-                      Last 30 Days
+                      {" "}Last 30 Days
                     </button>
                     <button className="bg-[#fff0ef] px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 border border-[#dac1be]/20 hover:bg-[#f4dddc] transition-colors">
                       <span className="material-symbols-outlined text-sm">
                         filter_list
                       </span>
-                      Status
+                      {" "}Status
                     </button>
                   </div>
                 </div>
@@ -567,11 +603,13 @@ const FundManagement: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#dac1be]/10">
-                      {loading ? (
+                      {loading && (
                         <tr><td colSpan={5} className="px-8 py-6 text-sm text-center text-[#554240]">Loading…</td></tr>
-                      ) : transactions.length === 0 ? (
+                      )}
+                      {!loading && transactions.length === 0 && (
                         <tr><td colSpan={5} className="px-8 py-6 text-sm text-center text-[#554240]">No transactions yet</td></tr>
-                      ) : transactions.map((tx) => (
+                      )}
+                      {!loading && transactions.length > 0 && transactions.map((tx) => (
                         <TransactionRow key={tx.id} tx={tx} />
                       ))}
                     </tbody>
@@ -590,16 +628,14 @@ const FundManagement: React.FC = () => {
                   </span>
                 </div>
                 <div className="space-y-8">
-                  {loading ? (
-                    <p className="text-sm text-[#554240]">Loading…</p>
-                  ) : withdrawals.length === 0 ? (
-                    <p className="text-sm text-[#554240]">No withdrawals yet</p>
-                  ) : withdrawals.map((w) => (
+                  {loading && <p className="text-sm text-[#554240]">Loading…</p>}
+                  {!loading && withdrawals.length === 0 && <p className="text-sm text-[#554240]">No withdrawals yet</p>}
+                  {!loading && withdrawals.length > 0 && withdrawals.map((w) => (
                     <WithdrawalItem key={w.id} w={w} />
                   ))}
                 </div>
                 <button className="w-full mt-10 text-[#97453e] font-bold text-xs flex items-center justify-center gap-2 hover:underline">
-                  View Full Report
+                  View Full Report{" "}
                   <span className="material-symbols-outlined text-sm">
                     open_in_new
                   </span>
