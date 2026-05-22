@@ -1,0 +1,25 @@
+/* Auth layout styles */
+.auth-root {
+  min-height: 100vh;
+  display: flex;
+  background-color: var(--bg);
+}
+.auth-brand {
+  display: none;
+}
+.auth-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+@media (min-width: 768px) {
+  .auth-brand {
+    display: flex;
+    flex: 1;
+    background-color: var(--primary);
+    color: white;
+    padding: 3rem;
+  }
+}
