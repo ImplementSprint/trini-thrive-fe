@@ -32,8 +32,6 @@ const sidebarLinks = [
   { label: "Support", href: "#support", key: "support", icon: "S" },
 ];
 
-const topLinks = ["Dashboard", "Emergency", "Shelters", "Prepare"];
-
 function CitizenAvatarChip() {
   return (
     <div className="citizen-web-profile-avatar" aria-label="Citizen profile">

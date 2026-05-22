@@ -2,12 +2,12 @@
 import "./dispatcher.css";
 import { useState, useEffect, useRef } from "react";
 import {
-  NavPage, Incident, Unit, Team, IncidentPriority, IncidentStatus, SituationType, UnitType,
+  NavPage, Incident, Unit, SituationType, UnitType,
   MOCK_DISPATCHER, MOCK_UNITS, MOCK_INCIDENTS, MOCK_TEAMS,
   priorityClass, statusClass, situationClass, situationColor, unitStatusColor, unitTypeColor,
-  priorityColor, UNIT_TYPE_ICON, CATEGORY_ICON,
+  UNIT_TYPE_ICON, CATEGORY_ICON,
 } from "./data";
-import LiveMap, { MapMode } from "./LiveMap";
+import LiveMap from "./LiveMap";
 
 declare global {
   interface Window {
@@ -475,8 +475,6 @@ function QueueRow({ inc, units, onDispatch, onMarkInvalid }: {
 
 function TicketModal({ inc, units, onClose }: { inc: Incident; units: Unit[]; onClose: () => void }) {
   const assigned = inc.assignedUnits.map(id => units.find(u => u.id === id)).filter(Boolean) as Unit[];
-  const pc = priorityColor(inc.priority);
-  const sc = situationColor(inc.situationType);
 
   return (
     <Modal title="Incident Ticket" onClose={onClose} width={680}>
@@ -605,6 +603,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
     };
     window.__dpMsg = (uid: string) => toast.show(`Message sent to ${uid}`);
     return () => { delete window.__dpAssign; delete window.__dpMsg; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selInc]);
 
   const confirmDispatch = () => {
@@ -799,6 +798,7 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
     window.__dpBackup   = (id: string) => { onUpdate(id, { situationType: "Escalating" }); toast.show(`Backup requested for ${id}`); setMapKey(k => k + 1); };
     window.__dpEscalate = (id: string) => { onUpdate(id, { situationType: "Critical"  }); toast.show(`${id} escalated`); setMapKey(k => k + 1); };
     return () => { delete window.__dpBackup; delete window.__dpEscalate; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Only show Dispatched + In Progress
@@ -1144,7 +1144,6 @@ function RescueDetailPanel({ inc, units, onBackup, onEscalate, onResolve, onClos
   const sc = situationColor(inc.situationType);
 
   // ── Mock real-time data derived from incident ──────────────────────────────
-  const now = new Date();
   const dispatchTime = inc.dispatchedAt || "09:23 AM";
 
   // Victims derived from description keywords
@@ -1918,9 +1917,6 @@ function ProfilePage({ onLogout }: { onLogout: () => void }) {
   const [draft, setDraft]     = useState({ ...MOCK_DISPATCHER });
   const [logoutModal, setLogoutModal] = useState(false);
   const [pwModal, setPwModal]   = useState(false);
-  const [oldPw, setOldPw] = useState("");
-  const [newPw, setNewPw] = useState("");
-  const [conPw, setConPw] = useState("");
   const toast = useToast();
 
   const save = () => { setProfile({...draft}); setEditing(false); toast.show("Profile updated"); };
@@ -2162,6 +2158,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
         {/* Topbar */}
         <header className="dp-topbar">
           <div className="dp-topbar-left">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/Main-Logo-removebg-preview.png"
               alt="Damayan Logo"

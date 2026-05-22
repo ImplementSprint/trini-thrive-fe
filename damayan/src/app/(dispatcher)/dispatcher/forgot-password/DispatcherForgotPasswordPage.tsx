@@ -10,7 +10,7 @@ export default function DispatcherForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<ForgotStep>("request");
   const [contact, setContact] = useState("");
-  const [showPass, setShowPass] = useState(false);
+  const [showPass] = useState(false);
 
   const steps: ForgotStep[] = ["request", "sent", "create"];
 

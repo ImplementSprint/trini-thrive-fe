@@ -80,9 +80,10 @@ const CitizenHeader: React.FC<CitizenHeaderProps> = ({ phase, onProfileClick }) 
               <p className="text-[10px] font-bold text-[#707a6c] dark:text-[#c4c7c0] uppercase tracking-widest">Brgy. 102, Dist 4</p>
             </div>
             <div className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-md transition-all ${isProfileOpen ? "border-[#2E7D32]" : "border-white dark:border-[#232622]"}`}>
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5o43MJlKk8bFumbe-kD--UwuoZpPYmQe13R3y_AruXj4fEkC5rsNLjsVpCnlJch4n3eAK6DOantbCAO4H0NxLI_QM2cwka9ht_-BobRE4JMDVEZNxPkeB7ETtlrSQKx9a4ZpsTuZCM3W4kfGoLIhLnvbd5PCT9NIjS-OcjyZELEQnYcn6codRevDEiY7M8cQFuMbDgnuEqj_XeYoZuLTlONTm_G7U6hmjKX3dgBjK4En5LrN2MPLVVtDJBbUIusSkbWnK6V5duC-W" 
-                alt="Elena Villacruz" 
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5o43MJlKk8bFumbe-kD--UwuoZpPYmQe13R3y_AruXj4fEkC5rsNLjsVpCnlJch4n3eAK6DOantbCAO4H0NxLI_QM2cwka9ht_-BobRE4JMDVEZNxPkeB7ETtlrSQKx9a4ZpsTuZCM3W4kfGoLIhLnvbd5PCT9NIjS-OcjyZELEQnYcn6codRevDEiY7M8cQFuMbDgnuEqj_XeYoZuLTlONTm_G7U6hmjKX3dgBjK4En5LrN2MPLVVtDJBbUIusSkbWnK6V5duC-W"
+                alt="Elena Villacruz"
                 className="w-full h-full object-cover"
               />
             </div>

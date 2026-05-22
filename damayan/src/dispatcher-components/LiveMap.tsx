@@ -76,6 +76,7 @@ export default function LiveMap({ mode, incidents, units, filterType="All", sele
       draw(L, map);
     });
     return () => { if (mapR.current){ mapR.current.remove(); mapR.current=null; } };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { if (mapR.current&&LR.current) draw(LR.current,mapR.current); });

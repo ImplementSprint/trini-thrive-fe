@@ -30,7 +30,6 @@ type WarningStep =
   | "escalate"
   | "deescalate"
   | "notify_passed";
-type CalamityState = "none" | "before" | "during" | "after";
 type ServiceStatus = "OPERATIONAL" | "DEGRADED" | "DOWN";
 
 interface FamilyMember {
@@ -56,7 +55,7 @@ interface PendingAccount {
   familyMembers?: FamilyMember[];
 }
 
-interface QRRecord {
+interface QRRecord {  // eslint-disable-line @typescript-eslint/no-unused-vars
   id: string;
   name: string;
   type: "individual" | "family";
@@ -201,13 +200,6 @@ const INITIAL_ACCOUNTS: PendingAccount[] = [
   },
 ];
 
-const INITIAL_QR: QRRecord[] = [
-  { id: "QR-5001", name: "Carlos Mendez", type: "individual", area: "District 4", issuedAt: "Today 10:00", linkedAccountId: "ACC-1044" },
-  { id: "QR-5002", name: "Santos Family", type: "family", area: "Zone A-4", issuedAt: "Today 09:30", familySize: 5 },
-  { id: "QR-5003", name: "Maria Reyes", type: "individual", area: "North District", issuedAt: "Today 09:00" },
-  { id: "QR-5004", name: "Dela Rosa Family", type: "family", area: "Sector 12", issuedAt: "Yesterday", familySize: 3 },
-];
-
 const INITIAL_DISASTERS: DisasterEvent[] = [
   { id: "DIS-001", name: "Typhoon Kristine", type: "Typhoon", severity: "CAT 3", phase: "DURING", areas: "Metro Manila, Rizal, Laguna", affected: 18432, tickets: 142, dispatchers: 4, riskLevel: "CRITICAL" },
   { id: "DIS-002", name: "Flooding — Laguna Basin", type: "Flood", severity: "WATCH", phase: "BEFORE", areas: "Laguna, Cavite", affected: 3200, tickets: 12, dispatchers: 1, riskLevel: "HIGH" },
@@ -330,34 +322,6 @@ function Modal({
         <div className="admin-modal-body">{children}</div>
         {footer && <div className="admin-modal-footer">{footer}</div>}
       </div>
-    </div>
-  );
-}
-
-// ─── Stepper ──────────────────────────────────────────────────────────────────
-function Stepper({ steps, current }: { steps: { id: string; label: string }[]; current: string }) {
-  const currentIdx = steps.findIndex((s) => s.id === current);
-  return (
-    <div className="admin-stepper">
-      {steps.map((step, i) => {
-        const isDone = i < currentIdx;
-        const isActive = i === currentIdx;
-        return (
-          <div key={step.id} className="admin-step-wrap">
-            <div className="admin-step">
-              <div className={`admin-step-circle ${isDone ? "done" : isActive ? "active" : "pending"}`}>
-                {isDone ? "✓" : i + 1}
-              </div>
-              <div className={`admin-step-label ${isDone ? "done" : isActive ? "active" : ""}`}>
-                {step.label}
-              </div>
-            </div>
-            {i < steps.length - 1 && (
-              <div className={`admin-step-connector ${isDone ? "done" : ""}`} />
-            )}
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -822,7 +786,7 @@ function ApprovalsPage({
   accounts,
   onApprove,
   onReject,
-  addLog,
+  addLog: _addLog, // eslint-disable-line @typescript-eslint/no-unused-vars
   showToast,
 }: {
   accounts: PendingAccount[];
@@ -2338,11 +2302,11 @@ function EarlyWarningPage({
   setPage: (p: AdminPage) => void;
 }) {
   const [step, setStep] = useState<WarningStep>("monitor");
-  const [warningRequired, setWarningRequired] = useState<boolean | null>(null);
+  const [, setWarningRequired] = useState<boolean | null>(null);
   const [config, setConfig] = useState<WarningConfig>({ type: "Typhoon", areas: [], severity: "HIGH", message: "", useSMS: true, usePush: true });
   const [broadcastSent, setBroadcastSent] = useState(false);
-  const [calamityEnded, setCalamityEnded] = useState<boolean | null>(null);
-  const [riskIncreased, setRiskIncreased] = useState<boolean | null>(null);
+  const [, setCalamityEnded] = useState<boolean | null>(null);
+  const [, setRiskIncreased] = useState<boolean | null>(null);
 
   const STEPS = [
     { id: "monitor",          label: "Monitor Data",       icon: "sensors" },
