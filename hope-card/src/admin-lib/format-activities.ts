@@ -7,7 +7,7 @@ export interface Activity {
   status: string;
 }
 
-interface RawActivity {
+export interface RawActivity {
   id?: string;
   action: string;
   description: string;
@@ -23,12 +23,12 @@ export function formatActivities(rawItems: RawActivity[]): Activity[] {
     const days = Math.floor(diff / 86400000);
 
     let timeStr = "just now";
-    if (minutes >= 60 && hours < 24) {
-      timeStr = `${hours} hour${hours !== 1 ? "s" : ""} ago`;
-    } else if (minutes >= 1 && minutes < 60) {
-      timeStr = `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
-    } else if (days >= 1) {
+    if (days >= 1) {
       timeStr = `${days} day${days !== 1 ? "s" : ""} ago`;
+    } else if (hours >= 1) {
+      timeStr = `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+    } else if (minutes >= 1) {
+      timeStr = `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
     }
 
     let type = "approval";
@@ -49,10 +49,12 @@ export function formatActivities(rawItems: RawActivity[]): Activity[] {
     }
 
     const words = activity.description.split(" ");
+    const action = words.length > 1 ? words.slice(0, -1).join(" ") : "";
+    const subject = words.length > 0 ? words[words.length - 1] : "";
     return {
-      id: activity.id ?? Math.random().toString(),
-      action: words.slice(0, -1).join(" "),
-      subject: words.slice(-1)[0] ?? "",
+      id: activity.id ?? `fallback-${activity.description}-${activity.created_at}`,
+      action,
+      subject,
       time: timeStr,
       type,
       status,
