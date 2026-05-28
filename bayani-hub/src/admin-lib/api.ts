@@ -1,5 +1,5 @@
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3004/api/v1';
+  process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3004/api/v1';
 
 export async function apiFetch<T = any>(
   path: string,
@@ -22,7 +22,7 @@ export async function apiFetch<T = any>(
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('admin-token');
-      window.location.href = '/login';
+      window.location.href = '/admin/login';
     }
     throw new Error('Unauthorised');
   }

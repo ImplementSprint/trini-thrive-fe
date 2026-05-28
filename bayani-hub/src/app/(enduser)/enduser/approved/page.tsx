@@ -5,6 +5,7 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import QRCode from "react-qr-code";
 import { useAuth } from "@/enduser-lib/auth-context";
+import EnduserNavBar from "@/enduser-components/EnduserNavBar";
 
 // ─── Icons (inline SVG to avoid external deps) ──────────────────────────────
 
@@ -162,31 +163,7 @@ export default function BayaniHubEventPass() {
   return (
     <div className={styles.container}>
 
-      {/* ── Navbar ── */}
-      <nav className={styles.navbar}>
-        <div className={styles.navLeft}>
-          <Link href="/enduser/dashboard" className={styles.logoContainer}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/enduser/logo_b.png" alt="BayaniHub logo" className={styles.logo} />
-            <span className={styles.brand}>BayaniHub</span>
-          </Link>
-
-          <div className={styles.navLinks}>
-            <Link href="/enduser/dashboard" className={styles.navLink}>Home</Link>
-            <Link href="/about" className={styles.navLink}>About Us</Link>
-            <Link href="/applications" className={`${styles.navLink} ${styles.activeLink}`}>Applications</Link>
-            <Link href="/mission" className={styles.navLink}>Mission</Link>
-          </div>
-        </div>
-        <div className={styles.navRight}>
-          <button className={styles.iconBtn} aria-label="Help"><IconHelp /></button>
-          <button className={`${styles.iconBtn} ${styles.relative}`} aria-label="Notifications">
-            <IconBell />
-            <span className={styles.badge} />
-          </button>
-          <button className={styles.iconBtn} aria-label="Account"><IconUser /></button>
-        </div>
-      </nav>
+      <EnduserNavBar activeKey="applications" />
 
       {/* ── Page body ── */}
       <main className={styles.main}>

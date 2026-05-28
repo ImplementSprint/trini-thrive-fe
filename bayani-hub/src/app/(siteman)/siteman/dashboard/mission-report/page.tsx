@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/siteman-components/layout/DashboardLayout";
+import { request } from "@/siteman-lib/api";
 import styles from "../scan-qr/page.module.css";
 
 export default function MissionReportPage() {
@@ -11,9 +12,7 @@ export default function MissionReportPage() {
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
-        const res = await fetch(`${baseUrl}/api/missions/report`);
-        const data = await res.json();
+        const data = await request<any>('/missions/report');
         setReport(data);
       } catch (err) {
         console.error("Failed to load report", err);

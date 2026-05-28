@@ -6,12 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/enduser-lib/auth-context';
 import { useState } from 'react';
-import NotificationButton from '@/enduser-components/NotificationButton';
+import EnduserNavBar from '@/enduser-components/EnduserNavBar';
 
 export default function HomePage() {
   const router = useRouter();
-  const { token, isReady, logout, user } = useAuth();
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { token, isReady } = useAuth();
 
   useEffect(() => {
     if (!isReady) return;
@@ -27,83 +26,7 @@ export default function HomePage() {
   return (
     <View style={styles.container}>
       
-      {/* ========================================= */}
-      {/* NAVIGATION BAR                            */}
-      {/* ========================================= */}
-      <View style={styles.navBar}>
-        {/* Left: Logo & Links */}
-        <View style={styles.navLeft}>
-          <Pressable 
-            onPress={() => router.push('/enduser/dashboard')} 
-            style={({ hovered }: any) => [styles.logoContainer, { transition: 'all 0.2s ease' }, hovered && { transform: [{ scale: 1.02 }] }]}
-          >
-            <Image 
-              source={{ uri: '/enduser/logo_b.png' }} 
-              style={styles.logoImage} 
-              resizeMode="contain" 
-            />
-            <Text style={styles.brandName}>BayaniHub</Text>
-          </Pressable>
-          
-          <View style={styles.navLinks}>
-            <Pressable onPress={() => router.push('/enduser/dashboard')}>
-              {({ hovered }: any) => (
-                <Text style={[styles.navLink, styles.activeLink, { transition: 'all 0.2s ease' }, hovered && { color: '#4273B8' }]}>Home</Text>
-              )}
-            </Pressable>
-            <Pressable onPress={() => router.push('/about')}>
-              {({ hovered }: any) => (
-                <Text style={[styles.navLink, { transition: 'all 0.2s ease' }, hovered && { color: '#4273B8' }]}>About Us</Text>
-              )}
-            </Pressable>
-            <Pressable onPress={() => router.push('/applications')}>
-              {({ hovered }: any) => (
-                <Text style={[styles.navLink, { transition: 'all 0.2s ease' }, hovered && { color: '#4273B8' }]}>Applications</Text>
-              )}
-            </Pressable>
-            <Pressable onPress={() => router.push('/mission')}>
-              {({ hovered }: any) => (
-                <Text style={[styles.navLink, { transition: 'all 0.2s ease' }, hovered && { color: '#4273B8' }]}>Mission</Text>
-              )}
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Right: User Icons */}
-        <View style={styles.navRight}>
-          <NotificationButton />
-          
-          <Pressable
-            onPress={() => setShowUserMenu((current) => !current)}
-            style={({ hovered }: any) => [styles.userProfile, { transition: 'all 0.2s ease' }, hovered && { opacity: 0.7 }]}
-          >
-            <Image source={{ uri: '/icon-user.png' }} style={styles.navIcon} resizeMode="contain" />
-            <View>
-              <Text style={styles.userName}>{user?.profile?.first_name} {user?.profile?.last_name}</Text>
-            </View>
-          </Pressable>
-
-          {showUserMenu ? (
-            <View style={styles.userMenu}>
-              <Pressable
-                onPress={() => {
-                  setShowUserMenu(false);
-                  logout();
-                  router.replace('/enduser/login');
-                }}
-                style={({ hovered, pressed }: any) => [
-                  styles.logoutButton,
-                  hovered && styles.logoutButtonHovered,
-                  pressed && styles.logoutButtonPressed,
-                  { borderRadius: 0 }
-                ]}
-              >
-                <Text style={styles.logoutButtonText}>Logout</Text>
-              </Pressable>
-            </View>
-          ) : null}
-        </View>
-      </View>
+      <EnduserNavBar activeKey="home" />
 
       {/* ========================================= */}
       {/* PAGE BODY (Scrollable area below navbar)  */}
@@ -114,7 +37,7 @@ export default function HomePage() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroSection}>
-          <Image source={{ uri: '/hero-bg.png' }} style={styles.heroBg} resizeMode="cover" />
+          <Image source={{ uri: '/enduser/hero-bg.png' }} style={styles.heroBg} resizeMode="cover" />
           <View style={styles.heroOverlay} />
 
           <View style={styles.heroContent}>
@@ -134,7 +57,7 @@ export default function HomePage() {
             {/* PLEDGE CARD */}
             <Pressable style={({ hovered }: any) => [styles.card, { transition: 'all 0.3s ease' }, hovered && { transform: [{ translateY: -8 }], boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.25)' }]}>
               <View style={styles.cardTop}>
-                <Image source={{ uri: '/icon-box.png' }} style={styles.cardIconImage} resizeMode="contain" />
+                <Image source={{ uri: '/enduser/icon-box.png' }} style={styles.cardIconImage} resizeMode="contain" />
                 <Text style={styles.cardTitle}>Pledge Goods</Text>
                 <View style={styles.subtitleWrapper}>
                   <Text style={styles.cardSubtitle}>Review dynamic site needs. Donate supplies.</Text>
@@ -147,7 +70,7 @@ export default function HomePage() {
                   hovered && { transform: [{ scale: 1.05 }], boxShadow: '0px 5px 15px rgba(46, 139, 87, 0.4)' },
                   pressed && { transform: [{ scale: 0.95 }] }
                 ]}
-                onPress={() => router.push('/pledge')}
+                onPress={() => router.push('/enduser/pledge')}
               >
                 <Text style={styles.cardButtonText}>Pledge Now</Text>
               </Pressable>
@@ -156,7 +79,7 @@ export default function HomePage() {
             {/* VOLUNTEER CARD */}
             <Pressable style={({ hovered }: any) => [styles.card, { transition: 'all 0.3s ease' }, hovered && { transform: [{ translateY: -8 }], boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.25)' }]}>
               <View style={styles.cardTop}>
-                <Image source={{ uri: '/icon-handshake.png' }} style={styles.cardIconImage} resizeMode="contain" />
+                <Image source={{ uri: '/enduser/icon-handshake.png' }} style={styles.cardIconImage} resizeMode="contain" />
                 <Text style={styles.cardTitle}>Volunteer Your Time</Text>
                 <View style={styles.subtitleWrapper}>
                   <Text style={styles.cardSubtitle}>Discover Medic, Logistics, & Field roles.</Text>
@@ -169,7 +92,7 @@ export default function HomePage() {
                   hovered && { transform: [{ scale: 1.05 }], boxShadow: '0px 5px 15px rgba(59, 113, 202, 0.4)' },
                   pressed && { transform: [{ scale: 0.95 }] }
                 ]}
-                onPress={() => router.push('/volunteer')}
+                onPress={() => router.push('/enduser/volunteer')}
                 >
                 <Text style={styles.cardButtonText}>Volunteer Now</Text>
               </Pressable>

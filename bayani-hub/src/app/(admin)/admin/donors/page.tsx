@@ -274,12 +274,12 @@ export default function Donors() {
 
       <main className={styles.main}>
         <div className={styles.pageHeader}>
-          <Link href="/" className={styles.backButton}>
+          <button onClick={() => router.back()} className={styles.backButton}>
             <svg className={styles.svg16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back
-          </Link>
+          </button>
           <div className={styles.headerCenter}>
             <div className={styles.headerIcon}>
               <h1 className={styles.headerTitle}>Donor Applications</h1>
@@ -351,7 +351,7 @@ export default function Donors() {
                     key={donor.id}
                     donor={donor}
                     busyAction={busyAction}
-                    onReview={(nextId) => router.push(`/donor/${nextId}`)}
+                    onReview={(nextId) => router.push(`/admin/donor/${nextId}`)}
                     onApprove={(nextId) => handleStatusUpdate(nextId, "confirmed")}
                     onReject={(nextId) => handleStatusUpdate(nextId, "failed")}
                   />

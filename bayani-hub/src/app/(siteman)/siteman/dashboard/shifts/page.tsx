@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { DashboardLayout } from "@/siteman-components/layout/DashboardLayout";
 import {
   Clock, Check, X, User, History, Search,
@@ -120,15 +121,18 @@ function EditModal({ shift, onClose, onSaved }: EditModalProps) {
     }
   };
 
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div style={{
-      position: "fixed", inset: 0, backgroundColor: "rgba(17,24,39,0.6)",
-      zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px",
+      position: "fixed", inset: 0,
+      backgroundColor: "rgba(17,24,39,0.6)", backdropFilter: "blur(2px)",
+      zIndex: 9999, display: "flex", alignItems: "flex-start", justifyContent: "center",
+      padding: "24px", overflowY: "auto",
     }}>
       <div style={{
         width: "100%", maxWidth: "500px", backgroundColor: "white",
         borderRadius: "16px", boxShadow: "0 24px 60px rgba(0,0,0,0.25)",
-        overflow: "hidden",
+        overflow: "hidden", marginBottom: "24px",
       }}>
         {/* Header */}
         <div style={{
@@ -287,7 +291,8 @@ function EditModal({ shift, onClose, onSaved }: EditModalProps) {
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -410,9 +415,9 @@ export default function ShiftsPage() {
   return (
     <DashboardLayout>
       {/* ── Flag Reason Modal ── */}
-      {flaggingShift && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(17,24,39,0.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-          <div style={{ width: "100%", maxWidth: "420px", backgroundColor: "white", borderRadius: "14px", border: "1px solid #E5E7EB", boxShadow: "0 24px 50px rgba(0,0,0,0.22)", padding: "22px" }}>
+      {flaggingShift && typeof document !== "undefined" && createPortal(
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(17,24,39,0.55)", backdropFilter: "blur(2px)", zIndex: 9999, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px", overflowY: "auto" }}>
+          <div style={{ width: "100%", maxWidth: "420px", backgroundColor: "white", borderRadius: "14px", border: "1px solid #E5E7EB", boxShadow: "0 24px 50px rgba(0,0,0,0.22)", padding: "22px", marginBottom: "24px" }}>
             <h2 style={{ margin: "0 0 6px", color: "#111827", fontSize: "20px", fontWeight: 700 }}>Flag Clock-Out</h2>
             <p style={{ margin: "0 0 18px", color: "#6B7280", fontSize: "14px" }}>
               Select the reason before flagging <strong>{flaggingShift.volunteer_name}</strong>&apos;s request.
@@ -440,7 +445,8 @@ export default function ShiftsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Edit Modal ── */}

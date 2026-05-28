@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/enduser-lib/auth-context';
-import NotificationButton from '@/enduser-components/NotificationButton';
+import EnduserNavBar from '@/enduser-components/EnduserNavBar';
 
 export default function VolunteerPage() {
   const router = useRouter();
@@ -29,7 +29,6 @@ export default function VolunteerPage() {
 
   const [isTimeDropdownOpen, setIsTimeDropdownOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState('Select Time Slot');
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [approvedRoleKeys, setApprovedRoleKeys] = useState<string[]>([]);
@@ -284,53 +283,7 @@ export default function VolunteerPage() {
 
   return (
     <View style={styles.container}>
-      {/* NAVIGATION BAR */}
-      <View style={styles.navBar}>
-        <View style={styles.navLeft}>
-          <Pressable onPress={() => router.push('/enduser/dashboard')} style={styles.logoContainer}>
-            <Image source={{ uri: '/enduser/logo_b.png' }} style={styles.logoImage} resizeMode="contain" />
-            <Text style={styles.brandName}>BayaniHub</Text>
-          </Pressable>
-          <View style={styles.navLinks}>
-            <Pressable onPress={() => router.push('/enduser/dashboard')}><Text style={styles.navLink}>Home</Text></Pressable>
-            <Pressable onPress={() => router.push('/about')}><Text style={styles.navLink}>About Us</Text></Pressable>
-            <Pressable onPress={() => router.push('/applications')}><Text style={styles.navLink}>Applications</Text></Pressable>
-            <Pressable onPress={() => router.push('/mission')}><Text style={styles.navLink}>Mission</Text></Pressable>
-          </View>
-        </View>
-        <View style={styles.navRight}>
-          <NotificationButton />
-          <View style={{ position: 'relative' }}>
-            <Pressable 
-              style={styles.userProfile} 
-              onPress={() => setShowUserMenu(!showUserMenu)}
-            >
-              <Image source={{ uri: '/icon-user.png' }} style={styles.navIcon} resizeMode="contain" />
-              <View>
-                <Text style={styles.userName}>{user?.profile?.first_name} {user?.profile?.last_name}</Text>
-              </View>
-            </Pressable>
-
-            {showUserMenu && (
-              <View style={styles.userMenu}>
-                <Pressable
-                  onPress={() => {
-                    setShowUserMenu(false);
-                    logout();
-                    router.replace('/enduser/login');
-                  }}
-                  style={({ hovered }: any) => [
-                    { padding: 10 },
-                    hovered && { backgroundColor: '#F3F4F6' }
-                  ]}
-                >
-                  <Text style={{ color: '#EF4444', fontWeight: '500' }}>Logout</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
+      <EnduserNavBar />
 
       {/* PAGE BODY */}
       <ScrollView 
@@ -417,7 +370,7 @@ export default function VolunteerPage() {
                       <RequiredLabel>Select Site Location</RequiredLabel>
                       <Pressable style={[styles.dropdownBox, showErrors && !isSiteValid && styles.errorBorder]} onPress={() => { setIsSiteDropdownOpen(!isSiteDropdownOpen); setIsTimeDropdownOpen(false); }}>
                         <Text style={[styles.dropdownBoxText, !isSiteValid && {color: '#9CA3AF'}]}>{selectedSite !== 'Select Site Location' ? selectedSite : '"Select Site Location"'}</Text>
-                        <Image source={{ uri: '/chevron-down.png' }} style={styles.dropdownIcon} />
+                        <Image source={{ uri: '/enduser/chevron-down.png' }} style={styles.dropdownIcon} />
                       </Pressable>
                       {showErrors && !isSiteValid && <Text style={styles.errorText}>• Site Location is required.</Text>}
                       {isSiteDropdownOpen && (
@@ -446,7 +399,7 @@ export default function VolunteerPage() {
                       <RequiredLabel>Select Time Slot</RequiredLabel>
                       <Pressable style={[styles.dropdownBox, showErrors && !isTimeValid && styles.errorBorder]} onPress={() => { setIsTimeDropdownOpen(!isTimeDropdownOpen); setIsSiteDropdownOpen(false); }}>
                         <Text style={[styles.dropdownBoxText, !isTimeValid && {color: '#9CA3AF'}]}>{selectedTime !== 'Select Time Slot' ? selectedTime : '"Select Time Slot"'}</Text>
-                        <Image source={{ uri: '/chevron-down.png' }} style={styles.dropdownIcon} />
+                        <Image source={{ uri: '/enduser/chevron-down.png' }} style={styles.dropdownIcon} />
                       </Pressable>
                       {showErrors && !isTimeValid && <Text style={styles.errorText}>• Time Slot is required.</Text>}
                       {isTimeDropdownOpen && (
@@ -754,9 +707,9 @@ export default function VolunteerPage() {
                       <View style={styles.donorPromptBtns}>
                         <Pressable style={styles.yesDonorBtn} onPress={() => {
                           if (typeof window !== 'undefined') sessionStorage.setItem('fromVolunteer', 'true');
-                          router.push('/pledge');
+                          router.push('/enduser/pledge');
                         }}><Text style={styles.yesDonorBtnText}>Yes, I want to be a donor</Text></Pressable>
-                        <Pressable style={styles.noDonorBtn} onPress={() => router.push('/')}><Text style={styles.noDonorBtnText}>No, Return to Homepage</Text></Pressable>
+                        <Pressable style={styles.noDonorBtn} onPress={() => router.push('/enduser/dashboard')}><Text style={styles.noDonorBtnText}>No, Return to Homepage</Text></Pressable>
                       </View>
                     </View>
                   ) : (

@@ -34,7 +34,7 @@ export function middleware(req: NextRequest) {
   );
 
   // Ignore static assets
-  if (pathname.match(/\.(png|jpe?g|svg|ico|gif|webp|css|js)$/)) return NextResponse.next();
+  if (pathname.match(/\.(png|jpe?g|svg|ico|gif|webp|css|js)$/i)) return NextResponse.next();
 
   // Not a persona route — pass through
   if (!prefix) return NextResponse.next();
@@ -48,19 +48,8 @@ export function middleware(req: NextRequest) {
   const storedPersona = req.cookies.get('persona')?.value;
   const expectedPersona = PERSONA_MAP[prefix];
 
-  // The siteman login page is exactly /siteman. We must allow it to pass through if unauthenticated.
-  if (pathname === '/siteman' || pathname === '/siteman/') {
-    // If they already have the expected cookie, redirect them to dashboard
-    if (storedPersona === expectedPersona) {
-        return NextResponse.redirect(new URL('/siteman/dashboard', req.url));
-    }
-    return NextResponse.next();
-  }
-
   if (!storedPersona || storedPersona !== expectedPersona) {
-    // Redirect to this persona's login page
-    const loginUrl = prefix === '/siteman' ? '/siteman' : `${prefix}/login`;
-    return NextResponse.redirect(new URL(loginUrl, req.url));
+    return NextResponse.redirect(new URL(`${prefix}/login`, req.url));
   }
 
   return NextResponse.next();

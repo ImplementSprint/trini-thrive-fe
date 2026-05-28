@@ -4,11 +4,25 @@
  * changed in a single place via NEXT_PUBLIC_API_BASE_URL.
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003';
+const BASE = process.env.NEXT_PUBLIC_SITEMAN_API_URL ?? 'http://localhost:3003';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}/api${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+export async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  let token = null;
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem("bayanihub.supabase.session");
+      if (raw) {
+        token = JSON.parse(raw).accessToken;
+      }
+    } catch (e) {}
+  }
+
+  const res = await fetch(`${BASE}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options?.headers
+    },
     ...options,
   });
 
@@ -121,4 +135,13 @@ export const ShiftsAPI = {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
+};
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export const NotificationsAPI = {
+  list: () => request<any[]>('/notifications'),
+  markAsRead: (id: string) =>
+    request<any>(`/notifications/${id}/read`, { method: 'PATCH' }),
+  clearAll: () => request<any>('/notifications', { method: 'DELETE' }),
 };

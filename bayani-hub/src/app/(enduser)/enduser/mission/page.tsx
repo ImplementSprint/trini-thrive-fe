@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/enduser-lib/auth-context";
 import styles from "../applications/page.module.css";
-import NotificationButton from "@/enduser-components/NotificationButton";
+import EnduserNavBar from "@/enduser-components/EnduserNavBar";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_ENDUSER_API_URL || "http://localhost:3001/api/v1";
 
 type MissionState =
   | "NO_APPROVED_APPLICATION"
@@ -184,27 +184,7 @@ export default function MissionPage() {
 
   return (
     <div className={styles.container}>
-      <nav className={styles.navbar}>
-        <div className={styles.navLeft}>
-          <Link href="/enduser/dashboard" className={styles.logoContainer}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/enduser/logo_b.png" alt="BayaniHub logo" className={styles.logo} />
-            <span className={styles.brand}>BayaniHub</span>
-          </Link>
-
-          <div className={styles.navLinks}>
-            <Link href="/enduser/dashboard" className={styles.navLink}>Home</Link>
-            <Link href="/about" className={styles.navLink}>About Us</Link>
-            <Link href="/applications" className={styles.navLink}>Applications</Link>
-            <Link href="/mission" className={`${styles.navLink} ${styles.activeLink}`}>Mission</Link>
-          </div>
-        </div>
-        <div className={styles.navRight}>
-          <button className={styles.iconBtn} aria-label="Help"><IconHelp /></button>
-          <NotificationButton />
-          <button className={styles.iconBtn} aria-label="Account"><IconUser /></button>
-        </div>
-      </nav>
+      <EnduserNavBar activeKey="mission" />
 
       <main className={styles.main}>
         <div className={styles.pageHeader}>
@@ -257,7 +237,7 @@ export default function MissionPage() {
               </svg>
               <p className={styles.emptyTitle}>No mission entries found</p>
               <p className={styles.emptySub}>Approved volunteer applications will appear here once they are available for mission tracking.</p>
-              <Link href="/applications" className={styles.applyBtn}>View Applications</Link>
+              <Link href="/enduser/applications" className={styles.applyBtn}>View Applications</Link>
             </div>
           ) : visible.map((missionEntry) => {
             const status = stateLabel[missionEntry.state];
@@ -270,7 +250,7 @@ export default function MissionPage() {
               <div
                 key={missionEntry.applicationId}
                 className={styles.appRow}
-                onClick={() => router.push(`/mission/${missionEntry.applicationId}`)}
+                onClick={() => router.push(`/enduser/mission/${missionEntry.applicationId}`)}
               >
                 <span className={styles.statusDot} style={{ backgroundColor: missionEntry.state === "COMPLETED" ? "#16a34a" : missionEntry.state === "APPROVED_WAITING_ASSIGNMENT" ? "#f59e0b" : "#2563eb" }} />
                 <div className={styles.rowInfo}>

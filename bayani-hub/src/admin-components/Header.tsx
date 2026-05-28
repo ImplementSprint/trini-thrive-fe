@@ -121,7 +121,7 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        <Link href="/" className={styles.logoLink}>
+        <Link href="/admin/dashboard" className={styles.logoLink}>
           <div className={styles.logoIconBox}>
             <img
               src="https://cdn.builder.io/api/v1/image/assets%2F895651d642164b74988a81b4e99696fb%2Fb3d0b1c5feab4adcb58d0b0014788cce?format=webp&width=800&height=1200"

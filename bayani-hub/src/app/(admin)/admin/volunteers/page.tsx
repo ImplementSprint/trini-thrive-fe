@@ -110,12 +110,14 @@ function ApplicationItem({
       </div>
 
       <div className={styles.applicationActions}>
-        <img
-          src={getRoleBadgeImage(volunteer.role)}
-          alt={volunteer.role}
-          className={styles.roleBadgeImage}
-          style={{ height: "2rem", objectFit: "contain" }}
-        />
+        {getRoleBadgeImage(volunteer.role) ? (
+          <img
+            src={getRoleBadgeImage(volunteer.role)}
+            alt={volunteer.role}
+            className={styles.roleBadgeImage}
+            style={{ height: "2rem", objectFit: "contain" }}
+          />
+        ) : null}
         <button
           onClick={() => onReview(volunteer.id)}
           className={styles.reviewButton}
@@ -255,15 +257,16 @@ export default function Volunteers() {
 
       <main className={styles.main}>
         <div className={styles.pageHeader}>
-          <Link
-            href="/"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className={styles.backButton}
           >
             <svg className={styles.svg16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back
-          </Link>
+          </button>
           <div className={styles.headerCenter}>
             <div className={styles.headerIcon}>
               <h1 className={styles.headerTitle}>Volunteer Applications</h1>
@@ -335,9 +338,9 @@ export default function Volunteers() {
                   onReview={(id) => {
                     const vol = volunteers.find(v => v.id === id);
                     if (vol?.status === "rejected") {
-                      router.push(`/rejected-applicant/${id}`);
+                      router.push(`/admin/rejected-applicant/${id}`);
                     } else {
-                      router.push(`/applicant/${id}`);
+                      router.push(`/admin/applicant/${id}`);
                     }
                   }}
                   onApprove={(id) => handleApprove(id)}

@@ -91,6 +91,7 @@ function VolunteerCard({ volunteer }: { volunteer: Volunteer }) {
 }
 
 export default function VolunteerVerification() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Volunteer[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -182,12 +183,16 @@ export default function VolunteerVerification() {
       <main className={styles.mainContent}>
         <div className={styles.pageHeader}>
           <div className={styles.headerRow}>
-            <Link href='/admin/volunteers' className={styles.backButton}>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className={styles.backButton}
+            >
               <svg className={styles.svgIcon16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               Back
-            </Link>
+            </button>
             <div className={styles.headerContent}>
               <h1 className={styles.pageTitle}>Volunteer Verification</h1>
               <p className={styles.pageSubtitle}>Check if users are registered volunteers in our system</p>

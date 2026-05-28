@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/enduser-lib/auth-context';
-import NotificationButton from '@/enduser-components/NotificationButton';
+import EnduserNavBar from '@/enduser-components/EnduserNavBar';
 
 export default function PledgePage() {
   const router = useRouter();
@@ -38,7 +38,6 @@ export default function PledgePage() {
   const [showModal, setShowModal] = useState(false); 
   const [showVolunteerModal, setShowVolunteerModal] = useState(false); 
   const [showSimpleSuccessModal, setShowSimpleSuccessModal] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [donorMessage, setDonorMessage] = useState('');
 
@@ -167,7 +166,7 @@ export default function PledgePage() {
     setShowVolunteerModal(false);
     if (choice === 'yes') { 
       if (typeof window !== 'undefined') sessionStorage.setItem('fromPledge', 'true');
-      router.push('/volunteer'); 
+      router.push('/enduser/volunteer');
     } else { 
       router.push('/enduser/dashboard'); 
     }
@@ -269,53 +268,7 @@ export default function PledgePage() {
         </View>
       )}
 
-      {/* NAVIGATION BAR */}
-      <View style={styles.navBar}>
-        <View style={styles.navLeft}>
-          <Pressable onPress={() => router.push('/enduser/dashboard')} style={(state: any) => [styles.logoContainer, styles.animated, state.hovered && { transform: [{ scale: 1.02 }] }]}>
-            <Image source={{ uri: '/enduser/logo_b.png' }} style={styles.logoImage} resizeMode="contain" />
-            <Text style={styles.brandName}>BayaniHub</Text>
-          </Pressable>
-          <View style={styles.navLinks}>
-            <Pressable onPress={() => router.push('/enduser/dashboard')}><Text style={styles.navLink}>Home</Text></Pressable>
-            <Pressable onPress={() => router.push('/about')}><Text style={styles.navLink}>About Us</Text></Pressable>
-            <Pressable onPress={() => router.push('/applications')}><Text style={styles.navLink}>Applications</Text></Pressable>
-            <Pressable onPress={() => router.push('/mission')}><Text style={styles.navLink}>Mission</Text></Pressable>
-          </View>
-        </View>
-        <View style={styles.navRight}>
-          <NotificationButton />
-          <View style={{ position: 'relative' }}>
-            <Pressable 
-              style={styles.userProfile} 
-              onPress={() => setShowUserMenu(!showUserMenu)}
-            >
-              <Image source={{ uri: '/icon-user.png' }} style={styles.navIcon} resizeMode="contain" />
-              <View>
-                <Text style={styles.userName}>{user?.profile?.first_name} {user?.profile?.last_name}</Text>
-              </View>
-            </Pressable>
-
-            {showUserMenu && (
-              <View style={styles.userMenu}>
-                <Pressable
-                  onPress={() => {
-                    setShowUserMenu(false);
-                    logout();
-                    router.replace('/enduser/login');
-                  }}
-                  style={({ hovered }: any) => [
-                    { padding: 10 },
-                    hovered && { backgroundColor: '#F3F4F6' }
-                  ]}
-                >
-                  <Text style={{ color: '#EF4444', fontWeight: '500' }}>Logout</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
+      <EnduserNavBar />
 
       {/* PAGE BODY */}
       <ScrollView style={styles.pageBody} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -441,7 +394,7 @@ export default function PledgePage() {
                           >
                             <Text style={[styles.smallDropdownText, { flex: 1 }]} numberOfLines={1}>{item.unit || 'Unit'}</Text>
                             <Image 
-                              source={{ uri: '/chevron-down.png' }} 
+                              source={{ uri: '/enduser/chevron-down.png' }}
                               style={[styles.dropdownIconMini, openDropdown?.index === index && openDropdown?.type === 'unit' && { transform: [{ rotate: '180deg' }] }]} 
                               resizeMode="contain" 
                             />
@@ -473,7 +426,7 @@ export default function PledgePage() {
                           >
                             <Text style={[styles.smallDropdownText, { flex: 1 }]} numberOfLines={1}>{item.condition || 'Condition'}</Text>
                             <Image 
-                              source={{ uri: '/chevron-down.png' }} 
+                              source={{ uri: '/enduser/chevron-down.png' }}
                               style={[styles.dropdownIconMini, openDropdown?.index === index && openDropdown?.type === 'condition' && { transform: [{ rotate: '180deg' }] }]} 
                               resizeMode="contain" 
                             />

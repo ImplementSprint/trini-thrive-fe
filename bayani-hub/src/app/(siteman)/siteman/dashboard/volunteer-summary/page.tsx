@@ -25,7 +25,7 @@ import Link from 'next/link';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { LoadingSpinner } from '@/siteman-components/ui/LoadingSpinner';
-import { MissionsAPI, CampaignsAPI } from '@/siteman-lib/api';
+import { MissionsAPI, CampaignsAPI, request } from '@/siteman-lib/api';
 
 export default function VolunteerSummaryPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,7 +78,7 @@ export default function VolunteerSummaryPage() {
 
     // Fetch tasks for the role when modal opens
     if (selectedTeamModal) {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
+      const baseUrl = (process.env.NEXT_PUBLIC_SITEMAN_API_URL ?? 'http://localhost:3003').replace(/\/$/, '');
       // Derive roleId directly from summaryData (available in scope) rather than
       // the 'volunteers' useMemo which is defined later in the file.
       const deployments = summaryData?.deployments ?? [];
@@ -90,8 +90,7 @@ export default function VolunteerSummaryPage() {
       const roleId = (match?.volunteer_applications as any)?.volunteer_roles?.id;
       if (roleId) {
         setLoadingTasks(true);
-        fetch(`${baseUrl}/api/tasks/role/${roleId}`)
-          .then(res => res.ok ? res.json() : Promise.resolve({ tasks: [] }))
+        request<{ tasks: any[] }>(`/tasks/role/${roleId}`)
           .then(data => setRoleTasks(data.tasks ?? []))
           .catch(() => setRoleTasks([]))
           .finally(() => setLoadingTasks(false));
@@ -1576,14 +1575,10 @@ export default function VolunteerSummaryPage() {
                           if (!roleId) return;
                           setSavingTask(true);
                           try {
-                            const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
-                            const res = await fetch(`${baseUrl}/api/tasks/role/${roleId}`, {
+                            const data = await request<any>(`/tasks/role/${roleId}`, {
                               method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ title: newTaskTitle.trim(), description: newTaskDesc.trim() }),
                             });
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data.message);
                             setRoleTasks(data.tasks ?? []);
                             setNewTaskTitle('');
                             setNewTaskDesc('');
@@ -1738,7 +1733,7 @@ export default function VolunteerSummaryPage() {
                     if (selectedTaskTitles.length === 0) { setAssignError('Please select at least one task.'); return; }
                     setAssigning(true); setAssignError(null);
                     try {
-                      const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
+                      const baseUrl = (process.env.NEXT_PUBLIC_SITEMAN_API_URL ?? 'http://localhost:3003').replace(/\/$/, '');
                       // Assign tasks to each selected volunteer's deployment
                       const teamVols = volunteers.filter(v => v.teamCategory === selectedTeamModal);
                       const selectedVols = teamVols.filter(v => selectedVolunteerIds.includes(v.applicationId));
@@ -1756,18 +1751,15 @@ export default function VolunteerSummaryPage() {
 
                       const results = await Promise.all(
                         selectedVols.map(v =>
-                          fetch(`${baseUrl}/api/tasks/assign`, {
+                          request(`/tasks/assign`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                               application_id: v.applicationId,
                               role_id: v.roleId,
                               campaign_id: selectedCampaignId || v.campaignId,
                               task_titles: selectedTaskTitles,
                             }),
-                          }).then(async r => {
-                            const data = await r.json();
-                            if (!r.ok) throw new Error(data.message || 'Failed to assign tasks');
+                          }).then(data => {
                             return data;
                           })
                         )

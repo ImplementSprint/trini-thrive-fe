@@ -18,6 +18,27 @@ import {
 import Link from 'next/link';
 import { MissionsAPI } from '@/siteman-lib/api';
 
+function formatTimeAgo(dateStr: string): string {
+  const ms = Date.now() - new Date(dateStr).getTime();
+  if (ms < 0 || Number.isNaN(ms)) return 'just now';
+
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} day${days === 1 ? '' : 's'} ago`;
+
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? '' : 's'} ago`;
+
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? '' : 's'} ago`;
+}
+
 export default function Home() {
   const [summaryData, setSummaryData] = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -39,13 +60,7 @@ export default function Home() {
       const profile = app.user_profiles ?? {};
       const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Unknown';
       const rawDate = d.date_assigned;
-      const timeStr = rawDate
-        ? (() => {
-            const ms = Date.now() - new Date(rawDate).getTime();
-            const mins = Math.floor(ms / 60000);
-            return mins < 60 ? `${mins} min ago` : `${Math.floor(mins / 60)}h ago`;
-          })()
-        : 'recently';
+      const timeStr = rawDate ? formatTimeAgo(rawDate) : 'recently';
       return { name, action: d.task_description ?? 'Deployed to mission', time: timeStr };
     });
   const activityPageSize = 5;
@@ -120,7 +135,7 @@ export default function Home() {
               }}>
                 Scan volunteer deployment QR codes for on-site verification and check-ins.
               </p>
-              <Link href="/scan-qr" style={{ width: '100%', textDecoration: 'none' }}>
+              <Link href="/siteman/dashboard/scan-qr" style={{ width: '100%', textDecoration: 'none' }}>
                 <button style={{
                   backgroundColor: 'var(--color-primary)',
                   color: 'white',
@@ -215,7 +230,7 @@ export default function Home() {
               </p>
               
               {/* Full-width Activate Mission Session Button - Linked to Activate Mission Page */}
-              <Link href="/activate-mission" style={{ width: '100%', textDecoration: 'none' }}>
+              <Link href="/siteman/dashboard/activate-mission" style={{ width: '100%', textDecoration: 'none' }}>
                 <button style={{
                   backgroundColor: 'var(--color-primary)',
                   color: 'white',
@@ -308,7 +323,7 @@ export default function Home() {
               </p>
               
               {/* Full-width View Live Dashboard Button - Linked to Volunteer Summary */}
-              <Link href="/volunteer-summary" style={{ width: '100%', textDecoration: 'none' }}>
+              <Link href="/siteman/dashboard/volunteer-summary" style={{ width: '100%', textDecoration: 'none' }}>
                 <button style={{
                   backgroundColor: 'transparent',
                   color: 'var(--color-primary)',

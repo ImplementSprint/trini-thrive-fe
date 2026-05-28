@@ -187,10 +187,10 @@ export default function LogisticVolunteers() {
               {filteredVolunteers.length} logistic volunteer application{filteredVolunteers.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <Link href='/admin/volunteers' className={styles.backButton}>
+          <button type="button" onClick={() => router.back()} className={styles.backButton}>
             <ChevronLeft className="w-4 h-4" />
             Back to All Roles
-          </Link>
+          </button>
         </div>
 
         {/* Stats */}
