@@ -1764,7 +1764,7 @@ export default function VolunteerSummaryPage() {
                           })
                         )
       );
-                      const totalAssigned = results.reduce((sum, r) => sum + (r.assigned ?? 0), 0);
+                      const totalAssigned = results.reduce<number>((sum, r) => sum + ((r as { assigned?: number })?.assigned ?? 0), 0);
                       let successMsg = `${totalAssigned} task assignment(s) created across ${selectedVols.length} volunteer(s).`;
                       if (alreadyAssignedInfo.length > 0) {
                         successMsg += `\n\nNote: ${alreadyAssignedInfo.join(' ')}`;
