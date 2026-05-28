@@ -127,7 +127,7 @@ export default function RejectedApplicationReview({ params }: { params: { id: st
       <main className={styles.main}>
         {/* Breadcrumb */}
         <div className={styles.breadcrumb}>
-          <Link href="/" className={styles.breadcrumbLink}>
+          <Link href="/admin/dashboard" className={styles.breadcrumbLink}>
             Dashboard
           </Link>
           <span>/</span>
@@ -263,7 +263,7 @@ export default function RejectedApplicationReview({ params }: { params: { id: st
             Resend Notification
           </button>
           <button
-            onClick={() => router.push("/admin/volunteers")}
+            onClick={() => router.back()}
             className={`${styles.button} ${styles.buttonPrimary}`}
           >
             <ArrowLeft className={styles.icon} />

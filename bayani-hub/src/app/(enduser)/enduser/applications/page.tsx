@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/enduser-lib/auth-context";
 import styles from "./page.module.css";
-import NotificationButton from "@/enduser-components/NotificationButton";
+import EnduserNavBar from "@/enduser-components/EnduserNavBar";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type AppStatus = "APPROVED" | "PENDING" | "REJECTED";
@@ -65,7 +65,7 @@ export default function ApplicationsPage() {
   useEffect(() => { setCurrentPage(1); }, [tab, search, typeFilter]);
 
   const handleRowClick = (app: Application) => {
-    router.push(`/applications/${app.refId}`);
+    router.push(`/enduser/applications/${app.refId}`);
   };
   const handleCopy = (refId: string, e: React.MouseEvent) => { e.stopPropagation(); navigator.clipboard.writeText(refId).catch(() => {}); setCopied(refId); setTimeout(() => setCopied(null), 1500); };
 
@@ -93,28 +93,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className={styles.container}>
-      {/* Navbar */}
-      <nav className={styles.navbar}>
-        <div className={styles.navLeft}>
-          <Link href="/enduser/dashboard" className={styles.logoContainer}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/enduser/logo_b.png" alt="BayaniHub logo" className={styles.logo} />
-            <span className={styles.brand}>BayaniHub</span>
-          </Link>
-
-          <div className={styles.navLinks}>
-            <Link href="/enduser/dashboard" className={styles.navLink}>Home</Link>
-            <Link href="/about" className={styles.navLink}>About Us</Link>
-            <Link href="/applications" className={`${styles.navLink} ${styles.activeLink}`}>Applications</Link>
-            <Link href="/mission" className={styles.navLink}>Mission</Link>
-          </div>
-        </div>
-        <div className={styles.navRight}>
-          <button className={styles.iconBtn} aria-label="Help"><IconHelp /></button>
-          <NotificationButton />
-          <button className={styles.iconBtn} aria-label="Account"><IconUser /></button>
-        </div>
-      </nav>
+      <EnduserNavBar activeKey="applications" />
 
       <main className={styles.main}>
         {/* Header */}
@@ -166,7 +145,7 @@ export default function ApplicationsPage() {
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
               <p className={styles.emptyTitle}>No applications found</p>
               <p className={styles.emptySub}>You have no submitted applications yet.</p>
-              <a href="/volunteer" className={styles.applyBtn}>Apply Now</a>
+              <Link href="/enduser/volunteer" className={styles.applyBtn}>Apply Now</Link>
             </div>
           ) : currentVisible.map((app) => (
             <div key={app.refId} className={styles.appRow} onClick={() => handleRowClick(app)}>
@@ -185,7 +164,7 @@ export default function ApplicationsPage() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/mission/${app.refId}`);
+                    router.push(`/enduser/mission/${app.refId}`);
                   }}
                   style={{
                     border: "1px solid #dbeafe",

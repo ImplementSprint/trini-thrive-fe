@@ -139,13 +139,23 @@ const ActivityCalendarIcon = () => (
 function getTimeAgo(dateStr: string | null | undefined): string {
   if (!dateStr) return "";
   const diff = Date.now() - new Date(dateStr).getTime();
+  if (diff < 0 || Number.isNaN(diff)) return "Just now";
+
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "Just now";
   if (mins < 60) return `${mins} min ago`;
+
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+
   const days = Math.floor(hours / 24);
-  return `${days} day${days > 1 ? "s" : ""} ago`;
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
 }
 
 export default function Index() {

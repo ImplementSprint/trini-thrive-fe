@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Fetch the logged-in admin profile from the backend
     const API_BASE =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3004/api/v1';
+      process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3004/api/v1';
 
     fetch(`${API_BASE}/auth/profile`, {
       headers: { Authorization: `Bearer ${stored}` },
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem('admin-token');
     setProfile(null);
     setToken(null);
-    window.location.href = '/login';
+    window.location.href = '/admin/login';
   };
 
   return (

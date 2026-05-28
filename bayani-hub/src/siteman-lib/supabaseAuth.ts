@@ -1,7 +1,7 @@
 const STORAGE_KEY = "bayanihub.supabase.session";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003';
+const API_BASE = process.env.NEXT_PUBLIC_SITEMAN_API_URL ?? 'http://localhost:3003';
 
 export interface StoredSession {
   accessToken: string;
@@ -50,13 +50,9 @@ function ensureBrowser() {
 }
 
 export async function signInWithPassword(email: string, password: string) {
-  const { url, anonKey } = getSupabaseConfig();
-  const response = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+  const response = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
-    headers: {
-      apikey: anonKey,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: email.trim(),
       password,
@@ -66,7 +62,7 @@ export async function signInWithPassword(email: string, password: string) {
   const payload = await parseSupabaseResponse(response);
   saveSession({
     accessToken: payload.access_token,
-    refreshToken: payload.refresh_token,
+    refreshToken: payload.refresh_token ?? "",
     email: payload.user?.email ?? email.trim(),
   });
 
@@ -75,7 +71,7 @@ export async function signInWithPassword(email: string, password: string) {
 
 export async function sendPasswordRecovery(email: string) {
   ensureBrowser();
-  const response = await fetch(`${API_BASE}/api/auth/send-otp`, {
+  const response = await fetch(`${API_BASE}/auth/send-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: email.trim() }),
@@ -85,7 +81,7 @@ export async function sendPasswordRecovery(email: string) {
 
 export async function verifyOtp(email: string, otp: string) {
   ensureBrowser();
-  const response = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+  const response = await fetch(`${API_BASE}/auth/verify-otp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: email.trim(), otp }),
@@ -94,7 +90,7 @@ export async function verifyOtp(email: string, otp: string) {
 }
 
 export async function updatePassword(session: RecoverySession, password: string) {
-  const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+  const response = await fetch(`${API_BASE}/auth/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

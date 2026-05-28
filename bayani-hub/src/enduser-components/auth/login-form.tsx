@@ -90,7 +90,7 @@ export function LoginForm() {
         </div>
 
         <div className={`${styles.card} ${isSuccess ? styles.cardSuccess : ""}`}>
-          <Link href="/" className={styles.backLink}>
+          <Link href="/enduser/home" className={styles.backLink}>
             ← Back to home
           </Link>
           <header className={styles.header}>

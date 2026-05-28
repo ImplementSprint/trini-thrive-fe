@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import styles from "./forgot-password-flow.module.css";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_ENDUSER_API_URL || "http://localhost:3001/api/v1";
 
 type Step = "request" | "otp" | "reset" | "success";
 

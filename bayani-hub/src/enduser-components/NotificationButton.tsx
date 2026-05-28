@@ -10,7 +10,7 @@ export default function NotificationButton() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  const API_BASE = process.env.NEXT_PUBLIC_ENDUSER_API_URL || 'http://localhost:3001/api/v1';
 
   const fetchNotifications = async () => {
     if (!token) return;
@@ -137,7 +137,7 @@ export default function NotificationButton() {
           hovered && { opacity: 0.8, transform: [{ scale: 1.1 }] }
         ]}
       >
-        <Image source={{ uri: '/icon-bell.png' }} style={styles.navIcon} resizeMode="contain" />
+        <Image source={{ uri: '/enduser/icon-bell.png' }} style={styles.navIcon} resizeMode="contain" />
         {unreadCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{unreadCount}</Text>

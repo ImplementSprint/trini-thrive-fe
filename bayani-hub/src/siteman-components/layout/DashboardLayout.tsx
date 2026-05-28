@@ -3,6 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { PageTransition } from '@/siteman-components/ui/PageTransition';
+import { NotificationsAPI } from '@/siteman-lib/api';
+import { clearStoredSession } from '@/siteman-lib/supabaseAuth';
 import {
   Bell, User, LayoutDashboard,
   Play, Activity, Clock, LogOut
@@ -14,9 +16,9 @@ interface DashboardLayoutProps {
 
 const NAV_ITEMS = [
   { href: '/siteman/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/siteman/activate-mission', label: 'Activate Mission', icon: Play },
-  { href: '/siteman/volunteer-summary', label: 'Volunteer Summary', icon: Activity },
-  { href: '/siteman/shifts', label: 'Review Shift Hours', icon: Clock },
+  { href: '/siteman/dashboard/activate-mission', label: 'Activate Mission', icon: Play },
+  { href: '/siteman/dashboard/volunteer-summary', label: 'Volunteer Summary', icon: Activity },
+  { href: '/siteman/dashboard/shifts', label: 'Review Shift Hours', icon: Clock },
 ];
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
@@ -33,13 +35,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const fetchNotifications = async () => {
     try {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
-      const res = await fetch(`${baseUrl}/api/notifications`);
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data || []);
-        setUnreadCount((data || []).filter((n: any) => !n.is_read).length);
-      }
+      const data = await NotificationsAPI.list();
+      setNotifications(data || []);
+      setUnreadCount((data || []).filter((n: any) => !n.is_read).length);
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
     }
@@ -66,14 +64,11 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
-      const res = await fetch(`${baseUrl}/api/notifications/${id}/read`, { method: 'PATCH' });
-      if (res.ok) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-        );
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
+      await NotificationsAPI.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
     }
@@ -84,10 +79,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     if (unread.length === 0) return;
 
     try {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
-      await Promise.all(
-        unread.map((n) => fetch(`${baseUrl}/api/notifications/${n.id}/read`, { method: 'PATCH' }))
-      );
+      await Promise.all(unread.map((n) => NotificationsAPI.markAsRead(n.id)));
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, is_read: true }))
       );
@@ -99,8 +91,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const handleClearAll = async () => {
     try {
-      const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3003').replace(/\/$/, '');
-      await fetch(`${baseUrl}/api/notifications`, { method: 'DELETE' });
+      await NotificationsAPI.clearAll();
       setNotifications([]);
       setUnreadCount(0);
     } catch (err) {
@@ -136,9 +127,10 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   const handleLogout = async () => {
-    // Clear cookies/session (Assuming simple implementation)
+    clearStoredSession();
+    document.cookie = "persona=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     document.cookie = "supabase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    router.push('/');
+    router.push('/siteman/login');
   };
 
   return (

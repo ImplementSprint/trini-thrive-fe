@@ -159,7 +159,7 @@ export function SignupForm() {
               <p className={styles.successMessage}>Redirecting you to login module...</p>
             </div>
           )}
-          <Link href="/" className={styles.backLink}>
+          <Link href="/enduser/home" className={styles.backLink}>
             ← Back to home
           </Link>
           <h1 className={styles.title}>Sign Up &amp; Verify</h1>

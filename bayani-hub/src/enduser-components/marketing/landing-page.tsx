@@ -13,7 +13,7 @@ export function LandingPage() {
 
   useEffect(() => {
     if (token) {
-      router.replace("/dashboard");
+      router.replace("/enduser/dashboard");
     }
   }, [token, router]);
 

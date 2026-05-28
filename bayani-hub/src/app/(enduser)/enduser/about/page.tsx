@@ -3,52 +3,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Image, ScrollView } from 'react-native';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/enduser-lib/auth-context';
-import NotificationButton from '@/enduser-components/NotificationButton';
+import EnduserNavBar from '@/enduser-components/EnduserNavBar';
 
 export default function AboutPage() {
   const router = useRouter();
-  const { user } = useAuth();
 
   return (
     <View style={styles.container}>
-      {/* NAVIGATION BAR */}
-      <View style={styles.navBar}>
-        <View style={styles.navLeft}>
-          <Pressable 
-            onPress={() => router.push('/')} 
-            style={({ hovered }: any) => [styles.logoContainer, styles.animated, hovered && { transform: [{ scale: 1.02 }] }]}
-          >
-            <Image source={{ uri: '/enduser/logo_b.png' }} style={styles.logoImage} resizeMode="contain" />
-            <Text style={styles.brandName}>BayaniHub</Text>
-          </Pressable>
-          <View style={styles.navLinks}>
-            <Pressable onPress={() => router.push('/')}>
-              {({ hovered }: any) => <Text style={[styles.navLink, styles.animated, hovered && { color: '#4273B8' }]}>Home</Text>}
-            </Pressable>
-            <Pressable onPress={() => router.push('/about')}>
-              {({ hovered }: any) => <Text style={[styles.navLink, styles.animated, styles.activeLink, hovered && { color: '#4273B8' }]}>About Us</Text>}
-            </Pressable>
-            <Pressable onPress={() => router.push('/applications')}>
-              {({ hovered }: any) => <Text style={[styles.navLink, styles.animated, hovered && { color: '#4273B8' }]}>Applications</Text>}
-            </Pressable>
-            <Pressable onPress={() => router.push('/mission')}>
-              {({ hovered }: any) => <Text style={[styles.navLink, styles.animated, hovered && { color: '#4273B8' }]}>Mission</Text>}
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.navRight}>
-          <NotificationButton />
-          <View style={styles.userProfile}>
-            <Image source={{ uri: '/icon-user.png' }} style={styles.navIcon} resizeMode="contain" />
-            <View>
-              <Text style={styles.userName}>{user?.profile?.first_name ? `${user.profile.first_name} ${user.profile.last_name}` : 'User'}</Text>
-              <Text style={styles.userRole}>{(user?.profile?.role as string) || 'Role'}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      <EnduserNavBar activeKey="about" />
 
       {/* PAGE BODY */}
       <View style={styles.pageBody}>
@@ -135,7 +97,7 @@ export default function AboutPage() {
             <View style={styles.cardFooter}>
               <Pressable 
                 style={(state: any) => [styles.returnButton, styles.animated, state.hovered && styles.btnHover, state.pressed && styles.btnPress]} 
-                onPress={() => router.push('/')}
+                onPress={() => router.push('/enduser/dashboard')}
               >
                 <Text style={styles.returnButtonText}>Return to Dashboard</Text>
               </Pressable>

@@ -144,7 +144,7 @@ function RejectedState({ app }: { app: Application }) {
         )}
       </div>
 
-      <a href="/volunteer" className="w-full text-center py-2.5 rounded-lg font-semibold text-sm text-white" style={{ backgroundColor: "#1a4f7a", display: "block" }}>Reapply</a>
+      <a href="/enduser/volunteer" className="w-full text-center py-2.5 rounded-lg font-semibold text-sm text-white" style={{ backgroundColor: "#1a4f7a", display: "block" }}>Reapply</a>
       <a href="tel:+639123456789" className="text-sm text-blue-600 hover:underline">Contact Support</a>
       <p className="text-xs text-gray-400">Last updated: {formatDate(app.updatedAt)}</p>
     </div>

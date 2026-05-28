@@ -111,7 +111,7 @@ export default function VolunteerHistory() {
 
       <main className={styles.main}>
         <div className={styles.pageHeader}>
-          <Link href='/admin/volunteers' className={styles.backButton}>Back</Link>
+          <button type="button" onClick={() => router.back()} className={styles.backButton}>Back</button>
           <div className={styles.headerCenter}>
             <div className={styles.headerIcon}>
               <h1 className={styles.headerTitle}>Volunteer History</h1>

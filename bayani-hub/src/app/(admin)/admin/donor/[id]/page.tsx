@@ -1,7 +1,7 @@
 'use client';
 
 ﻿import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/admin-components/Header";
 import Footer from "@/admin-components/Footer";
@@ -34,9 +34,10 @@ function getStatusLabel(status: string) {
   return "Pending Review";
 }
 
-export default function DonorReviewPage({ params }: { params: { id: string } }) {
+export default function DonorReviewPage() {
   const router = useRouter();
-  const { id } = params;
+  const params = useParams();
+  const id = params?.id as string;
   const [donor, setDonor] = useState<DonorDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<"approve" | "reject" | null>(null);
@@ -198,12 +199,12 @@ export default function DonorReviewPage({ params }: { params: { id: string } }) 
 
       <main className={styles.main}>
         <div>
-          <Link href='/admin/donors' className={styles.backButton}>
+          <button type="button" onClick={() => router.back()} className={styles.backButton}>
             <svg className={styles.svg16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back
-          </Link>
+          </button>
         </div>
 
         <div className={styles.applicantHeader}>
