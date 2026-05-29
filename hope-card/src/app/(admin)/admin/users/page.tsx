@@ -1,15 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Settings } from "lucide-react";
-import styles from "../tableStyles.module.css";
+import { useState, useEffect } from 'react';
+import { Settings } from 'lucide-react';
+import ManageUserModal from '@/admin-components/layout/modals/Users/ManageUserModal';
+import styles from '../tableStyles.module.css';
 
 interface User {
   id: string;
   first_name: string;
   last_name: string;
   email: string;
-  role: "Donor" | "Beneficiary" | "Campaign Manager";
+  role: 'Donor' | 'Beneficiary' | 'Campaign Manager';
   status: string;
   created_at: string;
 }
@@ -26,11 +27,13 @@ export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentRole, setCurrentRole] = useState("All");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentRole, setCurrentRole] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
 
-  const roleOptions = ["All", "Donor", "Beneficiary", "Campaign Manager"];
+  const roleOptions = ['All', 'Donor', 'Beneficiary', 'Campaign Manager'];
   const limit = 10;
 
   const fetchUsers = async (role: string, page: number) => {
@@ -38,16 +41,16 @@ export default function Users() {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem("admin_token");
+      const token = localStorage.getItem('admin_token');
       if (!token) {
-        setError("No authentication token found. Please log in.");
+        setError('No authentication token found. Please log in.');
         setUsers([]);
         setLoading(false);
         return;
       }
 
-      const roleParam = role === "All" ? "" : role;
-      const url = `/admin/api/users?page=${page}&limit=${limit}${roleParam ? `&role=${roleParam}` : ""}`;
+      const roleParam = role === 'All' ? '' : role;
+      const url = `/admin/api/users?page=${page}&limit=${limit}${roleParam ? `&role=${roleParam}` : ''}`;
 
       const response = await fetch(url, {
         headers: {
@@ -57,9 +60,7 @@ export default function Users() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Failed to fetch users: ${response.status}`
-        );
+        throw new Error(errorData.message || `Failed to fetch users: ${response.status}`);
       }
 
       const result: PaginatedResponse = await response.json();
@@ -73,7 +74,7 @@ export default function Users() {
       setUsers(result.data);
       setTotalUsers(result.total || 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch users");
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
       setUsers([]);
     } finally {
       setLoading(false);
@@ -89,105 +90,58 @@ export default function Users() {
     setCurrentPage(1);
   };
 
-  const handleRetry = () => {
+  const handleOpenModal = (user: User) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedUser(null);
+    setIsModalOpen(false);
+  };
+
+  const handleModalSuccess = () => {
+    handleCloseModal();
     fetchUsers(currentRole, currentPage);
   };
 
   const totalPages = Math.ceil(totalUsers / limit);
 
-  const getStatusBadgeClass = (status: string): string => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === "pending") return "badgePending";
-    if (statusLower === "approved" || statusLower === "active") return "badgeApproved";
-    if (statusLower === "rejected") return "badgeRejected";
-    return "badgePending";
-  };
-
-  const formatStatusText = (status: string): string => {
-    if (status.toLowerCase() === "approved") return "Active";
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
-  if (loading && users.length === 0) {
-    return (
-      <div className={styles.pageContainer}>
-        <header className={styles.header}>
-          <h1>User Management</h1>
-          <p>Manage and monitor all system users</p>
-        </header>
-        <div className={styles.tableContainer}>
-          <p>Loading users...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && users.length === 0) {
-    return (
-      <div className={styles.pageContainer}>
-        <header className={styles.header}>
-          <h1>User Management</h1>
-          <p>Manage and monitor all system users</p>
-        </header>
-        <div className={styles.tableContainer}>
-          <div
-            style={{
-              padding: "20px",
-              color: "#ef4444",
-              backgroundColor: "#fee2e2",
-              borderRadius: "8px",
-            }}
-          >
-            <strong>Error:</strong> {error}
-            <button
-              onClick={handleRetry}
-              style={{
-                marginLeft: "10px",
-                padding: "5px 10px",
-                backgroundColor: "#9b2c2c",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <h1>User Management</h1>
-        <p>Manage and monitor all system users</p>
-      </header>
+    <div className={styles.container}>
+      <h1 className={styles.title}>User Management</h1>
 
-      <div className={styles.controlsContainer}>
-        <div className={styles.tabsContainer}>
-          {roleOptions.map((role) => (
-            <button
-              key={role}
-              className={`${styles.tab} ${currentRole === role ? styles.tabActive : ""}`}
-              onClick={() => handleRoleChange(role)}
-            >
-              {role}
-            </button>
-          ))}
-        </div>
+      {/* Role Filter Tabs */}
+      <div className={styles.filterTabs}>
+        {roleOptions.map((role) => (
+          <button
+            key={role}
+            onClick={() => handleRoleChange(role)}
+            className={`${styles.tab} ${currentRole === role ? styles.activeTab : ''}`}
+          >
+            {role}
+          </button>
+        ))}
       </div>
 
-      <div className={styles.tableContainer}>
-        {loading ? (
-          <p style={{ padding: "20px" }}>Loading users...</p>
-        ) : users.length === 0 ? (
-          <p style={{ padding: "20px" }}>No users found</p>
-        ) : (
-          <>
-            <table className={styles.dataTable}>
+      {/* Loading State */}
+      {loading && <div className={styles.loadingMessage}>Loading users...</div>}
+
+      {/* Error State */}
+      {error && (
+        <div className={styles.errorMessage}>
+          {error}
+          <button onClick={() => fetchUsers(currentRole, currentPage)} className={styles.retryButton}>
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Users Table */}
+      {!loading && !error && users.length > 0 && (
+        <>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -201,82 +155,67 @@ export default function Users() {
               <tbody>
                 {users.map((user) => (
                   <tr key={user.id}>
-                    <td className={styles.textDark}>
-                      {`${user.first_name} ${user.last_name}`}
-                    </td>
-                    <td className={styles.textRed}>{user.email}</td>
+                    <td>{`${user.first_name} ${user.last_name}`}</td>
+                    <td>{user.email}</td>
                     <td>{user.role}</td>
+                    <td>{new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </td>
-                    <td>
-                      <span
-                        className={`${styles.badge} ${
-                          styles[getStatusBadgeClass(user.status)]
-                        }`}
-                      >
-                        {formatStatusText(user.status)}
+                      <span className={`${styles.statusBadge} ${styles[`status${user.status}`]}`}>
+                        {user.status === 'approved' ? 'Active' : user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                       </span>
                     </td>
                     <td>
                       <button
-                        className={styles.actionBtn}
+                        onClick={() => handleOpenModal(user)}
+                        className={styles.actionButton}
                         title="Manage user"
-                        onClick={() => {
-                          // TODO: Implement modal or navigate to user details
-                          console.log("Manage user:", user.id);
-                        }}
                       >
-                        <Settings size={18} style={{ display: "inline" }} />
+                        <Settings size={18} />
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "20px",
-                  borderTop: "1px solid #eaeaea",
-                }}
-              >
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  className={styles.actionBtn}
-                  style={{
-                    opacity: currentPage === 1 ? 0.5 : 1,
-                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                  }}
-                >
-                  Previous
-                </button>
-                <span style={{ fontSize: "0.9rem", color: "#666" }}>
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  className={styles.actionBtn}
-                  style={{
-                    opacity: currentPage >= totalPages ? 0.5 : 1,
-                    cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
-                  }}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          {/* Pagination */}
+          <div className={styles.pagination}>
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className={styles.paginationButton}
+            >
+              Previous
+            </button>
+            <span className={styles.pageInfo}>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className={styles.paginationButton}
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && users.length === 0 && (
+        <div className={styles.emptyMessage}>No users found</div>
+      )}
+
+      {/* Modal */}
+      {selectedUser && (
+        <ManageUserModal
+          isOpen={isModalOpen}
+          user={selectedUser}
+          onClose={handleCloseModal}
+          onSuccess={handleModalSuccess}
+        />
+      )}
     </div>
   );
 }
