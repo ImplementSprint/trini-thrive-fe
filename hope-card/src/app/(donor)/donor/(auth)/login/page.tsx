@@ -8,6 +8,17 @@ import {
   SubmitBtn, MobileLogo,
 } from "@/donor-components/auth-shared";
 
+function buildBanMessage(reason: string | null, expiresAt: string | null): string {
+  const reasonPart = reason ? ` Reason: ${reason}` : '';
+  if (expiresAt) {
+    const date = new Date(expiresAt);
+    const days = Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    const dateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    return `Your account has been banned until ${dateStr} (${days} day${days !== 1 ? 's' : ''}).${reasonPart}`;
+  }
+  return `Your account has been permanently banned.${reasonPart}`;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,6 +37,15 @@ function LoginForm() {
       document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
     }
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get('banned') === '1') {
+      setErrorMessage(buildBanMessage(
+        searchParams.get('reason'),
+        searchParams.get('expires'),
+      ));
+    }
+  }, [searchParams]);
 
   const togglePassword = useCallback(() => setShowPassword((p) => !p), []);
 
@@ -49,6 +69,10 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.reason === 'banned') {
+          setErrorMessage(buildBanMessage(data.status_reason ?? null, data.status_expires_at ?? null));
+          return;
+        }
         // Handle approval status case
         if (data.reason === 'pending_approval') {
           if (data.status === 'rejected') {
