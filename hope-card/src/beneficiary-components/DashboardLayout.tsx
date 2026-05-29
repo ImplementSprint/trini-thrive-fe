@@ -13,15 +13,15 @@ import { createClient } from "@/beneficiary-utils/supabase/client";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DashboardLayoutProps {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }
 
 interface NavItemProps {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  collapsed: boolean;
-  href: string;
+  readonly icon: React.ReactNode;
+  readonly label: string;
+  readonly active: boolean;
+  readonly collapsed: boolean;
+  readonly href: string;
 }
 
 // ─── Nav Item Component ───────────────────────────────────────────────────────
@@ -115,7 +115,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [bellOpen, setBellOpen] = useState(false);
   const [notifications, setNotifications] = useState<BeneficiaryNotification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
-  const bellRef = useState(() => ({ current: null as HTMLDivElement | null }))[0];
   const pathname = usePathname();
 
   const toggleSidebar = useCallback(() => setCollapsed((p) => !p), []);

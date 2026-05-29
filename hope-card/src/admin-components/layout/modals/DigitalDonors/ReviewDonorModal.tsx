@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, XCircle, FileText, Image } from "lucide-react";
+import { CheckCircle2, XCircle, Image } from "lucide-react";
 import BaseModal from "../shared/BaseModal";
 import styles from "./ReviewDonorModal.module.css";
 
 interface ReviewDonorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  donorData: any;
-  onUpdate?: (donor: any) => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
+  readonly donorData: any;
+  readonly onUpdate?: (donor: any) => void;
 }
 
 function getSupabaseImageUrl(filePath: string): string {
@@ -67,7 +67,7 @@ export default function ReviewDonorModal({ isOpen, onClose, donorData, onUpdate 
         return;
       }
 
-      const result = await response.json();
+      await response.json();
       const updatedDonor = { ...donorData, idVerified, status: "Approved" };
       if (onUpdate) onUpdate(updatedDonor);
       alert(`Approved: ${donorData.name}`);
@@ -111,7 +111,7 @@ export default function ReviewDonorModal({ isOpen, onClose, donorData, onUpdate 
         return;
       }
 
-      const result = await response.json();
+      await response.json();
       const updatedDonor = { ...donorData, idVerified, status: "Rejected" };
       if (onUpdate) onUpdate(updatedDonor);
       alert(`Rejected: ${donorData.name}\nReason: ${rejectionReason}`);
@@ -136,28 +136,28 @@ export default function ReviewDonorModal({ isOpen, onClose, donorData, onUpdate 
           <h3 className={styles.sectionTitle}>Donor Information</h3>
           <div className={styles.infoGrid}>
             <div className={styles.field}>
-              <label className={styles.label}>Name</label>
-              <p className={styles.value}>{donorData?.name || 'N/A'}</p>
+              <label htmlFor="donor-name" className={styles.label}>Name</label>
+              <p id="donor-name" className={styles.value}>{donorData?.name || 'N/A'}</p>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Email</label>
-              <p className={styles.value}>{donorData?.email || 'N/A'}</p>
+              <label htmlFor="donor-email" className={styles.label}>Email</label>
+              <p id="donor-email" className={styles.value}>{donorData?.email || 'N/A'}</p>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Municipality</label>
-              <p className={styles.value}>{donorData?.municipality || 'N/A'}</p>
+              <label htmlFor="donor-municipality" className={styles.label}>Municipality</label>
+              <p id="donor-municipality" className={styles.value}>{donorData?.municipality || 'N/A'}</p>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Province</label>
-              <p className={styles.value}>{donorData?.province || 'N/A'}</p>
+              <label htmlFor="donor-province" className={styles.label}>Province</label>
+              <p id="donor-province" className={styles.value}>{donorData?.province || 'N/A'}</p>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Date</label>
-              <p className={styles.value}>{donorData?.date || 'N/A'}</p>
+              <label htmlFor="donor-date" className={styles.label}>Date</label>
+              <p id="donor-date" className={styles.value}>{donorData?.date || 'N/A'}</p>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Status</label>
-              <p className={styles.value}>{donorData?.status || 'N/A'}</p>
+              <label htmlFor="donor-status" className={styles.label}>Status</label>
+              <p id="donor-status" className={styles.value}>{donorData?.status || 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -189,9 +189,10 @@ export default function ReviewDonorModal({ isOpen, onClose, donorData, onUpdate 
                 )}
               </div>
             </div>
-            <label className={styles.checkbox}>
-              <input 
-                type="checkbox" 
+            <label htmlFor="id-verify-checkbox" className={styles.checkbox}>
+              <input
+                id="id-verify-checkbox"
+                type="checkbox"
                 checked={idVerified}
                 onChange={(e) => setIdVerified(e.target.checked)}
               />

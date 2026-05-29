@@ -86,7 +86,6 @@ function WalletSuccessContent() {
     };
 
     confirmAndFetch();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fmt = (n: number) =>
