@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/donor-lib/supabase-client';
+import { supabase, getDonorTokenPayload } from '@/donor-lib/supabase-client';
 
 export interface UserProfile {
   id: string;
@@ -37,20 +37,32 @@ export function useProfile() {
     async function load() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user ?? null;
 
-        if (!user) {
-          if (isMounted) {
-            setLoading(false);
-            setProfile(null);
+        let userId: string;
+        let email: string;
+        let token: string;
+
+        if (session?.user) {
+          userId = session.user.id;
+          email = session.user.email ?? '';
+          token = localStorage.getItem('donor_token') ?? session.access_token ?? '';
+        } else {
+          // Supabase session gone — recover from custom donor_token JWT
+          const payload = getDonorTokenPayload();
+          if (!payload?.sub) {
+            if (isMounted) { setLoading(false); setProfile(null); }
+            return;
           }
-          return;
+          userId = payload.sub;
+          email = payload.email ?? '';
+          token = localStorage.getItem('donor_token') ?? '';
         }
 
-        if (isMounted) setAuthUserId(user.id);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/profile?authUserId=${user.id}&email=${encodeURIComponent(user.email || '')}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('donor_token') ?? session?.access_token ?? ''}` },
-        });
+        if (isMounted) setAuthUserId(userId);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/profile?authUserId=${userId}&email=${encodeURIComponent(email)}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
         const data = await res.json();
 
         if (!res.ok) throw new Error(data.error ?? 'Failed to load profile');

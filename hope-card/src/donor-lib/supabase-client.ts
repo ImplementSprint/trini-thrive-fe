@@ -1,5 +1,28 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+export interface DonorTokenPayload {
+  sub: string;
+  email: string;
+  exp: number;
+  persona: string;
+}
+
+/** Decode the custom donor_token JWT without verification (server already verified on issue).
+ *  Returns null if missing, malformed, or expired. */
+export function getDonorTokenPayload(): DonorTokenPayload | null {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('donor_token') : null;
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (!payload.sub || !payload.exp || Date.now() / 1000 > payload.exp) return null;
+    return payload as DonorTokenPayload;
+  } catch {
+    return null;
+  }
+}
+
 export type AuthError = {
   message: string;
   code?: string;
@@ -78,6 +101,9 @@ export async function signIn(email: string, password: string) {
 
 export async function signOut() {
   try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('donor_token');
+    }
     const { error } = await getSupabase().auth.signOut();
 
     if (error) {

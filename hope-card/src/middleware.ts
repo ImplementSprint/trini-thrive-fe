@@ -23,6 +23,8 @@ const PUBLIC_SUFFIXES = [
   '/upload-id',
   '/landing',
   '/api',
+  '/payment/success',
+  '/payment/cancel',
 ];
 
 export function middleware(req: NextRequest) {

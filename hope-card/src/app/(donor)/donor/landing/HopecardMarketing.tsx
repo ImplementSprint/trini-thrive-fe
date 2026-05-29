@@ -46,6 +46,15 @@ interface FooterColumnProps {
   links: string[];
 }
 
+interface Story {
+  id: string;
+  title: string;
+  description: string;
+  cover_image_url: string;
+  read_time_minutes: number;
+  category: string;
+}
+
 // ─── Sub-Components ────────────────────────────────────────────────────────────
 
 const StatCard = React.memo<StatCardProps>(({ icon, iconBg, iconColor, value, label }) => {
@@ -184,11 +193,13 @@ const FOOTER_COLUMNS: FooterColumnProps[] = [
 // ─── Page Component ────────────────────────────────────────────────────────────
 export default function HopecardMarketing() {
   const router = useRouter();
-  const [stats, setStats] = useState({ 
+  const [stats, setStats] = useState({
     livesImpacted: "124K+",
-    fundsRaised: "₱8.2M", 
-    globalPartners: "42" 
+    fundsRaised: "₱8.2M",
+    globalPartners: "42"
   });
+  const [latestStory, setLatestStory] = useState<Story | null>(null);
+  const [storyLoading, setStoryLoading] = useState(true);
 
   useEffect(() => {
     const backendUrl = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL;
@@ -217,6 +228,20 @@ export default function HopecardMarketing() {
         }
       })
       .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    const backendUrl = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL;
+    if (!backendUrl) return;
+    fetch(`${backendUrl}/api/v1/hopecard/donor/stories?limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.stories && data.stories.length > 0) {
+          setLatestStory(data.stories[0]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setStoryLoading(false));
   }, []);
 
   const dynamicStatCards = [
@@ -636,6 +661,164 @@ export default function HopecardMarketing() {
           </div>
         </div>
       </section>
+
+      {/* ── Featured Story Section ────────────────────────────────────────────── */}
+      {latestStory && (
+        <section style={{ padding: "6rem 2rem", background: C.surfaceContainerLowest }}>
+          <div style={{ maxWidth: "80rem", margin: "0 auto" }}>
+            {/* Section label */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "2rem" }}>
+              <div
+                style={{
+                  width: "6px",
+                  height: "24px",
+                  background: C.primaryContainer,
+                  borderRadius: "999px",
+                }}
+              />
+              <span
+                style={{
+                  color: C.primaryContainer,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  fontSize: "0.6875rem",
+                  fontFamily: "Plus Jakarta Sans, sans-serif",
+                }}
+              >
+                Latest Story
+              </span>
+            </div>
+
+            {/* Story card */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "3rem",
+                alignItems: "stretch",
+              }}
+            >
+              {/* Story image */}
+              <div style={{ flex: 1, minWidth: "280px", position: "relative" }}>
+                <div
+                  style={{
+                    aspectRatio: "3/2",
+                    borderRadius: "2rem",
+                    overflow: "hidden",
+                    boxShadow: "0 12px 40px rgba(27,28,27,0.08)",
+                    cursor: "pointer",
+                    transition: "transform 0.3s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                  onClick={() => router.push(`/donor/stories/${latestStory.id}`)}
+                >
+                  {storyLoading ? (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        background: C.surfaceContainer,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: C.onSurfaceVariant,
+                      }}
+                    >
+                      Loading...
+                    </div>
+                  ) : (
+                    <img
+                      src={latestStory.cover_image_url}
+                      alt={latestStory.title}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Story content */}
+              <div style={{ flex: 1, minWidth: "280px", display: "flex", flexDirection: "column", justifyContent: "center", gap: "1.5rem" }}>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                  <span
+                    style={{
+                      background: `${C.primaryContainer}1a`,
+                      color: C.primaryContainer,
+                      padding: "0.5rem 1rem",
+                      borderRadius: "0.75rem",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                    }}
+                  >
+                    {latestStory.category}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "0.875rem",
+                      color: C.onSurfaceVariant,
+                      fontWeight: 500,
+                      fontFamily: "Manrope, sans-serif",
+                    }}
+                  >
+                    {latestStory.read_time_minutes} min read
+                  </span>
+                </div>
+
+                <h2
+                  style={{
+                    fontFamily: "Plus Jakarta Sans, sans-serif",
+                    fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
+                    fontWeight: 800,
+                    letterSpacing: "-0.02em",
+                    color: C.onSurface,
+                    margin: 0,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {latestStory.title}
+                </h2>
+
+                <p
+                  style={{
+                    fontSize: "1.125rem",
+                    color: C.onSurfaceVariant,
+                    lineHeight: 1.7,
+                    fontWeight: 500,
+                    margin: 0,
+                  }}
+                >
+                  {latestStory.description}
+                </p>
+
+                <button
+                  onClick={() => router.push(`/donor/stories/${latestStory.id}`)}
+                  style={{
+                    background: C.primaryContainer,
+                    color: C.onPrimaryContainer,
+                    padding: "1rem 2rem",
+                    borderRadius: "1rem",
+                    fontSize: "1rem",
+                    fontWeight: 700,
+                    fontFamily: "Manrope, sans-serif",
+                    border: "none",
+                    cursor: "pointer",
+                    boxShadow: `0 8px 24px ${C.primaryContainer}33`,
+                    transition: "transform 0.15s",
+                    width: "fit-content",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  Read Full Story
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Secondary CTA Block ────────────────────────────────────────────────── */}
       <section style={{ padding: "8rem 2rem" }}>

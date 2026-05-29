@@ -1,10 +1,27 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 // Import both modals
 import ConfirmDonationModal from "@/admin-components/layout/modals/BeneficiaryList/ConfirmDonationModal";
 import DonationSuccessModal from "@/admin-components/layout/modals/BeneficiaryList/DonationSuccessModal";
 import styles from "../tableStyles.module.css";
+
+const formatAllocatedAmount = (amount: any): string => {
+  if (typeof amount === 'number') {
+    return `₱${amount.toLocaleString()}`;
+  }
+  if (amount) {
+    return `₱${amount}`;
+  }
+  return '₱0';
+};
+
+const formatStatus = (status: any, verificationStatus: any): string => {
+  if (status) {
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+  return verificationStatus === 'verified' ? 'Approved' : 'Pending';
+};
 
 export default function BeneficiariesList() {
   const [list, setList] = useState<any[]>([]);
@@ -36,8 +53,8 @@ export default function BeneficiariesList() {
           campaignManager: b.campaign_manager_name || 'N/A',
           campaign: b.campaign || 'General Aid',
           name: `${b.first_name || ''} ${b.last_name || ''}`.trim() || 'N/A',
-          amount: typeof b.allocated_amount === 'number' ? `₱${b.allocated_amount.toLocaleString()}` : (b.allocated_amount ? `₱${b.allocated_amount}` : '₱0'),
-          status: b.status ? (b.status.charAt(0).toUpperCase() + b.status.slice(1)) : (b.verification_status === 'verified' ? 'Approved' : 'Pending'),
+          amount: formatAllocatedAmount(b.allocated_amount),
+          status: formatStatus(b.status, b.verification_status),
         }));
         
         setList(formattedData);
@@ -87,6 +104,23 @@ export default function BeneficiariesList() {
     setIsSuccessOpen(true);
   };
 
+  const renderAction = (item: any) => {
+    if (item.status === "Sent") {
+      return <span className={styles.actionTextCompleted}>Sent</span>;
+    }
+    if (item.status === "Pending") {
+      return <span className={styles.actionTextDisabled}>Approval Pending</span>;
+    }
+    return (
+      <button 
+        className={styles.actionBtn}
+        onClick={() => handleOpenModal(item)}
+      >
+        Send Donation
+      </button>
+    );
+  };
+
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
@@ -113,20 +147,9 @@ export default function BeneficiariesList() {
                 <td className={styles.textRed}>{item.campaign}</td>
                 <td className={styles.textDark}>{item.name}</td>
                 <td className={styles.textDark}>{item.amount}</td>
-                <td><span className={`${styles.badge} ${styles[`badge${item.status}`]}`}>{item.status}</span></td>
+                <td><span className={`${styles.badge} ${styles['badge' + item.status]}`}>{item.status}</span></td>
                 <td>
-                  {item.status === "Sent" ? (
-                    <span className={styles.actionTextCompleted}>Sent</span>
-                  ) : item.status === "Pending" ? (
-                    <span className={styles.actionTextDisabled}>Approval Pending</span>
-                  ) : (
-                    <button 
-                      className={styles.actionBtn}
-                      onClick={() => handleOpenModal(item)}
-                    >
-                      Send Donation
-                    </button>
-                  )}
+                  {renderAction(item)}
                 </td>
               </tr>
             ))}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -125,7 +125,7 @@ export default function BeneficiariesApproval() {
                 <td>{item.date}</td>
                 <td>{item.docs ? <CheckCircle2 color="#22c55e" size={20} /> : <XCircle color="#ef4444" size={20} />}</td>
                 <td>{item.bank ? <CheckCircle2 color="#22c55e" size={20} /> : <XCircle color="#ef4444" size={20} />}</td>
-                <td><span className={`${styles.badge} ${styles[`badge${item.status}`]}`}>{item.status}</span></td>
+                <td><span className={`${styles.badge} ${styles['badge' + item.status]}`}>{item.status}</span></td>
                 <td>
                   {item.status === "Pending" && (
                     <button 

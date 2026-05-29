@@ -9,6 +9,7 @@ import styles from "./Sidebar.module.css";
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutGrid },
   { name: "Digital Donor Approval", href: "/admin/digital-donors", icon: User },
+  { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Campaign Manager Approval", href: "/admin/campaign-managers", icon: Users },
   { name: "Beneficiaries Approval", href: "/admin/beneficiaries-approval", icon: UserCheck },
   { name: "Beneficiary Documents Approval", href: "/admin/beneficiary-documents-approval", icon: FileText },
