@@ -2,25 +2,21 @@
 
 import React, { useState } from "react";
 import {
-  Menu,
-  Search,
-  ShoppingCart,
   User,
   BadgeCheck,
   History,
-  Receipt,
-  CreditCard,
   Settings,
   KeyRound,
   Monitor,
   Laptop,
   Smartphone,
   LogOut,
+  Wallet,
 } from "lucide-react";
 import { useProfile } from "@/donor-hooks/useProfile";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/donor-lib/supabase-client";
+import { supabase, getDonorTokenPayload } from "@/donor-lib/supabase-client";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const colors = {
@@ -268,6 +264,7 @@ export default function HopecardProfile() {
   const { profile, loading, saveProfile, saving, saveSuccess, saveError } = useProfile();
   const [searchFocused, setSearchFocused] = useState(false);
   const [lifetimeTotal, setLifetimeTotal] = useState<number | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -282,6 +279,35 @@ export default function HopecardProfile() {
       if (data) setLifetimeTotal(data.reduce((sum, r) => sum + (r.amount_paid ?? 0), 0));
     }
     fetchLifetimeTotal();
+  }, []);
+
+  useEffect(() => {
+    async function fetchWalletBalance() {
+      try {
+        const tokenPayload = getDonorTokenPayload();
+        if (!tokenPayload) return;
+
+        const token = localStorage.getItem("donor_token");
+        const base = process.env.NEXT_PUBLIC_DONOR_BACKEND_URL ?? "";
+        const res = await fetch(
+          `${base}/api/v1/hopecard/donor/wallet/balance?authUserId=${tokenPayload.sub}`,
+          {
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          }
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+          setWalletBalance(Number(data.balance));
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallet balance:", err);
+      }
+    }
+
+    fetchWalletBalance();
   }, []);
 
   // Form states
@@ -386,6 +412,9 @@ export default function HopecardProfile() {
   const impactAmount = lifetimeTotal !== null
     ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(lifetimeTotal)
     : "—";
+  const walletAmount = walletBalance !== null
+    ? new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", minimumFractionDigits: 2 }).format(walletBalance)
+    : "—";
 
   return (
     <div
@@ -439,26 +468,38 @@ export default function HopecardProfile() {
               >
                 {fullName}
               </h1>
-              <span
-                style={{
-                  padding: "0.25rem 0.75rem",
-                  background: profile?.status === 'approved' ? `${colors.secondaryContainer}33` : `${colors.surfaceContainerHigh}`,
-                  color: profile?.status === 'approved' ? colors.onSecondaryContainer : colors.onSurfaceVariant,
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  borderRadius: "999px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  fontFamily: "Manrope, sans-serif",
-                }}
-              >
-                <BadgeCheck size={14} fill={profile?.status === 'approved' ? "currentColor" : "none"} />
-                {profile?.status === 'approved' ? 'Verified Donor' : 'Pending Verification'}
-              </span>
+              {(() => {
+                const s = profile?.status;
+                const badge = s === 'approved'
+                  ? { bg: `${colors.secondaryContainer}33`, color: colors.onSecondaryContainer, label: 'Verified Donor', fill: 'currentColor' }
+                  : s === 'suspended'
+                  ? { bg: '#fff7ed', color: '#9a3412', label: 'Account Suspended', fill: 'none' }
+                  : s === 'banned'
+                  ? { bg: '#fef2f2', color: '#991b1b', label: 'Account Banned', fill: 'none' }
+                  : { bg: colors.surfaceContainerHigh, color: colors.onSurfaceVariant, label: 'Pending Verification', fill: 'none' };
+                return (
+                  <span
+                    style={{
+                      padding: "0.25rem 0.75rem",
+                      background: badge.bg,
+                      color: badge.color,
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      borderRadius: "999px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.25rem",
+                      fontFamily: "Manrope, sans-serif",
+                    }}
+                  >
+                    <BadgeCheck size={14} fill={badge.fill} />
+                    {badge.label}
+                  </span>
+                );
+              })()}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
               <p
                 style={{
                   color: colors.primary,
@@ -470,6 +511,27 @@ export default function HopecardProfile() {
               >
                 Lifetime Impact: {impactAmount}
               </p>
+              <span style={{ width: "1px", height: "1.5rem", background: `${colors.outlineVariant}4d`, display: "inline-block" }} />
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  background: `${colors.primaryContainer}18`,
+                  border: `1px solid ${colors.primaryContainer}44`,
+                  borderRadius: "999px",
+                  padding: "0.375rem 1rem",
+                  cursor: "pointer",
+                }}
+                onClick={() => router.push('/donor/wallet')}
+                onMouseEnter={(e) => (e.currentTarget.style.background = `${colors.primaryContainer}2a`)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = `${colors.primaryContainer}18`)}
+              >
+                <Wallet size={15} color={colors.primary} />
+                <span style={{ fontFamily: "Plus Jakarta Sans, sans-serif", fontWeight: 700, fontSize: "0.9375rem", color: colors.primary }}>
+                  {walletAmount}
+                </span>
+              </div>
               <span style={{ width: "1px", height: "1.5rem", background: `${colors.outlineVariant}4d`, display: "inline-block" }} />
               <p style={{ color: colors.onSurfaceVariant, fontSize: "0.875rem", fontWeight: 500, margin: 0 }}>
                 Joined {joinedDate}
@@ -503,32 +565,50 @@ export default function HopecardProfile() {
           {/* Sidebar */}
           <aside>
             <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              <SideNavItem 
-                icon={<User size={20} />} 
-                label="Profile & Security" 
-                active 
+              <SideNavItem
+                icon={<User size={20} />}
+                label="Profile & Security"
+                active
                 onClick={() => router.push('/donor/profile')}
               />
-              <SideNavItem 
-                icon={<History size={20} />} 
-                label="Donation History" 
+              <SideNavItem
+                icon={<History size={20} />}
+                label="Donation History"
                 onClick={() => router.push('/donor/transactions')}
               />
-              <SideNavItem 
-                icon={<Receipt size={20} />} 
-                label="Tax Receipts" 
-                onClick={() => router.push('/donor/transactions')}
-              />
-              <SideNavItem 
-                icon={<CreditCard size={20} />} 
-                label="Payment Methods" 
-                onClick={() => router.push('/donor/profile')}
-              />
-              <SideNavItem 
-                icon={<Settings size={20} />} 
-                label="Settings" 
+              <SideNavItem
+                icon={<Settings size={20} />}
+                label="Settings"
                 onClick={() => router.push('/donor/settings')}
               />
+              <a
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  localStorage.removeItem('donor_token');
+                  document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
+                  router.push('/donor/login');
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  padding: "1rem 1.5rem",
+                  borderRadius: "1rem",
+                  fontWeight: 600,
+                  color: "#ba1a1a",
+                  background: "transparent",
+                  textDecoration: "none",
+                  transition: "background 0.15s",
+                  fontFamily: "Manrope, sans-serif",
+                  fontSize: "0.95rem",
+                  cursor: "pointer",
+                  marginTop: "0.5rem",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#ffdad622")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <LogOut size={20} /> Log Out
+              </a>
             </nav>
 
           </aside>
