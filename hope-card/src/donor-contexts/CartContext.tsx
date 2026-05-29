@@ -167,7 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     campaign_id: string; title: string; price: number;
     imageSrc: string; imageAlt: string; category?: string;
   }) => {
-    if (isSuspended || isBanned) throw new Error('Your account is suspended. Donations are currently disabled.');
+    if (isSuspended || isBanned) throw new Error(isBanned ? 'Your account has been banned. Please contact support.' : 'Your account is suspended. Donations are currently disabled.');
     if (!authUserId) throw new Error('Please log in to manage your cart');
     const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/cart`, {
       method: 'POST',
@@ -224,7 +224,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const checkout = useCallback(async (): Promise<string> => {
     if (!authUserId) throw new Error('Not authenticated');
-    if (isSuspended || isBanned) throw new Error('Your account is suspended. Checkout is currently disabled.');
+    if (isSuspended || isBanned) throw new Error(isBanned ? 'Your account has been banned. Please contact support.' : 'Your account is suspended. Checkout is currently disabled.');
     if (cart.length === 0) throw new Error('Cart is empty');
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
@@ -254,7 +254,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     walletTransactionRef: string;
   }> => {
     if (!authUserId) throw new Error('Not authenticated');
-    if (isSuspended || isBanned) throw new Error('Your account is suspended. Wallet checkout is currently disabled.');
+    if (isSuspended || isBanned) throw new Error(isBanned ? 'Your account has been banned. Please contact support.' : 'Your account is suspended. Wallet checkout is currently disabled.');
     if (cart.length === 0) throw new Error('Cart is empty');
 
     const campaignIds = cart.map((item) => item.campaign_id);

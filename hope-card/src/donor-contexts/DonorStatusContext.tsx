@@ -78,6 +78,7 @@ export function DonorStatusProvider({ children }: { children: ReactNode }) {
         const statusExpiresAt: string | null = profile?.status_expires_at ?? null;
 
         if (status === 'banned') {
+          if (cancelled) return;
           await supabase.auth.signOut();
           localStorage.removeItem('donor_token');
           document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
