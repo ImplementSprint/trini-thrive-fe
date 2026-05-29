@@ -16,7 +16,9 @@ export interface UserProfile {
   province: string;
   profile_photo_url: string | null;
   profile_photo_key: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'suspended' | 'banned';
+  status_reason: string | null;
+  status_expires_at: string | null;
   created_at: string;
   total_donations_amount: number;
   total_donations_count: number;
