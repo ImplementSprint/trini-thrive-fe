@@ -58,8 +58,8 @@ export default function DigitalDonors() {
           status: d.status?.charAt(0).toUpperCase() + d.status?.slice(1) || 'Pending',
           age: d.age,
           gender: d.gender,
-          company: d.company,
-          phone: d.phone,
+          municipality: d.municipality,
+          province: d.province,
           address: d.address,
           image: d.image || "/HopeCard%20Logo.png"
         }));

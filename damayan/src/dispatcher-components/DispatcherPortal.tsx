@@ -10,24 +10,22 @@ import {
 import LiveMap from "./LiveMap";
 
 declare global {
-  interface Window {
-    __dpAssign?: (uid: string) => void;
-    __dpMsg?: (uid: string) => void;
-    __dpBackup?: (id: string) => void;
-    __dpEscalate?: (id: string) => void;
-  }
+  var __dpAssign: ((uid: string) => void) | undefined;
+  var __dpMsg: ((uid: string) => void) | undefined;
+  var __dpBackup: ((id: string) => void) | undefined;
+  var __dpEscalate: ((id: string) => void) | undefined;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // MINI COMPONENTS
 // ══════════════════════════════════════════════════════════════════════════════
-function Badge({ label, cls }: { label: string; cls: string }) {
+function Badge({ label, cls }: Readonly<{ label: string; cls: string }>) {
   return <span className={`dp-badge ${cls}`}>{label}</span>;
 }
 
-function Modal({ title, onClose, width = 560, children }: { title: string; onClose: () => void; width?: number; children: React.ReactNode }) {
+function Modal({ title, onClose, width = 560, children }: Readonly<{ title: string; onClose: () => void; width?: number; children: React.ReactNode }>) {
   return (
-    <div className="dp-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="dp-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { (e => e.target === e.currentTarget && onClose())(e as any); } }}>
       <div className="dp-modal" style={{ maxWidth: width }}>
         <div className="dp-modal-header">
           <span className="dp-modal-title">{title}</span>
@@ -39,7 +37,7 @@ function Modal({ title, onClose, width = 560, children }: { title: string; onClo
   );
 }
 
-function Toast({ msg }: { msg: string }) {
+function Toast({ msg }: Readonly<{ msg: string }>) {
   return <div className="dp-toast">{msg}</div>;
 }
 
@@ -76,7 +74,7 @@ function useToast() {
 // ══════════════════════════════════════════════════════════════════════════════
 // LOGIN PAGE
 // ══════════════════════════════════════════════════════════════════════════════
-function LoginPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: () => void }) {
+function LoginPage({ onLogin, onRegister }: Readonly<{ onLogin: () => void; onRegister: () => void }>) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [user, setUser] = useState(""); const [pass, setPass] = useState("");
   const [idFile, setIdFile] = useState<string | null>(null);
@@ -160,7 +158,7 @@ function LoginPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: (
                     </div>
                     <button className="dp-btn-primary" onClick={() => { if (user && pass) { setErr(false); onLogin(); } else setErr(true); }}>Sign In →</button>
                   </div>
-                  <p className="dp-login-switch">Don&apos;t have an account? <a onClick={() => setMode("register")}>Register here</a></p>
+                  <p className="dp-login-switch">Don&apos;t have an account? <button type="button" className="dp-btn-link" onClick={() => setMode("register")}>Register here</button></p>
                 </>
               ) : (
                 <>
@@ -179,14 +177,14 @@ function LoginPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: (
                     </div>
                     <div className="dp-field">
                       <label>Upload Valid Government ID *</label>
-                      <div className={`dp-id-upload ${idFile ? "uploaded" : ""}`} onClick={() => setIdFile("gov_id.jpg")}>
+                      <div className={`dp-id-upload ${idFile ? "uploaded" : ""}`} onClick={() => setIdFile("gov_id.jpg")} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { (() => setIdFile("gov_id.jpg"))(); } }}>
                         {idFile ? <><div className="label" style={{ color: "var(--d-green)", fontWeight: 700 }}>{idFile} — uploaded</div></> : <><div className="label">Click to upload Government ID</div><div className="hint">UMID, SSS, Passport, Driver&apos;s License</div></>}
                       </div>
                     </div>
                     <button className="dp-btn-primary" disabled={!user || !pass || !idFile} onClick={onRegister}>Register & Submit for Verification</button>
                   </div>
                   <div className="dp-login-note">⏳ After submission, wait for admin approval before accessing the portal.</div>
-                  <p className="dp-login-switch">Already have an account? <a onClick={() => setMode("login")}>Sign in here</a></p>
+                  <p className="dp-login-switch">Already have an account? <button type="button" className="dp-btn-link" onClick={() => setMode("login")}>Sign in here</button></p>
                 </>
               )}
             </>
@@ -200,7 +198,7 @@ function LoginPage({ onLogin, onRegister }: { onLogin: () => void; onRegister: (
 // ══════════════════════════════════════════════════════════════════════════════
 // AWAITING VERIFICATION
 // ══════════════════════════════════════════════════════════════════════════════
-function AwaitingPage({ onProceed }: { onProceed: () => void }) {
+function AwaitingPage({ onProceed }: Readonly<{ onProceed: () => void }>) {
   return (
     <div className="dp-page dp-verify-page">
       <div className="dp-verify-card">
@@ -225,12 +223,12 @@ function AwaitingPage({ onProceed }: { onProceed: () => void }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD PAGE
 // ══════════════════════════════════════════════════════════════════════════════
-function DashboardPage({ incidents, units, onDispatch, onMarkInvalid }: {
+function DashboardPage({ incidents, units, onDispatch, onMarkInvalid }: Readonly<{
   incidents: Incident[];
   units: Unit[];
   onDispatch: (inc: Incident) => void;
   onMarkInvalid: (inc: Incident, reason: string) => void;
-}) {
+}>) {
   const today = new Date().toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const newInc    = incidents.filter(i => i.status === "New" || i.status === "Waiting");
   const activeInc = incidents.filter(i => i.status === "In Progress" || i.status === "Dispatched");
@@ -344,7 +342,7 @@ function DashboardPage({ incidents, units, onDispatch, onMarkInvalid }: {
               const c = unitTypeColor(type);
               return (
                 <div key={type} className="dp-unit-bar">
-                    <span>{type === "FIRE" ? "Fire" : type === "AMB" ? "Medical" : "Police"}</span>
+                    <span>{{"FIRE": "Fire", "AMB": "Medical", "POL": "Police"}[type as string]}</span>
                   <div className="dp-unit-bar-track"><div className="dp-unit-bar-fill" style={{ width: `${pct}%`, background: c }} /></div>
                 </div>
               );
@@ -411,12 +409,12 @@ function DashboardPage({ incidents, units, onDispatch, onMarkInvalid }: {
 }
 
 // Queue row — dispatch navigates to Resource Map dispatch mode; invalid removes from queue
-function QueueRow({ inc, units, onDispatch, onMarkInvalid }: {
+function QueueRow({ inc, units, onDispatch, onMarkInvalid }: Readonly<{
   inc: Incident;
   units: Unit[];
   onDispatch: (inc: Incident) => void;
   onMarkInvalid: (inc: Incident, reason: string) => void;
-}) {
+}>) {
   const [ticketModal, setTicketModal] = useState(false);
   const [invalidModal, setInvalidModal] = useState(false);
   const [reason, setReason] = useState("");
@@ -473,7 +471,7 @@ function QueueRow({ inc, units, onDispatch, onMarkInvalid }: {
   );
 }
 
-function TicketModal({ inc, units, onClose }: { inc: Incident; units: Unit[]; onClose: () => void }) {
+function TicketModal({ inc, units, onClose }: Readonly<{ inc: Incident; units: Unit[]; onClose: () => void }>) {
   const assigned = inc.assignedUnits.map(id => units.find(u => u.id === id)).filter(Boolean) as Unit[];
 
   return (
@@ -558,14 +556,14 @@ function TicketModal({ inc, units, onClose }: { inc: Incident; units: Unit[]; on
 // RESOURCE MAP PAGE  (Live Monitoring + Dispatch Select only — NO rescue tab,
 //                     NO incident queue table. Map fills full height.)
 // ══════════════════════════════════════════════════════════════════════════════
-function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDispatchTarget, onDispatchConfirmed }: {
+function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDispatchTarget, onDispatchConfirmed }: Readonly<{
   incidents: Incident[];
   units: Unit[];
   onUpdate: (id: string, p: Partial<Incident>) => void;
   dispatchTarget: Incident | null;
   onClearDispatchTarget: () => void;
   onDispatchConfirmed?: () => void;
-}) {
+}>) {
   // If a dispatchTarget arrives from dashboard, start in dispatch mode
   const [mapMode, setMapMode] = useState<"monitoring" | "dispatch">(dispatchTarget ? "dispatch" : "monitoring");
   const [filterType, setFilterType] = useState("All");
@@ -589,7 +587,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
   }, [dispatchTarget?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    window.__dpAssign = (uid: string) => {
+    globalThis.__dpAssign = (uid: string) => {
       setAssigned(p => p.includes(uid) ? p : [...p, uid]);
       if (selInc) {
         onUpdate(selInc.id, {
@@ -601,8 +599,8 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
         setMapKey(k => k + 1);
       }
     };
-    window.__dpMsg = (uid: string) => toast.show(`Message sent to ${uid}`);
-    return () => { delete window.__dpAssign; delete window.__dpMsg; };
+    globalThis.__dpMsg = (uid: string) => toast.show(`Message sent to ${uid}`);
+    return () => { delete globalThis.__dpAssign; delete globalThis.__dpMsg; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selInc]);
 
@@ -704,7 +702,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
                       <button
                         className="dp-btn dp-btn-sm"
                         style={{ flex: 1, background: isAss ? "var(--d-green)" : c, color: "#fff", border: "none" }}
-                        onClick={() => window.__dpAssign(u.id)}
+                        onClick={() => globalThis.__dpAssign?.(u.id)}
                       >
                         {isAss ? "✓ Assigned" : "Assign"}
                       </button>
@@ -746,7 +744,7 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
               filterType={filterType}
               selectedIncident={selInc}
               assignedUnits={assigned}
-              onUnitAssign={uid => window.__dpAssign(uid)}
+              onUnitAssign={uid => globalThis.__dpAssign?.(uid)}
               onIncidentClick={i => setSelInc(i)}
               height="100%"
             />
@@ -778,11 +776,11 @@ function ResourceMapPage({ incidents, units, onUpdate, dispatchTarget, onClearDi
 // Layout: left = incidents-in-progress list, right = map + ticket detail panel
 // Map uses rescue mode; clicking incident zooms map + shows detail below
 // ══════════════════════════════════════════════════════════════════════════════
-function RescueMonitoringPage({ incidents, units, onUpdate }: {
+function RescueMonitoringPage({ incidents, units, onUpdate }: Readonly<{
   incidents: Incident[];
   units: Unit[];
   onUpdate: (id: string, p: Partial<Incident>) => void;
-}) {
+}>) {
   const [selInc, setSelInc] = useState<Incident | null>(null);
   const [backupModal, setBackupModal] = useState<Incident | null>(null);
   const [escalateModal, setEscalateModal] = useState<Incident | null>(null);
@@ -795,9 +793,9 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
   const toast = useToast();
 
   useEffect(() => {
-    window.__dpBackup   = (id: string) => { onUpdate(id, { situationType: "Escalating" }); toast.show(`Backup requested for ${id}`); setMapKey(k => k + 1); };
-    window.__dpEscalate = (id: string) => { onUpdate(id, { situationType: "Critical"  }); toast.show(`${id} escalated`); setMapKey(k => k + 1); };
-    return () => { delete window.__dpBackup; delete window.__dpEscalate; };
+    globalThis.__dpBackup   = (id: string) => { onUpdate(id, { situationType: "Escalating" }); toast.show(`Backup requested for ${id}`); setMapKey(k => k + 1); };
+    globalThis.__dpEscalate = (id: string) => { onUpdate(id, { situationType: "Critical"  }); toast.show(`${id} escalated`); setMapKey(k => k + 1); };
+    return () => { delete globalThis.__dpBackup; delete globalThis.__dpEscalate; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -873,7 +871,7 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
               <div
                 key={inc.id}
                 className={`dp-incident-list-item ${selInc?.id === inc.id ? "active" : ""}`}
-                onClick={() => handleSelect(inc)}
+                onClick={() => handleSelect(inc)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { (() => handleSelect(inc))(); } }}
               >
                 <span className="dp-incident-list-dot" style={{ background: dotColor }} />
                 <div className="dp-incident-list-body">
@@ -885,7 +883,7 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
                     <Badge label={inc.situationType} cls={situationClass(inc.situationType)} />
                   </div>
                   <div style={{ fontSize: "0.72rem", color: "var(--d-text-sub)", marginTop: "0.2rem" }}>
-                    ⏱ Active: {inc.timeActive} min · {inc.assignedUnits.length} unit{inc.assignedUnits.length !== 1 ? "s" : ""} assigned
+                    ⏱ Active: {inc.timeActive} min · {inc.assignedUnits.length} unit{inc.assignedUnits.length === 1 ? "" : "s"} assigned
                   </div>
                 </div>
                 <span className="dp-incident-list-arrow">›</span>
@@ -1020,7 +1018,7 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
                     fontSize: "0.65rem",
                     fontWeight: 800,
                     textAlign: "center",
-                    background: done ? "var(--d-green)" : active ? "var(--d-primary)" : "var(--d-surface-low)",
+                    background: (done ? "var(--d-green)" : (active ? "var(--d-primary)" : "var(--d-surface-low)")),
                     color: done || active ? "#fff" : "var(--d-text-sub)",
                     border: done || active ? "none" : "1px solid var(--d-border)",
                   }}>
@@ -1073,7 +1071,7 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
                 ].map((chk, i) => (
                   <div
                     key={i}
-                    onClick={() => i === 3 && setSafetyChecked(v => !v)}
+                    onClick={() => i === 3 && setSafetyChecked(v => !v)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { (() => i === 3 && setSafetyChecked(v => !v))(); } }}
                     style={{
                       display: "flex", alignItems: "center", gap: "0.6rem",
                       padding: "0.7rem 0.9rem",
@@ -1136,10 +1134,10 @@ function RescueMonitoringPage({ incidents, units, onUpdate }: {
 }
 
 // Rescue detail panel — comprehensive real-time rescue monitoring view
-function RescueDetailPanel({ inc, units, onBackup, onEscalate, onResolve, onClose }: {
+function RescueDetailPanel({ inc, units, onBackup, onEscalate, onResolve, onClose }: Readonly<{
   inc: Incident; units: Unit[];
   onBackup: () => void; onEscalate: () => void; onResolve: () => void; onClose: () => void;
-}) {
+}>) {
   const assigned = inc.assignedUnits.map(id => units.find(u => u.id === id)).filter(Boolean) as Unit[];
   const sc = situationColor(inc.situationType);
 
@@ -1430,11 +1428,11 @@ function RescueDetailPanel({ inc, units, onBackup, onEscalate, onResolve, onClos
 // ══════════════════════════════════════════════════════════════════════════════
 // INCIDENTS PAGE  (list only — no map; all incidents with filters + expanded ticket)
 // ══════════════════════════════════════════════════════════════════════════════
-function IncidentsPage({ incidents, units, onUpdate }: {
+function IncidentsPage({ incidents, units, onUpdate }: Readonly<{
   incidents: Incident[];
   units: Unit[];
   onUpdate: (id: string, p: Partial<Incident>) => void;
-}) {
+}>) {
   const [tab, setTab] = useState<"All" | "In Progress" | "Completed" | "Invalid">("All");
   const [searchId,   setSearchId]   = useState("");
   const [searchType, setSearchType] = useState("");
@@ -1538,7 +1536,7 @@ function IncidentsPage({ incidents, units, onUpdate }: {
               <div
                 key={inc.id}
                 className={`dp-incident-list-item ${selInc?.id === inc.id ? "active" : ""}`}
-                onClick={() => setSelInc(inc)}
+                onClick={() => setSelInc(inc)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { (() => setSelInc(inc))(); } }}
               >
                 <span className="dp-incident-list-dot" style={{ background: dotColor }} />
                 <div className="dp-incident-list-body">
@@ -1630,10 +1628,10 @@ function IncidentsPage({ incidents, units, onUpdate }: {
 }
 
 // ── Expanded ticket (used in Incidents page) ──────────────────────────────────
-function ExpandedTicket({ inc, units, onBackup, onEscalate, onResolve, onClose }: {
+function ExpandedTicket({ inc, units, onBackup, onEscalate, onResolve, onClose }: Readonly<{
   inc: Incident; units: Unit[];
   onBackup: () => void; onEscalate: () => void; onResolve: () => void; onClose: () => void;
-}) {
+}>) {
   const assigned = inc.assignedUnits.map(id => units.find(u => u.id === id)).filter(Boolean) as Unit[];
   return (
     <div className="dp-ticket-detail dp-fade-in">
@@ -1716,7 +1714,7 @@ function ExpandedTicket({ inc, units, onBackup, onEscalate, onResolve, onClose }
   );
 }
 
-function ResourcesPage({ units, setUnits }: { units: Unit[]; setUnits: React.Dispatch<React.SetStateAction<Unit[]>> }) {
+function ResourcesPage({ units, setUnits }: Readonly<{ units: Unit[]; setUnits: React.Dispatch<React.SetStateAction<Unit[]>> }>) {
   const [tab, setTab] = useState<"teams"|"units">("teams");
   const [teams, setTeams] = useState(MOCK_TEAMS);
   const [typeFilter, setTypeFilter] = useState("All");
@@ -1911,7 +1909,7 @@ function ResourcesPage({ units, setUnits }: { units: Unit[]; setUnits: React.Dis
 // ══════════════════════════════════════════════════════════════════════════════
 // PROFILE PAGE
 // ══════════════════════════════════════════════════════════════════════════════
-function ProfilePage({ onLogout }: { onLogout: () => void }) {
+function ProfilePage({ onLogout }: Readonly<{ onLogout: () => void }>) {
   const [profile, setProfile] = useState({ ...MOCK_DISPATCHER });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft]     = useState({ ...MOCK_DISPATCHER });
@@ -1942,9 +1940,9 @@ function ProfilePage({ onLogout }: { onLogout: () => void }) {
               <div className="dp-profile-stat"><div className="dp-profile-stat-label">Member Since</div><div className="dp-profile-stat-val" style={{ fontSize:"0.9rem",fontWeight:600 }}>{profile.joinedDate}</div></div>
             </div>
             <div className="dp-profile-actions">
-              {!editing
-                ? <button className="dp-btn dp-btn-orange" style={{ width:"100%",justifyContent:"center" }} onClick={()=>{setEditing(true);setDraft({...profile})}}>Edit Profile</button>
-                : <><button className="dp-btn dp-btn-green" style={{ width:"100%",justifyContent:"center" }} onClick={save}>Save Changes</button><button className="dp-btn dp-btn-ghost" style={{ width:"100%",justifyContent:"center",marginTop:"0.3rem" }} onClick={()=>{setEditing(false);setDraft({...profile})}}>Cancel</button></>}
+              {editing
+                ? <><button className="dp-btn dp-btn-green" style={{ width:"100%",justifyContent:"center" }} onClick={save}>Save Changes</button><button className="dp-btn dp-btn-ghost" style={{ width:"100%",justifyContent:"center",marginTop:"0.3rem" }} onClick={()=>{setEditing(false);setDraft({...profile})}}>Cancel</button></>
+                : <button className="dp-btn dp-btn-orange" style={{ width:"100%",justifyContent:"center" }} onClick={()=>{setEditing(true);setDraft({...profile})}}>Edit Profile</button>}
               <button className="dp-btn dp-btn-ghost" style={{ width:"100%",justifyContent:"center" }} onClick={()=>setPwModal(true)}>🔒 Change Password</button>
               <div className="dp-divider" />
               <button className="dp-btn dp-btn-ghost" style={{ width:"100%",justifyContent:"center",borderColor:"var(--d-red)",color:"var(--d-red)" }} onClick={()=>setLogoutModal(true)}>→ Sign Out</button>
@@ -1954,7 +1952,7 @@ function ProfilePage({ onLogout }: { onLogout: () => void }) {
 
         {/* Fields */}
         <div className="dp-profile-fields">
-          {editing&&<div className="dp-alert dp-alert-amber" style={{ marginBottom:"1rem" }}>✏️ You are in edit mode. Make changes and click Save.</div>}
+          {Boolean(editing) && <div className="dp-alert dp-alert-amber" style={{ marginBottom:"1rem" }}>✏️ You are in edit mode. Make changes and click Save.</div>}
           <div className="dp-profile-2col">
             <div>
               <div className="dp-profile-section-head">Personal Information</div>
@@ -2019,7 +2017,7 @@ function ProfilePage({ onLogout }: { onLogout: () => void }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // MAIN SHELL
 // ══════════════════════════════════════════════════════════════════════════════
-function Shell({ onLogout }: { onLogout: () => void }) {
+function Shell({ onLogout }: Readonly<{ onLogout: () => void }>) {
   const [page, setPage] = useState<NavPage>("dashboard");
 
   // Set favicon to the Damayan logo
@@ -2173,7 +2171,7 @@ function Shell({ onLogout }: { onLogout: () => void }) {
             <span className="dp-clock">{clock}</span>
             <button className="dp-broadcast-btn" onClick={() => setBroadcastModal(true)}>⚠ Broadcast</button>
             <div ref={dropRef} style={{ position: "relative" }}>
-              <div className="dp-avatar-btn" onClick={() => setDropdown(d => !d)}>DS</div>
+              <div className="dp-avatar-btn" onClick={() => setDropdown(d => !d)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { (() => setDropdown(d => !d))(); } }}>DS</div>
               {dropdown && (
                 <div className="dp-avatar-dropdown">
                   <div className="dp-avatar-dropdown-header">

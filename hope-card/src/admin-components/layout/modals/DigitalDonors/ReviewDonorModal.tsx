@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { CheckCircle2, XCircle, FileText, Image } from "lucide-react";
@@ -144,12 +144,12 @@ export default function ReviewDonorModal({ isOpen, onClose, donorData, onUpdate 
               <p className={styles.value}>{donorData?.email || 'N/A'}</p>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Phone</label>
-              <p className={styles.value}>{donorData?.phone || 'N/A'}</p>
+              <label className={styles.label}>Municipality</label>
+              <p className={styles.value}>{donorData?.municipality || 'N/A'}</p>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Company</label>
-              <p className={styles.value}>{donorData?.company || 'N/A'}</p>
+              <label className={styles.label}>Province</label>
+              <p className={styles.value}>{donorData?.province || 'N/A'}</p>
             </div>
             <div className={styles.field}>
               <label className={styles.label}>Date</label>

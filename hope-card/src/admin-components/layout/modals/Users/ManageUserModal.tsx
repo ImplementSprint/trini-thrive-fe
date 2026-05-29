@@ -104,6 +104,12 @@ export default function ManageUserModal({
 
       const expiresAt = calculateExpirationDate();
 
+      const statusMap: Record<string, 'active' | 'suspended' | 'banned'> = {
+        reactivate: 'active',
+        suspend: 'suspended',
+        ban: 'banned',
+      };
+
       const response = await fetch(
         `/admin/api/users/${user.id}/status`,
         {
@@ -113,8 +119,7 @@ export default function ManageUserModal({
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            status:
-              selectedAction === 'reactivate' ? 'active' : selectedAction,
+            status: statusMap[selectedAction],
             reason: reason.trim(),
             role: user.role,
             expiresAt,
@@ -122,16 +127,17 @@ export default function ManageUserModal({
         },
       );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || result.success === false) {
         throw new Error(
-          errorData.message || `Failed to update user: ${response.status}`,
+          result.message || `Failed to update user: ${response.status}`,
         );
       }
 
       setMessage({
         type: 'success',
-        text: `User account ${selectedAction === 'reactivate' ? 'reactivated' : selectedAction} successfully`,
+        text: `User account ${selectedAction === 'reactivate' ? 'reactivated' : selectedAction}ed successfully`,
       });
 
       setTimeout(() => {

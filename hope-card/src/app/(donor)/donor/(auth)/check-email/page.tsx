@@ -2,7 +2,7 @@
 
 import React, { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, ArrowLeft } from "lucide-react";
+import { CheckCircle, ArrowLeft } from "lucide-react";
 import { C, AuthShell, MobileLogo } from "@/donor-components/auth-shared";
 
 function CheckEmailForm() {
@@ -43,31 +43,32 @@ function CheckEmailForm() {
               color: C.primary,
             }}
           >
-            <Mail size={32} />
+            <CheckCircle size={32} />
           </div>
 
-          <h2 style={{ 
-            fontFamily: "Plus Jakarta Sans, sans-serif", 
-            fontSize: "1.875rem", 
-            fontWeight: 700, 
-            color: C.onPrimaryFixed, 
+          <h2 style={{
+            fontFamily: "Plus Jakarta Sans, sans-serif",
+            fontSize: "1.875rem",
+            fontWeight: 700,
+            color: C.onPrimaryFixed,
             margin: "0 0 0.5rem",
             textAlign: "center"
           }}>
-            Check Your Email
+            Application Submitted
           </h2>
-          
-          <p style={{ 
-            color: C.onSurfaceVariant, 
-            margin: "0 0 1.5rem", 
-            lineHeight: 1.6, 
+
+          <p style={{
+            color: C.onSurfaceVariant,
+            margin: "0 0 1.5rem",
+            lineHeight: 1.6,
             fontFamily: "Manrope, sans-serif",
             fontSize: "1rem"
           }}>
-            We've sent a confirmation link to{" "}
+            Your Hopecard donor account for{" "}
             <span style={{ color: C.onPrimaryFixed, fontWeight: 600 }}>
               {maskedEmail}
             </span>
+            {" "}has been created successfully.
           </p>
 
           <div style={{
@@ -95,13 +96,13 @@ function CheckEmailForm() {
               lineHeight: 1.8
             }}>
               <li style={{ marginBottom: "0.5rem" }}>
-                Check your email inbox for a confirmation link from Hopecard
+                Your application and submitted ID are under review by our team
               </li>
               <li style={{ marginBottom: "0.5rem" }}>
-                Click the confirmation link to verify your email address
+                You will be notified once your account has been approved
               </li>
               <li>
-                Your application will be subject for review
+                After approval, you can log in and start donating
               </li>
             </ol>
           </div>
@@ -112,7 +113,13 @@ function CheckEmailForm() {
             fontFamily: "Manrope, sans-serif",
             fontSize: "0.875rem"
           }}>
-            Didn't receive the email? Check your spam folder or go back to signup to resend.
+            Already approved? Head to the{" "}
+            <span
+              style={{ color: C.primary, cursor: "pointer", fontWeight: 500 }}
+              onClick={() => window.location.href = '/donor/login'}
+            >
+              login page
+            </span>.
           </p>
         </div>
 

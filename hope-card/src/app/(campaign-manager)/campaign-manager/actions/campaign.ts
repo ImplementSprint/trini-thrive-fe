@@ -1,15 +1,15 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { createClient } from '@/campaign-manager-utils/supabase/server';
 import { createAdminClient } from '@/campaign-manager-utils/supabase/admin';
 
 const CM_BACKEND_URL = process.env.NEXT_PUBLIC_CM_BACKEND_URL ?? 'http://localhost:3103';
 
 async function getAuthToken(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token ?? null;
+  const cookieStore = await cookies();
+  return cookieStore.get('cm_token')?.value ?? null;
 }
 
 // ─── Campaign status actions ──────────────────────────────────────────────────
@@ -153,10 +153,10 @@ export async function createCampaignAction(
     body: JSON.stringify({
       title: fd.get('title'),
       description: fd.get('description'),
-      targetAmount: Number(fd.get('targetAmount') ?? 0),
+      target_amount: Number(fd.get('targetAmount') ?? 0),
       category: fd.get('category'),
-      endDate: fd.get('endDate'),
-      createdBy: user.id,
+      end_date: fd.get('endDate'),
+      created_by: user.id,
     }),
     cache: 'no-store',
   });

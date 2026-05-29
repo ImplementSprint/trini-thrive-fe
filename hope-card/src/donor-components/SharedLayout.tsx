@@ -22,8 +22,6 @@ import {
   BookOpen,
   Wallet,
   History,
-  Receipt,
-  CreditCard,
   Settings,
   LogOut,
   HandHeart,
@@ -352,9 +350,16 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
             onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
           />
           <SideNavItem
+            icon={<BookOpen size={20} />}
+            label="Stories"
+            active={currentPage === 'stories'}
+            onClick={() => { router.push('/donor/stories'); setSidebarOpen(false); }}
+          />
+          <SideNavItem
             icon={<Wallet size={20} />}
             label="Wallet"
-            onClick={() => { router.push('/donor/profile'); setSidebarOpen(false); }}
+            active={currentPage === 'wallet'}
+            onClick={() => { router.push('/donor/wallet'); setSidebarOpen(false); }}
           />
         </nav>
 
@@ -387,18 +392,6 @@ export default function SharedLayout({ children, currentPage = 'home' }: SharedL
             secondary
             active={currentPage === 'transactions'}
             onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
-          />
-          <SideNavItem
-            icon={<Receipt size={20} />}
-            label="Tax Receipts"
-            secondary
-            onClick={() => { router.push('/donor/transactions'); setSidebarOpen(false); }}
-          />
-          <SideNavItem
-            icon={<CreditCard size={20} />}
-            label="Payment Methods"
-            secondary
-            onClick={() => { router.push('/donor/profile'); setSidebarOpen(false); }}
           />
           <SideNavItem
             icon={<Settings size={20} />}

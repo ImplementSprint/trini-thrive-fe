@@ -38,7 +38,7 @@ function getAnnualPeriodStart(createdAt: string): Date {
 
 export default function BasketPage() {
   const router = useRouter();
-  const { cart, removeFromCart, updateQuantity, cartTotal, loading, processingFee, apiTotal } = useCart();
+  const { cart, removeFromCart, updateQuantity, cartTotal, loading, apiTotal } = useCart();
   const [annualDonated, setAnnualDonated] = useState(0);
 
   useEffect(() => {
@@ -163,10 +163,7 @@ export default function BasketPage() {
                   <span>Subtotal</span>
                   <span style={{ fontWeight: 600, color: colors.onSurface }}>₱{subtotal.toLocaleString()}.00</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem", color: colors.onSurfaceVariant }}>
-                  <span>Processing Fee</span>
-                  <span style={{ color: colors.secondary, fontWeight: 500, fontStyle: "italic" }}>₱{processingFee.toLocaleString()}.00</span>
-                </div>
+
                 <div style={{ paddingTop: "1rem", borderTop: `1px solid ${colors.outlineVariant}33`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: 700, fontSize: "1.125rem" }}>Total</span>
                   <span style={{ fontWeight: 700, fontSize: "2rem", color: colors.primary, fontFamily: "Plus Jakarta Sans, sans-serif" }}>₱{(apiTotal > 0 ? apiTotal : subtotal).toLocaleString()}.00</span>

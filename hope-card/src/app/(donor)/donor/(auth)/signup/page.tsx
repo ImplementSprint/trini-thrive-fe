@@ -99,12 +99,12 @@ export default function HopecardSignUp() {
         body: JSON.stringify({
           email,
           password,
-          firstName,
-          lastName,
+          first_name: firstName,
+          last_name: lastName,
           barangay,
           municipality,
           province,
-          validIdUrl: idVerificationKey, // Storage path/key from upload
+          id_verification_key: idVerificationKey,
         }),
       });
 

@@ -470,7 +470,7 @@ export default function HopecardProfile() {
               </h1>
               {(() => {
                 const s = profile?.status;
-                const badge = s === 'approved'
+                const badge = (s === 'approved' || s === 'active')
                   ? { bg: `${colors.secondaryContainer}33`, color: colors.onSecondaryContainer, label: 'Verified Donor', fill: 'currentColor' }
                   : s === 'suspended'
                   ? { bg: '#fff7ed', color: '#9a3412', label: 'Account Suspended', fill: 'none' }

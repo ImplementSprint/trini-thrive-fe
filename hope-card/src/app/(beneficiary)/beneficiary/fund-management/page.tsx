@@ -205,11 +205,16 @@ const FundManagement: React.FC = () => {
             .order("created_at", { ascending: false }),
         ]);
 
+        const isTxCompleted = (s: string) => s === "approved" || s === "processed";
+        const isTxRejected = (s: string) => s === "rejected" || s === "failed";
+        const isWdCompleted = (s: string) => s === "approved" || s === "processed";
+        const isWdFailed = (s: string) => s === "rejected" || s === "failed";
+
         // Build transactions display
         const txDisplay: Transaction[] = (txRows ?? []).map((t: any) => {
           let tStatus: "Completed" | "Rejected" | "Pending" = "Pending";
-          if (t.status === "approved") tStatus = "Completed";
-          else if (t.status === "rejected") tStatus = "Rejected";
+          if (isTxCompleted(t.status)) tStatus = "Completed";
+          else if (isTxRejected(t.status)) tStatus = "Rejected";
 
           return {
             id: t.id,
@@ -226,10 +231,10 @@ const FundManagement: React.FC = () => {
         const wdDisplay: Withdrawal[] = (wdRows ?? []).map((w: any) => {
           let wStatus: "Successful" | "Processing" | "Failed" = "Processing";
           let wDotColor = "#cda336";
-          if (w.status === "approved") {
+          if (isWdCompleted(w.status)) {
             wStatus = "Successful";
             wDotColor = "#97453e";
-          } else if (w.status === "rejected") {
+          } else if (isWdFailed(w.status)) {
             wStatus = "Failed";
             wDotColor = "#ba1a1a";
           }
@@ -248,9 +253,9 @@ const FundManagement: React.FC = () => {
         setWithdrawals(wdDisplay);
 
         // Compute scorecards
-        const approved = (txRows ?? []).filter((t: any) => t.status === "approved");
+        const approved = (txRows ?? []).filter((t: any) => isTxCompleted(t.status));
         const pending = (txRows ?? []).filter((t: any) => t.status === "pending");
-        const wdApproved = (wdRows ?? []).filter((w: any) => w.status === "approved");
+        const wdApproved = (wdRows ?? []).filter((w: any) => isWdCompleted(w.status));
 
         const totalRx = approved.reduce((s: number, t: any) => s + Number(t.amount), 0);
         const totalPending = pending.reduce((s: number, t: any) => s + Number(t.amount), 0);

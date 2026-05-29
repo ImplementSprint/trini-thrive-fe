@@ -3,9 +3,9 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle2, FileEdit, Plus, Search, TrendingUp, UserPlus, Users, XCircle } from 'lucide-react';
+import { CheckCircle2, FileEdit, Plus, Search, TrendingUp, Users, XCircle } from 'lucide-react';
 import AppShell from '@/campaign-manager-components/AppShell';
-import { activateCampaignAction, completeCampaignAction, cancelCampaignAction, changeCampaignToDraftAction, inviteBeneficiariesToCampaignAction, getApprovedBeneficiaries, getCampaignBeneficiaryIds } from '@/app/(campaign-manager)/campaign-manager/actions/campaign';
+import { activateCampaignAction, completeCampaignAction, cancelCampaignAction, changeCampaignToDraftAction } from '@/app/(campaign-manager)/campaign-manager/actions/campaign';
 import type { MyCampaignRow } from '@/app/(campaign-manager)/campaign-manager/actions/reports';
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
@@ -49,12 +49,6 @@ export default function MyCampaignsUI({
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
   const [showDraftDialog, setShowDraftDialog] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteCampaignId, setInviteCampaignId] = useState<string | null>(null);
-  const [allBeneficiaries, setAllBeneficiaries] = useState<any[]>([]);
-  const [selectedBeneficiaryIds, setSelectedBeneficiaryIds] = useState<string[]>([]);
-  const [inviteLoading, setInviteLoading] = useState(false);
-
 
   function navigate(params: Record<string, string>) {
     const next = new URLSearchParams(searchParams.toString());
@@ -89,41 +83,6 @@ export default function MyCampaignsUI({
         alert(res.error || 'Failed to change status to draft');
       }
     }
-  }
-
-  async function openInviteModal(campaignId: string) {
-    setInviteCampaignId(campaignId);
-    setSelectedBeneficiaryIds([]);
-    setInviteLoading(true);
-    setShowInviteModal(true);
-    const [allRes, assignedRes] = await Promise.all([
-      getApprovedBeneficiaries(),
-      getCampaignBeneficiaryIds(campaignId),
-    ]);
-    const assignedIds = new Set(assignedRes.success ? (assignedRes.data ?? []) : []);
-    const available = (allRes.data ?? []).filter((b: any) => !assignedIds.has(b.id));
-    setAllBeneficiaries(available);
-    setInviteLoading(false);
-  }
-
-  async function handleInviteSubmit() {
-    if (!inviteCampaignId || selectedBeneficiaryIds.length === 0) return;
-    setInviteLoading(true);
-    const res = await inviteBeneficiariesToCampaignAction(inviteCampaignId, selectedBeneficiaryIds);
-    setInviteLoading(false);
-    if (!res) {
-      setShowInviteModal(false);
-      setInviteCampaignId(null);
-      router.refresh();
-    } else {
-      alert(res.error || 'Failed to invite beneficiaries');
-    }
-  }
-
-  function toggleBeneficiary(id: string) {
-    setSelectedBeneficiaryIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
   }
 
 
@@ -296,14 +255,6 @@ export default function MyCampaignsUI({
                                 </button>
                               </>
                             )}
-                            <button
-                              type="button"
-                              title="Invite Beneficiary"
-                              onClick={() => openInviteModal(campaign.id.toString())}
-                              className="rounded-lg bg-[#b55247] p-1.5 text-white hover:bg-[#a0483e]"
-                            >
-                              <UserPlus size={14} />
-                            </button>
                           </div>
                         </td>
                       </tr>
@@ -400,82 +351,6 @@ export default function MyCampaignsUI({
         </div>
       </div>
 
-      {showInviteModal && inviteCampaignId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2d201d]/35 px-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-[0_24px_70px_rgba(61,34,29,0.18)]">
-            <div className="flex items-start justify-between gap-4 mb-5">
-              <div>
-                <h2 className="text-[22px] font-extrabold text-[#352826]">Invite Beneficiary</h2>
-                <p className="mt-1 text-[13px] text-[#87736e]">Choose one or more approved beneficiaries to invite to this campaign.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setShowInviteModal(false); setInviteCampaignId(null); }}
-                className="text-[#a18e89]"
-              >
-                ✕
-              </button>
-            </div>
-
-            {inviteLoading ? (
-              <p className="py-6 text-center text-[14px] text-[#84716b]">Loading beneficiaries…</p>
-            ) : allBeneficiaries.length === 0 ? (
-              <p className="py-6 text-center text-[14px] text-[#84716b]">All approved beneficiaries are already assigned to this campaign.</p>
-            ) : (
-              <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
-                {allBeneficiaries.map((b) => {
-                  const selected = selectedBeneficiaryIds.includes(b.id);
-                  const initials = getInitials(`${b.first_name} ${b.last_name}`);
-                  return (
-                    <button
-                      key={b.id}
-                      type="button"
-                      onClick={() => toggleBeneficiary(b.id)}
-                      className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors ${
-                        selected
-                          ? 'bg-[#fff1ed] ring-1 ring-[#e08069]'
-                          : 'bg-[#faf7f5] hover:bg-[#f5efec]'
-                      }`}
-                    >
-                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold ${
-                        selected ? 'bg-[#b55247] text-white' : 'bg-[#e8deda] text-[#7a6560]'
-                      }`}>
-                        {initials}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-bold text-[#3b2f2c]">{b.first_name} {b.last_name}</p>
-                        {b.email && <p className="text-[12px] text-[#9a8984] truncate">{b.email}</p>}
-                      </div>
-                      {selected && (
-                        <CheckCircle2 size={16} className="shrink-0 text-[#b55247]" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => { setShowInviteModal(false); setInviteCampaignId(null); }}
-                className="rounded-full border border-[#eedfdb] px-5 py-2.5 text-[13px] font-bold text-[#7b6763]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleInviteSubmit}
-                disabled={selectedBeneficiaryIds.length === 0 || inviteLoading}
-                className="flex items-center gap-2 rounded-full bg-[#b55247] px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_10px_22px_rgba(181,82,71,0.28)] hover:bg-[#a0483e] disabled:opacity-50"
-              >
-                <UserPlus size={14} />
-                Invite {selectedBeneficiaryIds.length > 0 ? `(${selectedBeneficiaryIds.length})` : ''}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showDraftDialog && selectedCampaignId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2d201d]/35 px-4 backdrop-blur-[2px]">

@@ -45,20 +45,29 @@ function PaymentSuccessContent() {
 
   const referenceId = searchParams.get('ref') ?? '';
   const buyerAuthId = searchParams.get('buyerAuthId') ?? '';
+  const source = searchParams.get('source') ?? '';
+  const isWalletPayment = source === 'wallet';
 
-  const [confirming, setConfirming] = useState(true);
+  const [confirming, setConfirming] = useState(!isWalletPayment);
   const [confirmError, setConfirmError] = useState<string | null>(null);
 
-  // Order snapshot saved before redirecting to PayMongo
-  const { cart, cartTotal, processingFee, apiTotal } = React.useMemo(() => {
+  // Order snapshot saved before payment
+  const { cart, cartTotal, apiTotal } = React.useMemo(() => {
     try {
       const saved = sessionStorage.getItem('lastOrder');
       if (saved) return JSON.parse(saved);
     } catch {}
-    return { cart: [], cartTotal: 0, processingFee: 0, apiTotal: 0 };
+    return { cart: [], cartTotal: 0, apiTotal: 0 };
   }, []);
 
   useEffect(() => {
+    // Wallet payments are confirmed server-side synchronously — no confirm call needed
+    if (isWalletPayment) {
+      clearCart();
+      sessionStorage.removeItem('lastOrder');
+      return;
+    }
+
     if (!referenceId || !buyerAuthId) {
       setConfirmError('Missing payment reference. Please contact support.');
       setConfirming(false);
@@ -81,7 +90,7 @@ function PaymentSuccessContent() {
       })
       .catch((err) => setConfirmError(err.message))
       .finally(() => setConfirming(false));
-  }, [referenceId, buyerAuthId, clearCart]);
+  }, [referenceId, buyerAuthId, isWalletPayment, clearCart]);
 
   const donorName = profile?.first_name || "Friend";
   const total = apiTotal > 0 ? apiTotal : cartTotal;
@@ -245,12 +254,7 @@ function PaymentSuccessContent() {
                     </span>
                   </div>
                 ))}
-                {processingFee > 0 && (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.5rem", borderTop: `1px solid ${colors.outlineVariant}1A` }}>
-                    <span style={{ fontSize: "0.875rem", color: colors.onSurfaceVariant }}>Processing Fee</span>
-                    <span style={{ fontSize: "0.875rem", color: colors.onSurfaceVariant }}>₱{processingFee.toLocaleString()}</span>
-                  </div>
-                )}
+
               </div>
             )}
 

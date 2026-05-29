@@ -159,10 +159,10 @@ export default function RequestWithdrawal() {
       setBankOptions(opts);
       if (opts.length > 0) setForm((f) => ({ ...f, bank: opts[0].value }));
 
-      // Compute available balance
+      // Compute available balance (handle both "approved" and "processed" status values)
       const [{ data: txRows }, { data: wdRows }] = await Promise.all([
-        supabase.from("beneficiary_transactions").select("amount").eq("beneficiary_id", beneficiary.id).eq("status", "approved"),
-        supabase.from("beneficiary_withdrawals").select("amount").eq("beneficiary_id", beneficiary.id).eq("status", "approved"),
+        supabase.from("beneficiary_transactions").select("amount, status").eq("beneficiary_id", beneficiary.id).in("status", ["approved", "processed"]),
+        supabase.from("beneficiary_withdrawals").select("amount, status").eq("beneficiary_id", beneficiary.id).in("status", ["approved", "processed"]),
       ]);
       const totalRx = (txRows ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0);
       const totalWd = (wdRows ?? []).reduce((s: number, r: any) => s + Number(r.amount), 0);

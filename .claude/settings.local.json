@@ -48,7 +48,24 @@
       "Bash(rm \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\\\\src\\\\app\\\\\\(beneficiary\\)\\\\beneficiary\\\\api\\\\campaigns\\\\invitations\\\\[id]\\\\accept\\\\route.ts\")",
       "Bash(rm \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\\\\src\\\\app\\\\\\(beneficiary\\)\\\\beneficiary\\\\api\\\\campaigns\\\\invitations\\\\[id]\\\\decline\\\\route.ts\")",
       "Bash(xargs sed -i 's/© 2024/© 2026/g')",
-      "Bash(npx jest *)"
+      "Bash(npx jest *)",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path . -Name)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Backend\\\\trini-thrive-be\\\\apps\\\\hopecard-admin-service\\\\src\" -Recurse)",
+      "Bash(Select-Object -First 20)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(Get-ChildItem *)",
+      "PowerShell(New-Item *)",
+      "Bash(dir \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\")",
+      "Bash(dir \"C:\\\\Users\\\\arjel\\\\Downloads\\\\TriniThrive_Hopecard\\\\Frontend\\\\trini-thrive-fe\\\\hope-card\")",
+      "Bash(git push *)",
+      "Bash(npm start *)",
+      "PowerShell(Get-NetTCPConnection *)"
     ]
   }
 }
