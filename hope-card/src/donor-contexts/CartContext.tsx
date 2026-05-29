@@ -4,6 +4,7 @@ import React, {
   createContext, useContext, useState, useCallback, useEffect, ReactNode
 } from 'react';
 import { supabase, getDonorTokenPayload } from '@/donor-lib/supabase-client';
+import { useDonorStatus } from './DonorStatusContext';
 
 export interface CartItem {
   id: string;           // cart_items.id (DB row id)
@@ -26,9 +27,9 @@ interface CartContextType {
   cartCount: number;
   cartTotal: number;
   loading: boolean;
-  processingFee: number;
   apiTotal: number;
   checkout: () => Promise<string>;
+  checkoutFromWallet: () => Promise<{ success: boolean; purchasedCount: number; newBalance: number; walletTransactionRef: string }>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -48,7 +49,6 @@ interface ApiCartResponse {
     id: string;
     items: ApiCartItem[];
     subtotal: number;
-    processing_fee: number;
     total: number;
   };
 }
@@ -82,13 +82,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [processingFee, setProcessingFee] = useState(0);
   const [apiTotal, setApiTotal] = useState(0);
+
+  const { isSuspended, isBanned } = useDonorStatus();
 
   const applyCartResponse = useCallback((data: ApiCartResponse) => {
     setCart(data.cart.items.map(toCartItem));
-    setProcessingFee(data.cart.processing_fee);
-    setApiTotal(data.cart.total);
+    setApiTotal(data.cart.subtotal);
   }, []);
 
   // Load cart from DB on mount and sync with auth state changes
@@ -104,9 +104,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         });
         const data: ApiCartResponse = await parseJsonResponse(res);
         if (res.ok) applyCartResponse(data);
-        else {
-          setCart([]); setApiTotal(0); setProcessingFee(0);
-        }
+          setCart([]); setApiTotal(0);
       } catch {
         // silently fail
       } finally {
@@ -136,7 +134,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           );
           const data: ApiCartResponse = await parseJsonResponse(res);
           if (res.ok) applyCartResponse(data);
-          else { setCart([]); setApiTotal(0); setProcessingFee(0); }
+          else { setCart([]); setApiTotal(0); }
         } catch { /* silently fail */ }
         finally { setLoading(false); }
         return;
@@ -157,7 +155,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setAccessToken(null);
         setCart([]);
         setApiTotal(0);
-        setProcessingFee(0);
       }
     });
 
@@ -170,6 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     campaign_id: string; title: string; price: number;
     imageSrc: string; imageAlt: string; category?: string;
   }) => {
+    if (isSuspended || isBanned) throw new Error('Your account is suspended. Donations are currently disabled.');
     if (!authUserId) throw new Error('Please log in to manage your cart');
     const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/cart`, {
       method: 'POST',
@@ -187,7 +185,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const data = await parseJsonResponse(res);
     if (!res.ok) throw new Error((data as { message?: string; error?: string }).message ?? (data as { error?: string }).error ?? 'Failed to add to cart');
     applyCartResponse(data);
-  }, [authUserId, accessToken, applyCartResponse]);
+  }, [authUserId, accessToken, applyCartResponse, isSuspended, isBanned]);
 
   const removeFromCart = useCallback(async (cartItemId: string) => {
     if (!authUserId) throw new Error('Please log in to manage your cart');
@@ -222,11 +220,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setCart([]);
     setApiTotal(0);
-    setProcessingFee(0);
   }, []);
 
   const checkout = useCallback(async (): Promise<string> => {
     if (!authUserId) throw new Error('Not authenticated');
+    if (isSuspended || isBanned) throw new Error('Your account is suspended. Checkout is currently disabled.');
     if (cart.length === 0) throw new Error('Cart is empty');
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
@@ -247,7 +245,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const { checkoutUrl } = data as { checkoutUrl: string };
     if (!checkoutUrl) throw new Error('No checkout URL returned from server');
     return checkoutUrl;
-  }, [authUserId, accessToken, cart]);
+  }, [authUserId, accessToken, cart, isSuspended, isBanned]);
+
+  const checkoutFromWallet = useCallback(async (): Promise<{
+    success: boolean;
+    purchasedCount: number;
+    newBalance: number;
+    walletTransactionRef: string;
+  }> => {
+    if (!authUserId) throw new Error('Not authenticated');
+    if (isSuspended || isBanned) throw new Error('Your account is suspended. Wallet checkout is currently disabled.');
+    if (cart.length === 0) throw new Error('Cart is empty');
+
+    const campaignIds = cart.map((item) => item.campaign_id);
+    const quantities = cart.map((item) => item.quantity);
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_DONOR_BACKEND_URL}/api/v1/hopecard/donor/purchases/wallet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({ authUserId, campaignIds, quantities }),
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error((data as any).message ?? (data as any).error ?? 'Wallet payment failed');
+    clearCart();
+    return data as { success: boolean; purchasedCount: number; newBalance: number; walletTransactionRef: string };
+  }, [authUserId, accessToken, cart, clearCart, isSuspended, isBanned]);
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -255,7 +280,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <CartContext.Provider value={{
       cart, addToCart, removeFromCart, updateQuantity, clearCart,
-      cartCount, cartTotal, loading, processingFee, apiTotal, checkout,
+      cartCount, cartTotal, loading, apiTotal, checkout, checkoutFromWallet,
     }}>
       {children}
     </CartContext.Provider>
