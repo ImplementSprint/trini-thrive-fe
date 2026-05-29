@@ -107,41 +107,75 @@ export default function Users() {
 
   const totalPages = Math.ceil(totalUsers / limit);
 
+  const getStatusBadgeClass = (status: string) => {
+    if (status === 'approved' || status === 'active') return styles.badgeApproved;
+    if (status === 'suspended') return styles.badgePending;
+    if (status === 'banned') return styles.badgeRejected;
+    return styles.badgePending;
+  };
+
+  const getStatusDisplayText = (status: string) => {
+    if (status === 'approved') return 'Active';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>User Management</h1>
+    <div className={styles.pageContainer}>
+      <header className={styles.header}>
+        <h1>User Management</h1>
+        <p>View and manage user accounts across all roles</p>
+      </header>
 
       {/* Role Filter Tabs */}
-      <div className={styles.filterTabs}>
-        {roleOptions.map((role) => (
-          <button
-            key={role}
-            onClick={() => handleRoleChange(role)}
-            className={`${styles.tab} ${currentRole === role ? styles.activeTab : ''}`}
-          >
-            {role}
-          </button>
-        ))}
+      <div className={styles.controlsContainer}>
+        <div className={styles.tabsContainer}>
+          {roleOptions.map((role) => (
+            <button
+              key={role}
+              onClick={() => handleRoleChange(role)}
+              className={`${styles.tab} ${currentRole === role ? styles.tabActive : ''}`}
+            >
+              {role}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Loading State */}
-      {loading && <div className={styles.loadingMessage}>Loading users...</div>}
+      {loading && (
+        <div className={styles.tableContainer}>
+          <p style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>Loading users...</p>
+        </div>
+      )}
 
       {/* Error State */}
       {error && (
-        <div className={styles.errorMessage}>
-          {error}
-          <button onClick={() => fetchUsers(currentRole, currentPage)} className={styles.retryButton}>
-            Retry
-          </button>
+        <div className={styles.tableContainer}>
+          <div style={{ padding: '2rem', color: '#991b1b', backgroundColor: '#fee2e2', borderRadius: '8px' }}>
+            <strong>Error:</strong> {error}
+            <button
+              onClick={() => fetchUsers(currentRole, currentPage)}
+              style={{
+                marginLeft: '1rem',
+                padding: '0.4rem 1rem',
+                backgroundColor: '#9b2c2c',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+              }}
+            >
+              Retry
+            </button>
+          </div>
         </div>
       )}
 
       {/* Users Table */}
       {!loading && !error && users.length > 0 && (
         <>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
+          <div className={styles.tableContainer}>
+            <table className={styles.dataTable}>
               <thead>
                 <tr>
                   <th>Name</th>
@@ -155,19 +189,19 @@ export default function Users() {
               <tbody>
                 {users.map((user) => (
                   <tr key={user.id}>
-                    <td>{`${user.first_name} ${user.last_name}`}</td>
-                    <td>{user.email}</td>
+                    <td className={styles.textDark}>{`${user.first_name} ${user.last_name}`}</td>
+                    <td className={styles.textRed}>{user.email}</td>
                     <td>{user.role}</td>
                     <td>{new Date(user.created_at).toLocaleDateString()}</td>
                     <td>
-                      <span className={`${styles.statusBadge} ${styles[`status${user.status}`]}`}>
-                        {user.status === 'approved' ? 'Active' : user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                      <span className={`${styles.badge} ${getStatusBadgeClass(user.status)}`}>
+                        {getStatusDisplayText(user.status)}
                       </span>
                     </td>
                     <td>
                       <button
                         onClick={() => handleOpenModal(user)}
-                        className={styles.actionButton}
+                        className={styles.actionBtn}
                         title="Manage user"
                       >
                         <Settings size={18} />
@@ -180,21 +214,23 @@ export default function Users() {
           </div>
 
           {/* Pagination */}
-          <div className={styles.pagination}>
+          <div className={styles.controlsContainer}>
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(currentPage - 1)}
-              className={styles.paginationButton}
+              className={styles.actionBtn}
+              style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
             >
               Previous
             </button>
-            <span className={styles.pageInfo}>
+            <span style={{ color: '#666', fontSize: '0.9rem' }}>
               Page {currentPage} of {totalPages}
             </span>
             <button
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage(currentPage + 1)}
-              className={styles.paginationButton}
+              className={styles.actionBtn}
+              style={{ opacity: currentPage >= totalPages ? 0.5 : 1 }}
             >
               Next
             </button>
@@ -204,7 +240,9 @@ export default function Users() {
 
       {/* Empty State */}
       {!loading && !error && users.length === 0 && (
-        <div className={styles.emptyMessage}>No users found</div>
+        <div className={styles.tableContainer}>
+          <p style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>No users found</p>
+        </div>
       )}
 
       {/* Modal */}
