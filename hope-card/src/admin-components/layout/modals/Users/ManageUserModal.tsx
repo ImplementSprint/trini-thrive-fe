@@ -36,12 +36,37 @@ export default function ManageUserModal({
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+  const [suspensionDuration, setSuspensionDuration] = useState<number>(24);
+  const [suspensionUnit, setSuspensionUnit] = useState<'hours' | 'days' | 'weeks'>('hours');
+  const [banType, setBanType] = useState<'permanent' | 'temporary'>('permanent');
 
   if (!isOpen || !user) return null;
 
   const isActive = user.status === 'approved' || user.status === 'active';
   const isSuspendedOrBanned =
     user.status === 'suspended' || user.status === 'banned';
+
+  const calculateExpirationDate = () => {
+    if (selectedAction !== 'suspend' && selectedAction !== 'ban') return null;
+    if (selectedAction === 'ban' && banType === 'permanent') return null;
+
+    const now = new Date();
+    const expiresAt = new Date(now);
+
+    if (selectedAction === 'suspend') {
+      if (suspensionUnit === 'hours') {
+        expiresAt.setHours(expiresAt.getHours() + suspensionDuration);
+      } else if (suspensionUnit === 'days') {
+        expiresAt.setDate(expiresAt.getDate() + suspensionDuration);
+      } else if (suspensionUnit === 'weeks') {
+        expiresAt.setDate(expiresAt.getDate() + suspensionDuration * 7);
+      }
+    } else if (selectedAction === 'ban' && banType === 'temporary') {
+      expiresAt.setDate(expiresAt.getDate() + suspensionDuration);
+    }
+
+    return expiresAt.toISOString();
+  };
 
   const handleAction = async () => {
     if (!selectedAction || !reason.trim()) {
@@ -60,6 +85,14 @@ export default function ManageUserModal({
       return;
     }
 
+    if ((selectedAction === 'suspend' || selectedAction === 'ban') && suspensionDuration <= 0) {
+      setMessage({
+        type: 'error',
+        text: 'Duration must be greater than 0',
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       const token = localStorage.getItem('admin_token');
@@ -68,6 +101,8 @@ export default function ManageUserModal({
         setMessage({ type: 'error', text: 'Authentication token not found' });
         return;
       }
+
+      const expiresAt = calculateExpirationDate();
 
       const response = await fetch(
         `/admin/api/users/${user.id}/status`,
@@ -82,6 +117,7 @@ export default function ManageUserModal({
               selectedAction === 'reactivate' ? 'active' : selectedAction,
             reason: reason.trim(),
             role: user.role,
+            expiresAt,
           }),
         },
       );
@@ -115,6 +151,9 @@ export default function ManageUserModal({
     setSelectedAction(null);
     setReason('');
     setMessage(null);
+    setSuspensionDuration(24);
+    setSuspensionUnit('hours');
+    setBanType('permanent');
     onClose();
   };
 
@@ -154,6 +193,8 @@ export default function ManageUserModal({
                   setSelectedAction('suspend');
                   setReason('');
                   setMessage(null);
+                  setSuspensionDuration(24);
+                  setSuspensionUnit('hours');
                 }}
                 className={`${styles.actionButton} ${
                   selectedAction === 'suspend' ? styles.selected : ''
@@ -166,6 +207,8 @@ export default function ManageUserModal({
                   setSelectedAction('ban');
                   setReason('');
                   setMessage(null);
+                  setBanType('permanent');
+                  setSuspensionDuration(30);
                 }}
                 className={`${styles.actionButton} ${
                   selectedAction === 'ban' ? styles.selected : ''
@@ -190,6 +233,76 @@ export default function ManageUserModal({
             </button>
           )}
         </div>
+
+        {/* Duration/Expiration Section */}
+        {selectedAction === 'suspend' && (
+          <div className={styles.durationSection}>
+            <label>
+              Suspension Duration <span className={styles.required}>*</span>
+            </label>
+            <div className={styles.durationInputs}>
+              <input
+                type="number"
+                min="1"
+                value={suspensionDuration}
+                onChange={(e) => setSuspensionDuration(Math.max(1, parseInt(e.target.value) || 1))}
+                disabled={loading}
+                className={styles.durationInput}
+              />
+              <select
+                value={suspensionUnit}
+                onChange={(e) => setSuspensionUnit(e.target.value as 'hours' | 'days' | 'weeks')}
+                disabled={loading}
+                className={styles.unitSelect}
+              >
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+                <option value="weeks">Weeks</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {selectedAction === 'ban' && (
+          <div className={styles.durationSection}>
+            <label>Ban Type</label>
+            <div className={styles.banTypeOptions}>
+              <label className={styles.radioLabel}>
+                <input
+                  type="radio"
+                  value="permanent"
+                  checked={banType === 'permanent'}
+                  onChange={(e) => setBanType(e.target.value as 'permanent' | 'temporary')}
+                  disabled={loading}
+                />
+                Permanent Ban
+              </label>
+              <label className={styles.radioLabel}>
+                <input
+                  type="radio"
+                  value="temporary"
+                  checked={banType === 'temporary'}
+                  onChange={(e) => setBanType(e.target.value as 'permanent' | 'temporary')}
+                  disabled={loading}
+                />
+                Temporary Ban (expires in)
+              </label>
+            </div>
+            {banType === 'temporary' && (
+              <div className={styles.durationInputs}>
+                <input
+                  type="number"
+                  min="1"
+                  value={suspensionDuration}
+                  onChange={(e) => setSuspensionDuration(Math.max(1, parseInt(e.target.value) || 1))}
+                  disabled={loading}
+                  className={styles.durationInput}
+                />
+                <span className={styles.unitText}>Days</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Reason Field */}
         {selectedAction && (
