@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CartProvider } from "@/donor-contexts/CartContext";
+import { DonorStatusProvider } from "@/donor-contexts/DonorStatusContext";
 
 export const metadata: Metadata = {
   title: "Hopecard",
@@ -15,8 +16,10 @@ export default function DonorLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <CartProvider>
-      {children}
-    </CartProvider>
+    <DonorStatusProvider>
+      <CartProvider>
+        {children}
+      </CartProvider>
+    </DonorStatusProvider>
   );
 }
