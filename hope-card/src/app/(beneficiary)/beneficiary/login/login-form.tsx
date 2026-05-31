@@ -20,6 +20,7 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hashLinkExpired, setHashLinkExpired] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
@@ -29,6 +30,24 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
     const persona = cookies.find(c => c.startsWith('persona='))?.split('=')[1];
     if (persona && persona !== 'beneficiary') {
       document.cookie = 'persona=; path=/; SameSite=Strict; Max-Age=0';
+    }
+  }, []);
+
+  // Detect Supabase auth errors sent via URL hash (e.g. otp_expired from email confirmation)
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const params = new URLSearchParams(hash);
+    const errorCode = params.get('error_code');
+    const errorDesc = params.get('error_description') ?? '';
+    if (errorCode === 'otp_expired' || params.get('error') === 'access_denied') {
+      const msg = errorDesc
+        ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
+        : 'This confirmation link has expired or is invalid. Please sign up again.';
+      setHashLinkExpired(true);
+      // Clear the hash from the URL bar without triggering a reload
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      setError(msg);
     }
   }, []);
 
@@ -50,7 +69,7 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || data.message || 'Something went wrong, please try again.');
+        setError(data.message || data.error || 'Something went wrong, please try again.');
         setIsSubmitting(false);
         return;
       }
@@ -120,9 +139,9 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
       )}
 
       {/* Expired link banner */}
-      {linkExpired && !error && (
+      {(linkExpired || hashLinkExpired) && !error && (
         <p style={errorBannerStyle}>
-          This confirmation link has expired. Please sign up again.
+          This confirmation link has expired or is invalid. Please sign up again.
         </p>
       )}
 
