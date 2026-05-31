@@ -85,7 +85,23 @@ export async function signUpAction(fd: FormData): Promise<{ error: string } | nu
     return { error: signUpError.message };
   }
 
-  const authUserId = signUpData.user?.id;
+  let authUserId = signUpData.user?.id;
+  if (!authUserId) {
+    // If email confirmation/enumeration protection is enabled, signUp response may return user as null.
+    // Fallback: search for the user using the admin client.
+    const admin = createAdminClient();
+    const { data: listData, error: listError } = await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000
+    });
+    if (!listError && listData?.users) {
+      const user = listData.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      if (user) {
+        authUserId = user.id;
+      }
+    }
+  }
+
   if (!authUserId) {
     return { error: 'Sign up succeeded but no user ID was returned. Please try again.' };
   }
@@ -102,13 +118,21 @@ export async function signUpAction(fd: FormData): Promise<{ error: string } | nu
     if (secRegistration) formData.append('secRegistration', secRegistration);
     if (orgCertificate) formData.append('orgCertificate', orgCertificate);
 
-    await fetch(`${CM_BACKEND_URL}/api/v1/hopecard/cm/auth/register`, {
+    const res = await fetch(`${CM_BACKEND_URL}/api/v1/hopecard/cm/auth/register`, {
       method: 'POST',
       body: formData,
       cache: 'no-store',
     });
-  } catch {
-    // Non-fatal — admin can manually create profile
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const msg = body?.message ?? body?.error ?? `Registration service error (${res.status})`;
+      console.error('[CM SignUp] /register failed:', res.status, msg);
+      return { error: `Account created but profile setup failed: ${msg}. Please contact support.` };
+    }
+  } catch (err) {
+    console.error('[CM SignUp] /register unreachable:', err);
+    return { error: 'Account created but could not reach the registration service. Please contact support.' };
   }
 
   return null;
