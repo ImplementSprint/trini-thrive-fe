@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { createClient } from '@/campaign-manager-utils/supabase/server';
-import { createAdminClient } from '@/campaign-manager-utils/supabase/admin';
+import { createAdminClient } from '@/campaign-manager-utils/supabase/admin'; // used by getProfileAction / updateProfileAction
 
 const CM_BACKEND_URL = process.env.NEXT_PUBLIC_CM_BACKEND_URL ?? 'http://localhost:3103';
 
@@ -64,53 +64,11 @@ export async function signUpAction(fd: FormData): Promise<{ error: string } | nu
     return { error: 'Passwords do not match.' };
   }
 
-  const supabase = await createClient();
-
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/campaign-manager/auth/callback`,
-      data: {
-        first_name: firstName,
-        last_name: lastName,
-        organization,
-        contact_number: contactNumber,
-        role: 'campaign-manager',
-      },
-    },
-  });
-
-  if (signUpError) {
-    return { error: signUpError.message };
-  }
-
-  let authUserId = signUpData.user?.id;
-  if (!authUserId) {
-    // If email confirmation/enumeration protection is enabled, signUp response may return user as null.
-    // Fallback: search for the user using the admin client.
-    const admin = createAdminClient();
-    const { data: listData, error: listError } = await admin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000
-    });
-    if (!listError && listData?.users) {
-      const user = listData.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      if (user) {
-        authUserId = user.id;
-      }
-    }
-  }
-
-  if (!authUserId) {
-    return { error: 'Sign up succeeded but no user ID was returned. Please try again.' };
-  }
-
-  // Always register profile — backend is idempotent
+  // Backend creates the auth user and profile atomically — never split across client + server
   try {
     const formData = new FormData();
-    formData.append('authUserId', authUserId);
     formData.append('email', email);
+    formData.append('password', password);
     formData.append('firstName', firstName);
     formData.append('lastName', lastName);
     formData.append('organization', organization);
@@ -126,13 +84,11 @@ export async function signUpAction(fd: FormData): Promise<{ error: string } | nu
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      const msg = body?.message ?? body?.error ?? `Registration service error (${res.status})`;
-      console.error('[CM SignUp] /register failed:', res.status, msg);
-      return { error: `Account created but profile setup failed: ${msg}. Please contact support.` };
+      const msg = (Array.isArray(body?.message) ? body.message.join(', ') : body?.message) ?? body?.error ?? `Registration error (${res.status})`;
+      return { error: msg };
     }
-  } catch (err) {
-    console.error('[CM SignUp] /register unreachable:', err);
-    return { error: 'Account created but could not reach the registration service. Please contact support.' };
+  } catch {
+    return { error: 'Unable to reach the registration service. Please try again.' };
   }
 
   return null;
