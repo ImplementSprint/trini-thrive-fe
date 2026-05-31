@@ -110,7 +110,7 @@ function LoginForm() {
         </div>
 
         {error && (
-          <p className="text-center text-[9px] font-bold uppercase tracking-wider text-red-500">{error}</p>
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-center text-[11px] font-semibold text-red-700">{error}</p>
         )}
 
         <button

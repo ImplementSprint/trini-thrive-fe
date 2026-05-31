@@ -27,6 +27,36 @@ export async function loginAction(fd: FormData): Promise<{ error: string } | nul
     const data = await res.json();
 
     if (!res.ok) {
+      if (res.status === 403) {
+        const payload = typeof data.message === 'object' ? data.message : data;
+        const reason = payload?.reason as string | undefined;
+        const statusReason = payload?.status_reason as string | null | undefined;
+        const expiresAt = payload?.status_expires_at as string | null | undefined;
+
+        if (reason === 'pending_approval') {
+          return { error: 'Your account is awaiting admin approval. You will be notified once approved.' };
+        }
+
+        const durationText = (() => {
+          if (!expiresAt) return 'permanently';
+          const diff = new Date(expiresAt).getTime() - Date.now();
+          if (diff <= 0) return 'temporarily';
+          const days = Math.ceil(diff / 86_400_000);
+          const date = new Date(expiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+          return `until ${date} (${days} day${days !== 1 ? 's' : ''} remaining)`;
+        })();
+
+        if (reason === 'banned') {
+          const why = statusReason ? ` Reason: ${statusReason}.` : '';
+          return { error: `Your account has been banned ${durationText}.${why}` };
+        }
+
+        if (reason === 'suspended') {
+          const why = statusReason ? ` Reason: ${statusReason}.` : '';
+          return { error: `Your account has been suspended ${durationText}.${why}` };
+        }
+      }
+
       return { error: data.message ?? data.error ?? 'Invalid credentials.' };
     }
 
