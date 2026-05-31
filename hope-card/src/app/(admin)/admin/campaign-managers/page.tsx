@@ -48,16 +48,22 @@ export default function CampaignManagers() {
         }
 
         // Map backend data to frontend format
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const storageBase = `${supabaseUrl}/storage/v1/object/public/camp-man-files`;
+
+        const toStorageUrl = (path: string | null | undefined) =>
+          path ? `${storageBase}/${path}` : null;
+
         const formattedData = result.data.map((m: any) => ({
           id: m.id,
           name: `${m.first_name || ''} ${m.last_name || ''}`.trim() || m.full_name || 'N/A',
-          org: m.organization || m.company || 'N/A',
+          org: m.organization || m.organization_name || m.company || 'N/A',
           email: m.email,
           date: m.created_at?.split('T')[0] || '',
           docsVerified: m.documents_verified || false,
           status: m.verification_status?.charAt(0).toUpperCase() + m.verification_status?.slice(1) || 'Pending',
-          secRegistrationUrl: m.sec_registration_url,
-          organizationalCertificateUrl: m.organizational_certificate_url,
+          secRegistrationUrl: toStorageUrl(m.sec_registration),
+          organizationalCertificateUrl: toStorageUrl(m.organizational_certificate),
         }));
 
         setManagers(formattedData);
