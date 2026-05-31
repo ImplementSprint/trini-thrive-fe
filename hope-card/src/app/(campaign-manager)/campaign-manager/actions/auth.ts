@@ -66,7 +66,7 @@ export async function signUpAction(fd: FormData): Promise<{ error: string } | nu
 
   const supabase = await createClient();
 
-  const { error: signUpError } = await supabase.auth.signUp({
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -85,26 +85,30 @@ export async function signUpAction(fd: FormData): Promise<{ error: string } | nu
     return { error: signUpError.message };
   }
 
-  // Upload documents to backend if provided
-  if (secRegistration || orgCertificate) {
-    try {
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('firstName', firstName);
-      formData.append('lastName', lastName);
-      formData.append('organization', organization);
-      formData.append('contactNumber', contactNumber);
-      if (secRegistration) formData.append('secRegistration', secRegistration);
-      if (orgCertificate) formData.append('orgCertificate', orgCertificate);
+  const authUserId = signUpData.user?.id;
+  if (!authUserId) {
+    return { error: 'Sign up succeeded but no user ID was returned. Please try again.' };
+  }
 
-      await fetch(`${CM_BACKEND_URL}/api/v1/hopecard/cm/auth/register`, {
-        method: 'POST',
-        body: formData,
-        cache: 'no-store',
-      });
-    } catch {
-      // Non-fatal — documents can be submitted later
-    }
+  // Always register profile — backend is idempotent
+  try {
+    const formData = new FormData();
+    formData.append('authUserId', authUserId);
+    formData.append('email', email);
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
+    formData.append('organization', organization);
+    formData.append('contactNumber', contactNumber);
+    if (secRegistration) formData.append('secRegistration', secRegistration);
+    if (orgCertificate) formData.append('orgCertificate', orgCertificate);
+
+    await fetch(`${CM_BACKEND_URL}/api/v1/hopecard/cm/auth/register`, {
+      method: 'POST',
+      body: formData,
+      cache: 'no-store',
+    });
+  } catch {
+    // Non-fatal — admin can manually create profile
   }
 
   return null;
