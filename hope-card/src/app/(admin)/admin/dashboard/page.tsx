@@ -26,11 +26,10 @@ interface DashboardStats {
 
 interface Activity {
   id: string;
-  action: string;
-  subject: string;
+  description: string;
   time: string;
-  type: string;
-  status: string;
+  type: 'approval' | 'rejection' | 'donation' | 'campaign' | 'ban' | 'suspension' | 'status_update';
+  resource_type: string;
 }
 
 export default function Dashboard() {
@@ -145,20 +144,20 @@ export default function Dashboard() {
 
     const fetchActivities = async () => {
       try {
-        // Dynamically discover backend URL
         const backendUrl = await getBackendUrlCached();
         const token = localStorage.getItem('admin_token');
-        
-        console.log("🔍 Fetching activities from:", `${backendUrl}/api/v1/hopecard/admin/activity`);
 
-        const response = await fetch(`${backendUrl}/api/v1/hopecard/admin/activity?page=1&limit=50`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` }),
+        const response = await fetch(
+          `${backendUrl}/api/v1/hopecard/admin/activity/unified?limit=50`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
           },
-        });
-        
+        );
+
         if (response.status === 401) {
           localStorage.removeItem('admin_token');
           window.location.href = '/admin/login';
@@ -169,20 +168,24 @@ export default function Dashboard() {
           setActivities([]);
           return;
         }
-        
-        const activityData = await response.json();
-        console.log("📊 Activities fetched:", activityData);
-        
-        // Convert backend activity data to display format
-        const formattedActivities: Activity[] = (activityData.data || []).map((activity: any) => {
-          const createdAt = new Date(activity.created_at);
+
+        const raw: Array<{
+          id: string;
+          type: Activity['type'];
+          description: string;
+          resource_type: string;
+          created_at: string;
+        }> = await response.json();
+
+        const formatted: Activity[] = raw.map((item) => {
+          const createdAt = new Date(item.created_at);
           const now = new Date();
           const diff = now.getTime() - createdAt.getTime();
           const minutes = Math.floor(diff / 60000);
           const hours = Math.floor(diff / 3600000);
           const days = Math.floor(diff / 86400000);
-          
-          let timeStr = "just now";
+
+          let timeStr = 'just now';
           if (minutes < 60) {
             timeStr = `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
           } else if (hours < 24) {
@@ -190,39 +193,19 @@ export default function Dashboard() {
           } else if (days < 7) {
             timeStr = `${days} day${days !== 1 ? 's' : ''} ago`;
           }
-          
-          // Determine activity type and format
-          let type = "approval";
-          const actionText = activity.description;
-          let status = activity.action || "Activity";
-          
-          if (activity.action === "APPROVED") {
-            type = "approval";
-            status = "Approved";
-          } else if (activity.action === "REJECTED") {
-            type = "rejection";
-            status = "Rejected";
-          } else if (activity.action === "APPLIED") {
-            type = "approval";
-            status = "Applied";
-          } else if (activity.action === "SENT") {
-            type = "donation";
-            status = "Sent";
-          }
-          
+
           return {
-            id: activity.id || Math.random().toString(),
-            action: actionText.split(" ").slice(0, -1).join(" "),
-            subject: actionText.split(" ").slice(-1)[0],
+            id: item.id ?? Math.random().toString(),
+            description: item.description,
             time: timeStr,
-            type,
-            status,
+            type: item.type,
+            resource_type: item.resource_type,
           };
         });
-        
-        setActivities(formattedActivities);
+
+        setActivities(formatted);
       } catch (err) {
-        console.error("❌ Error fetching activities:", err);
+        console.error('❌ Error fetching activities:', err);
         setActivities([]);
       } finally {
         setLoading(false);
@@ -233,14 +216,16 @@ export default function Dashboard() {
     fetchActivities();
   }, []);
 
-  const filters = ["All", "Approvals", "Rejections", "Donations Sent"];
+  const filters = ["All", "Approvals", "Rejections", "Donations Sent", "Campaigns", "Banned", "Suspensions"];
 
-  // Filter activities based on active filter
   const filteredActivities = activities.filter((activity) => {
     if (activeFilter === "All") return true;
-    if (activeFilter === "Approvals" && (activity.type === "approval" || activity.type === "applied")) return true;
-    if (activeFilter === "Rejections" && activity.type === "rejection") return true;
-    if (activeFilter === "Donations Sent" && activity.type === "donation") return true;
+    if (activeFilter === "Approvals") return activity.type === "approval";
+    if (activeFilter === "Rejections") return activity.type === "rejection";
+    if (activeFilter === "Donations Sent") return activity.type === "donation";
+    if (activeFilter === "Campaigns") return activity.type === "campaign";
+    if (activeFilter === "Banned") return activity.type === "ban";
+    if (activeFilter === "Suspensions") return activity.type === "suspension";
     return false;
   });
 
@@ -313,16 +298,19 @@ export default function Dashboard() {
         <div className={styles.activityList}>
           {filteredActivities.map((activity, index) => (
             <div key={activity.id} className={styles.activityItem}>
-              {/* The visual timeline dot */}
               <div className={`${styles.timelineDot} ${styles[activity.type]}`}></div>
-              
+
               <div className={`${styles.activityContent} ${index !== filteredActivities.length - 1 ? styles.hasBorder : ""}`}>
                 <span className={styles.time}>{activity.time}</span>
-                <p className={styles.actionText}>
-                  {activity.action} <strong>{activity.subject}</strong>
-                </p>
+                <p className={styles.actionText}>{activity.description}</p>
                 <span className={`${styles.badge} ${styles[`badge-${activity.type}`]}`}>
-                  • {activity.status}
+                  • {activity.type === 'approval' ? 'Approved'
+                    : activity.type === 'rejection' ? 'Rejected'
+                    : activity.type === 'donation' ? 'Donation'
+                    : activity.type === 'campaign' ? 'Campaign Created'
+                    : activity.type === 'ban' ? 'Banned'
+                    : activity.type === 'suspension' ? 'Suspended'
+                    : 'Status Update'}
                 </span>
               </div>
             </div>
