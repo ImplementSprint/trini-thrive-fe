@@ -15,11 +15,20 @@ interface LoginFormProps {
   passwordReset?: boolean;
 }
 
+type BlockCode = 'PENDING_APPROVAL' | 'REJECTED' | 'BANNED' | 'SUSPENDED';
+
+interface BlockInfo {
+  code: BlockCode;
+  message: string;
+  reason?: string | null;
+}
+
 export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [blockInfo, setBlockInfo] = useState<BlockInfo | null>(null);
   const [hashLinkExpired, setHashLinkExpired] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -45,7 +54,6 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
         ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
         : 'This confirmation link has expired or is invalid. Please sign up again.';
       setHashLinkExpired(true);
-      // Clear the hash from the URL bar without triggering a reload
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
       setError(msg);
     }
@@ -56,10 +64,10 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setBlockInfo(null);
     setIsSubmitting(true);
 
     try {
-      // Step 1: Validate credentials + profile via backend (issues persona-scoped JWT)
       const res = await fetch('/beneficiary/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -69,7 +77,12 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || data.error || 'Something went wrong, please try again.');
+        const BLOCK_CODES: BlockCode[] = ['PENDING_APPROVAL', 'REJECTED', 'BANNED', 'SUSPENDED'];
+        if (data.code && BLOCK_CODES.includes(data.code as BlockCode)) {
+          setBlockInfo({ code: data.code, message: data.message, reason: data.reason ?? null });
+        } else {
+          setError(data.message || data.error || 'Something went wrong, please try again.');
+        }
         setIsSubmitting(false);
         return;
       }
@@ -80,19 +93,15 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
         return;
       }
 
-      // Step 2: Store the persona-scoped JWT for API calls (cookie so SSR proxy can read it)
       localStorage.setItem('beneficiary_token', data.token);
       document.cookie = `beneficiary_token=${data.token}; path=/; SameSite=Strict`;
 
-      // Step 3: Establish Supabase browser session so SSR middleware works
       const supabase = createClient();
       const { error: sessionError } = await supabase.auth.signInWithPassword({ email, password });
       if (sessionError) {
-        // Non-fatal — persona JWT is stored; proceed anyway
         console.warn('Supabase session error:', sessionError.message);
       }
 
-      // Set persona cookie and navigate
       document.cookie = 'persona=beneficiary; path=/; SameSite=Strict';
       router.push('/beneficiary/dashboard');
       router.refresh();
@@ -102,44 +111,75 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
     }
   };
 
-  const infoBannerStyle = {
-    borderRadius: "0.75rem",
-    background: "#e8f4fd",
-    padding: "0.75rem 1rem",
-    fontSize: "0.875rem",
-    color: "#1a5276",
-    margin: 0,
-    fontFamily: "Plus Jakarta Sans, sans-serif",
-  };
+  const banner = (bg: string, color: string, border: string, children: React.ReactNode) => (
+    <div style={{ borderRadius: "0.75rem", background: bg, padding: "0.875rem 1rem", fontSize: "0.875rem", color, border: `1px solid ${border}`, fontFamily: "Plus Jakarta Sans, sans-serif", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+      {children}
+    </div>
+  );
 
-  const errorBannerStyle = {
-    borderRadius: "0.75rem",
-    background: S.errorContainer,
-    padding: "0.75rem 1rem",
-    fontSize: "0.875rem",
-    color: S.onErrorContainer,
-    margin: 0,
-    fontFamily: "Plus Jakarta Sans, sans-serif",
+  const infoBannerStyle = { borderRadius: "0.75rem", background: "#e8f4fd", padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#1a5276", margin: 0, fontFamily: "Plus Jakarta Sans, sans-serif" };
+  const errorBannerStyle = { borderRadius: "0.75rem", background: S.errorContainer, padding: "0.75rem 1rem", fontSize: "0.875rem", color: S.onErrorContainer, margin: 0, fontFamily: "Plus Jakarta Sans, sans-serif" };
+
+  const renderBlockBanner = () => {
+    if (!blockInfo) return null;
+    const { code, message, reason } = blockInfo;
+
+    if (code === 'PENDING_APPROVAL') {
+      return banner("#e8f4fd", "#1a5276", "#aed6f1",
+        <>
+          <span style={{ fontWeight: 700 }}>Application Under Review</span>
+          <span>{message}</span>
+        </>
+      );
+    }
+    if (code === 'REJECTED') {
+      return banner(S.errorContainer, S.onErrorContainer, "#f1948a",
+        <>
+          <span style={{ fontWeight: 700 }}>Application Rejected</span>
+          <span>{message}</span>
+          {reason && <span style={{ marginTop: "0.25rem", opacity: 0.85 }}>Reason: {reason}</span>}
+        </>
+      );
+    }
+    if (code === 'BANNED') {
+      return banner("#2d0000", "#ffcdd2", "#7b0000",
+        <>
+          <span style={{ fontWeight: 700 }}>Account Banned</span>
+          <span>{message}</span>
+          {reason && <span style={{ marginTop: "0.25rem", opacity: 0.85 }}>Reason: {reason}</span>}
+        </>
+      );
+    }
+    if (code === 'SUSPENDED') {
+      return banner("#fff3e0", "#7c4700", "#ffcc80",
+        <>
+          <span style={{ fontWeight: 700 }}>Account Suspended</span>
+          <span>{message}</span>
+          {reason && <span style={{ marginTop: "0.25rem", opacity: 0.85 }}>Reason: {reason}</span>}
+        </>
+      );
+    }
+    return null;
   };
 
   return (
     <form style={{ width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }} onSubmit={handleLogin}>
       {/* Confirmed banner */}
-      {confirmed && !error && (
+      {confirmed && !error && !blockInfo && (
         <p style={infoBannerStyle}>
           Email confirmed. Enter your credentials to sign in.
         </p>
       )}
 
       {/* Password reset banner */}
-      {passwordReset && !error && (
+      {passwordReset && !error && !blockInfo && (
         <p style={infoBannerStyle}>
           Password updated successfully. Please sign in with your new password.
         </p>
       )}
 
       {/* Expired link banner */}
-      {(linkExpired || hashLinkExpired) && !error && (
+      {(linkExpired || hashLinkExpired) && !error && !blockInfo && (
         <p style={errorBannerStyle}>
           This confirmation link has expired or is invalid. Please sign up again.
         </p>
@@ -199,9 +239,8 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
         </div>
       </div>
 
-      {error && (
-        <p style={errorBannerStyle}>{error}</p>
-      )}
+      {error && <p style={errorBannerStyle}>{error}</p>}
+      {renderBlockBanner()}
 
       <PrimaryBtn label={isSubmitting ? "Signing in..." : "Login"} disabled={isSubmitting} />
     </form>
