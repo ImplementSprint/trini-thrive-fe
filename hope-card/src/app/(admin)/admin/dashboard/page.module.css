@@ -224,8 +224,24 @@
   background-color: #3b82f6;
 }
 
-.timelineDot.rejection { 
+.timelineDot.rejection {
   background-color: #ef4444;
+}
+
+.timelineDot.ban {
+  background-color: #f97316;
+}
+
+.timelineDot.suspension {
+  background-color: #eab308;
+}
+
+.timelineDot.campaign {
+  background-color: #8b5cf6;
+}
+
+.timelineDot.status_update {
+  background-color: #6b7280;
 }
 
 .activityContent {
@@ -289,10 +305,34 @@
   border: 1px solid #bfdbfe; 
 }
 
-.badge-rejection { 
-  background-color: #fee2e2; 
-  color: #991b1b; 
-  border: 1px solid #fecaca; 
+.badge-rejection {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.badge-ban {
+  background-color: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+.badge-suspension {
+  background-color: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fef08a;
+}
+
+.badge-campaign {
+  background-color: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+.badge-status_update {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
 }
 
 .noData {
