@@ -23,7 +23,7 @@ interface BlockInfo {
   reason?: string | null;
 }
 
-export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormProps) {
+export function LoginForm({ confirmed, linkExpired, passwordReset }: Readonly<LoginFormProps>) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,24 +44,24 @@ export function LoginForm({ confirmed, linkExpired, passwordReset }: LoginFormPr
 
   // Detect Supabase auth errors sent via URL hash (e.g. otp_expired from email confirmation)
   useEffect(() => {
-    const hash = window.location.hash.slice(1);
+    const hash = globalThis.location.hash.slice(1);
     if (!hash) return;
     const params = new URLSearchParams(hash);
     const errorCode = params.get('error_code');
     const errorDesc = params.get('error_description') ?? '';
     if (errorCode === 'otp_expired' || params.get('error') === 'access_denied') {
       const msg = errorDesc
-        ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
+        ? decodeURIComponent(errorDesc.replaceAll('+', ' '))
         : 'This confirmation link has expired or is invalid. Please sign up again.';
       setHashLinkExpired(true);
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      globalThis.history.replaceState(null, '', globalThis.location.pathname + globalThis.location.search);
       setError(msg);
     }
   }, []);
 
   const togglePassword = useCallback(() => setShowPassword((p) => !p), []);
 
-  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setBlockInfo(null);
