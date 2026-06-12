@@ -1,0 +1,117 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: white;
+  width: 450px;
+  border-radius: 12px;
+  position: relative;
+  padding: 2rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #111;
+}
+
+.message {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.amount {
+  color: #a32a2a;
+  font-weight: 700;
+}
+
+.infoBox {
+  background-color: #fff5f5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.subtext {
+  margin-top: 0.5rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.cancelBtn, .confirmBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cancelBtn {
+  background: #f3f4f6;
+  border: none;
+  color: #374151;
+}
+
+.confirmBtn {
+  background: #a32a2a;
+  border: none;
+  color: white;
+}
+
+.confirmBtn:hover {
+  opacity: 0.9;
+}
+
+.confirmBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorBox {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.errorText {
+  color: #991b1b;
+  font-size: 0.9rem;
+  margin: 0;
+}

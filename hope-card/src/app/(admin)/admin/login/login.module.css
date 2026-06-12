@@ -1,0 +1,165 @@
+.pageWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #fef9f3;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loginContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  padding: 1rem;
+}
+
+.logoSection {
+  display: flex;
+  flex-direction: column; /* Stack logo on top of text */
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.logoMark {
+  width: 70px; /* Slightly larger container than the image */
+  height: 70px;
+  background-color: #f1d4d4; /* That light red/pink background */
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(155, 44, 44, 0.08); /* Optional subtle shadow */
+}
+
+.logoText {
+  color: #f05252;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.card {
+  background: white;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 2.5rem;
+  border: 1px solid #eaeaea;
+}
+
+.cardHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.cardHeader h2 {
+  font-size: 1.5rem;
+  color: #111;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.cardHeader p {
+  color: #9b2c2c;
+  font-size: 0.9rem;
+}
+
+.errorMessage {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #9b2c2c;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputGroup label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  color: #9b2c2c;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  color: #111;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: #f05252;
+  box-shadow: 0 0 0 3px rgba(240, 82, 82, 0.1);
+}
+
+.loginBtn {
+  background-color: #9b2c2c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.875rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.loginBtn:hover {
+  background-color: #7a2222;
+}
+
+.forgotPassword {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.forgotPassword button {
+  background: none;
+  border: none;
+  color: #f05252;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.forgotPassword button:hover {
+  text-decoration: underline;
+}

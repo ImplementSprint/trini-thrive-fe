@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -12,24 +12,40 @@
     "test:e2e": "tsx tests/e2e/playwright-e2e.ts"
   },
   "dependencies": {
-    "next": "16.2.1",
+    "@supabase/supabase-js": "^2.103.3",
+    "@supabase/ssr": "^0.10.2",
+    "jose": "^6.2.2",
+    "lucide-react": "^1.8.0",
+    "next": "16.2.6",
+    "nodemailer": "^8.0.5",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/jest": "^30.0.0",
+    "@types/nodemailer": "^8.0.0",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/react-native": "^0.72.8",
     "eslint": "^9.0.0",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "16.2.6",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "playwright": "^1.58.2",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
+  },
+  "overrides": {
+    "shell-quote": "^1.8.4",
+    "next": {
+      "postcss": "^8.5.15"
+    },
+    "brace-expansion@5": "^5.0.6",
+    "ws@8": "^8.21.0"
   }
 }
