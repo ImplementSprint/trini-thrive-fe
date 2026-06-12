@@ -6,6 +6,59 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/enduser-lib/auth-context';
 import EnduserNavBar from '@/enduser-components/EnduserNavBar';
 
+const TrackerCard = ({ currentStep }: { currentStep: number }) => (
+  <View style={styles.trackerContainer}>
+    <Text style={styles.trackerHeader}>Registration Status Tracker</Text>
+    <View style={styles.trackerBarRow}>
+      <View style={[styles.trackerBar, currentStep >= 1 ? styles.trackerBarActive : {}]} />
+      <View style={[styles.trackerBar, currentStep >= 2 ? styles.trackerBarActive : {}]} />
+      <View style={[styles.trackerBar, currentStep >= 3 ? styles.trackerBarActive : {}]} />
+      <View style={[styles.trackerBar, currentStep >= 4 ? styles.trackerBarActive : {}]} />
+    </View>
+    <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '12px' }}>
+      <div style={{ flex: 1 }}>
+        <Text style={[styles.trackerLabelText, currentStep === 1 && styles.trackerLabelActive]}>[1] View Detailed Role Requirements:</Text>
+        <Text style={styles.trackerLabelSubText}>({currentStep > 1 ? 'Completed' : 'Current Step'})</Text>
+      </div>
+      <div style={{ flex: 1 }}>
+        <Text style={[styles.trackerLabelText, currentStep === 2 && styles.trackerLabelActive]}>[2] Role Selection & Document Upload:</Text>
+        <Text style={styles.trackerLabelSubText}>({currentStep > 2 ? 'Completed' : currentStep === 2 ? 'Current Step' : 'Upcoming'})</Text>
+      </div>
+      <div style={{ flex: 1 }}>
+        <Text style={[styles.trackerLabelText, currentStep === 3 && styles.trackerLabelActive]}>[3] General Screening Questionnaire:</Text>
+        <Text style={styles.trackerLabelSubText}>({currentStep > 3 ? 'Completed' : currentStep === 3 ? 'Current Step' : 'Upcoming'})</Text>
+      </div>
+      <div style={{ flex: 1 }}>
+        <Text style={[styles.trackerLabelText, currentStep === 4 && styles.trackerLabelActive]}>[4] Admin Review & Badge Issuance:</Text>
+        <Text style={styles.trackerLabelSubText}>({currentStep === 4 ? 'Current Step' : 'Upcoming'})</Text>
+      </div>
+    </div>
+  </View>
+);
+
+const YesNoPills = ({ state, setState, hasError }: { state: boolean | null, setState: (val: boolean) => void, hasError?: boolean }) => (
+  <View style={styles.pillGroup}>
+    <Pressable
+      style={[styles.pillBtn, state === true && styles.pillBtnActive, hasError && state === null && styles.errorBorder]}
+      onPress={() => setState(true)}
+    >
+      <Text style={[styles.pillText, state === true && styles.pillTextActive]}>YES</Text>
+    </Pressable>
+    <Pressable
+      style={[styles.pillBtn, state === false && styles.pillBtnActive, hasError && state === null && styles.errorBorder]}
+      onPress={() => setState(false)}
+    >
+      <Text style={[styles.pillText, state === false && styles.pillTextActive]}>NO</Text>
+    </Pressable>
+  </View>
+);
+
+const RequiredLabel = ({ children, style }: { children: React.ReactNode; style?: any }) => (
+  <Text style={[styles.inputLabel, style]}>
+    {children}<Text style={styles.requiredAsterisk}> *</Text>
+  </Text>
+);
+
 export default function VolunteerPage() {
   const router = useRouter();
   const { token, user, logout, isReady } = useAuth();
@@ -222,60 +275,6 @@ export default function VolunteerPage() {
   const toggleConductCheck = (key: keyof typeof conductChecks) => {
     setConductChecks(prev => ({ ...prev, [key]: !prev[key] }));
   };
-
-  // --- UI COMPONENTS ---
-  const TrackerCard = ({ currentStep }: { currentStep: number }) => (
-    <View style={styles.trackerContainer}>
-      <Text style={styles.trackerHeader}>Registration Status Tracker</Text>
-      <View style={styles.trackerBarRow}>
-        <View style={[styles.trackerBar, currentStep >= 1 ? styles.trackerBarActive : {}]} />
-        <View style={[styles.trackerBar, currentStep >= 2 ? styles.trackerBarActive : {}]} />
-        <View style={[styles.trackerBar, currentStep >= 3 ? styles.trackerBarActive : {}]} />
-        <View style={[styles.trackerBar, currentStep >= 4 ? styles.trackerBarActive : {}]} />
-      </View>
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '12px' }}>
-        <div style={{ flex: 1 }}>
-          <Text style={[styles.trackerLabelText, currentStep === 1 && styles.trackerLabelActive]}>[1] View Detailed Role Requirements:</Text>
-          <Text style={styles.trackerLabelSubText}>({currentStep > 1 ? 'Completed' : 'Current Step'})</Text>
-        </div>
-        <div style={{ flex: 1 }}>
-          <Text style={[styles.trackerLabelText, currentStep === 2 && styles.trackerLabelActive]}>[2] Role Selection & Document Upload:</Text>
-          <Text style={styles.trackerLabelSubText}>({currentStep > 2 ? 'Completed' : currentStep === 2 ? 'Current Step' : 'Upcoming'})</Text>
-        </div>
-        <div style={{ flex: 1 }}>
-          <Text style={[styles.trackerLabelText, currentStep === 3 && styles.trackerLabelActive]}>[3] General Screening Questionnaire:</Text>
-          <Text style={styles.trackerLabelSubText}>({currentStep > 3 ? 'Completed' : currentStep === 3 ? 'Current Step' : 'Upcoming'})</Text>
-        </div>
-        <div style={{ flex: 1 }}>
-          <Text style={[styles.trackerLabelText, currentStep === 4 && styles.trackerLabelActive]}>[4] Admin Review & Badge Issuance:</Text>
-          <Text style={styles.trackerLabelSubText}>({currentStep === 4 ? 'Current Step' : 'Upcoming'})</Text>
-        </div>
-      </div>
-    </View>
-  );
-
-  const YesNoPills = ({ state, setState, hasError }: { state: boolean | null, setState: (val: boolean) => void, hasError?: boolean }) => (
-    <View style={styles.pillGroup}>
-      <Pressable 
-        style={[styles.pillBtn, state === true && styles.pillBtnActive, hasError && state === null && styles.errorBorder]} 
-        onPress={() => setState(true)}
-      >
-        <Text style={[styles.pillText, state === true && styles.pillTextActive]}>YES</Text>
-      </Pressable>
-      <Pressable 
-        style={[styles.pillBtn, state === false && styles.pillBtnActive, hasError && state === null && styles.errorBorder]} 
-        onPress={() => setState(false)}
-      >
-        <Text style={[styles.pillText, state === false && styles.pillTextActive]}>NO</Text>
-      </Pressable>
-    </View>
-  );
-
-  const RequiredLabel = ({ children, style }: { children: React.ReactNode; style?: any }) => (
-    <Text style={[styles.inputLabel, style]}>
-      {children}<Text style={styles.requiredAsterisk}> *</Text>
-    </Text>
-  );
 
   if (!isReady) {
     return null;
