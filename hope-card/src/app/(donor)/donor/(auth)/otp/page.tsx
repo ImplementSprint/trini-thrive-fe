@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect, Suspense } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { C, AuthShell, SubmitBtn, MobileLogo } from "@/donor-components/auth-shared";
@@ -9,7 +9,7 @@ import { C, AuthShell, SubmitBtn, MobileLogo } from "@/donor-components/auth-sha
 interface OtpInputProps {
   index: number;
   value: string;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: React.Ref<HTMLInputElement>;
   onChange: (index: number, value: string) => void;
   onKeyDown: (index: number, e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
@@ -66,8 +66,12 @@ function OTPForm() {
   const [resending, setResending] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const inputRefs = useRef<Array<React.RefObject<HTMLInputElement | null>>>(
-    Array.from({ length: OTP_LENGTH }, () => React.createRef<HTMLInputElement>())
+  const inputRefs = useRef<Array<HTMLInputElement | null>>(new Array(OTP_LENGTH).fill(null));
+  const refSetters = useMemo(
+    () => Array.from({ length: OTP_LENGTH }, (_, i) => (el: HTMLInputElement | null) => {
+      inputRefs.current[i] = el;
+    }),
+    []
   );
 
   // Start countdown on mount
@@ -100,13 +104,13 @@ function OTPForm() {
       return next;
     });
     if (digit && index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1].current?.focus();
+      inputRefs.current[index + 1]?.focus();
     }
   }, []);
 
   const handleKeyDown = useCallback((index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1].current?.focus();
+      inputRefs.current[index - 1]?.focus();
     }
   }, [digits]);
 
@@ -152,7 +156,7 @@ function OTPForm() {
       setDigits(Array(OTP_LENGTH).fill(''));
       setErrorMessage('');
       startCountdown();
-      inputRefs.current[0].current?.focus();
+      inputRefs.current[0]?.focus();
     } catch {
       setErrorMessage('Failed to resend code. Please try again.');
     } finally {
@@ -230,7 +234,7 @@ function OTPForm() {
                 key={i}
                 index={i}
                 value={digit}
-                inputRef={inputRefs.current[i]}
+                inputRef={refSetters[i]}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
               />
