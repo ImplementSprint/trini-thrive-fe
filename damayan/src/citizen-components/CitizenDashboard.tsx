@@ -1,121 +1,160 @@
 "use client";
 
-import { useState } from "react";
-import CitizenAuthPage from "./CitizenAuthPage";
-import CitizenSidebar, { NavDestination } from "./CitizenSidebar";
-import CitizenHeader from "./CitizenHeader";
-import CitizenBeforePage from "./CitizenBeforePage";
-import CitizenDuringPage from "./CitizenDuringPage";
-import CitizenAfterPage from "./CitizenAfterPage";
-import CitizenProfilePage from "./CitizenProfilePage";
+import React, { useState, useEffect } from "react";
+import QRCode from "react-qr-code";
+import { loadSession, clearSession } from "../lib/session";
+import { getCitizenProfile, getFileViewUrl } from "../lib/api";
+import type { AuthSession } from "../lib/types";
+import type { CitizenProfile } from "../lib/api";
 
-type Phase = "auth" | "before" | "during" | "after";
+export default function CitizenPortalPage() {
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [profile, setProfile] = useState<CitizenProfile | null>(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-interface Props {
-  initialPhase?: Phase;
-}
+  useEffect(() => {
+    const stored = loadSession();
+    if (!stored) { window.location.href = "/login"; return; }
+    setSession(stored);
+    getCitizenProfile(stored.accessToken)
+      .then(async (data) => {
+        setProfile(data);
+        if (data.profilePhotoKey) {
+          try {
+            const photoBucket = "government-ids";
+            const rawKey = data.profilePhotoKey ?? "";
+            // Strip leading "bucket/" prefix — legacy signups stored key as "bucket/objectPath"
+            const photoKey = rawKey.startsWith(`${photoBucket}/`) ? rawKey.slice(photoBucket.length + 1) : rawKey;
+            const url = await getFileViewUrl(stored.accessToken, photoBucket, photoKey);
+            setProfilePhotoUrl(url);
+          } catch { /* photo unavailable, use initials */ }
+        }
+      })
+      .catch(() => setError("Could not load your profile. You may not be registered as a citizen yet."))
+      .finally(() => setLoading(false));
+  }, []);
 
-export default function CitizenDashboard({ initialPhase = "auth" }: Props) {
-  const [phase, setPhase] = useState<Phase>(initialPhase);
-  const [activeNav, setActiveNav] = useState<NavDestination>("Overview");
-  const [targetStep, setTargetStep] = useState<string | null>(null);
-
-  const handleNavigate = (dest: NavDestination) => {
-    setActiveNav(dest);
-    
-    switch (dest) {
-      case "Overview":
-        // Usually defaults to the current phase's main dashboard
-        setTargetStep("dashboard");
-        break;
-      case "Family & ID":
-        setPhase("before");
-        setTargetStep("registration");
-        break;
-      case "Safety Map":
-        setPhase("during");
-        setTargetStep("map");
-        break;
-      case "Relief Status":
-        setPhase("after");
-        setTargetStep("relief_claim");
-        break;
-      case "Profile":
-        // Stay on current phase, just change active nav
-        break;
-    }
+  const handleLogout = () => {
+    clearSession();
+    window.location.href = "/login";
   };
 
-  // If in auth phase, show the full-screen auth page
-  if (phase === "auth") {
-    return <CitizenAuthPage onAuthenticated={() => setPhase("before")} />;
+  const displayName = profile?.fullName
+    || (profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : null)
+    || session?.user?.name
+    || session?.user?.email
+    || "Citizen";
+
+  const initials = displayName
+    .split(" ").filter(Boolean).map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f4f4ef] flex items-center justify-center">
+        <div className="text-[#444743] text-sm font-bold animate-pulse">Loading your portal...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#fafaf5] dark:bg-[#1a1c19] text-[#1a1c19] dark:text-[#e2e3dd] font-['Public_Sans'] transition-colors duration-300">
-      {/* Persistent Sidebar */}
-      <CitizenSidebar
-        phase={phase as "before" | "during" | "after"}
-        setPhase={(p) => { setPhase(p as Phase); setActiveNav("Overview"); }}
-        onNavigate={handleNavigate}
-        activeNav={activeNav}
-      />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Persistent Header */}
-        <CitizenHeader phase={phase as "before" | "during" | "after"} onProfileClick={() => handleNavigate("Profile")} />
-
-        {/* Dynamic Content Area */}
-        <main className="flex-1 overflow-y-auto px-10 py-12 scroll-smooth">
-          <div className="max-w-6xl mx-auto">
-            {activeNav === "Profile" ? (
-              <CitizenProfilePage onBack={() => handleNavigate("Overview")} />
-            ) : (
-              <>
-                {phase === "before" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <CitizenBeforePage 
-                      onGoToDuring={() => setPhase("during")} 
-                      initialStep={targetStep === "registration" ? "registration" : "dashboard"}
-                    />
-                  </div>
-                )}
-                {phase === "during" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <CitizenDuringPage 
-                      onGoToAfter={() => setPhase("after")} 
-                      initialStep={targetStep === "map" ? "map" : "decision"}
-                    />
-                  </div>
-                )}
-                {phase === "after" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <CitizenAfterPage 
-                      initialStep={targetStep === "relief_claim" ? "relief_claim" : "relief_claim"}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </main>
+    <div className="min-h-screen bg-[#f4f4ef] flex flex-col items-center justify-start py-12 px-4">
+      {/* Header */}
+      <div className="w-full max-w-md flex items-center justify-between mb-8">
+        <div>
+          <p className="text-[10px] font-black tracking-widest text-[#888] uppercase">Damayan</p>
+          <p className="text-[10px] font-bold text-[#888]">Citizen Portal</p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="text-xs font-bold text-[#444743] border border-[#dadad5] rounded-xl px-4 py-2 hover:bg-white transition-colors"
+        >
+          Sign Out
+        </button>
       </div>
 
-      {/* Dev Phase Switcher Overlay (Subtle) */}
-      <div className="fixed bottom-6 right-6 z-[200] opacity-10 hover:opacity-100 transition-opacity duration-300 pointer-events-none hover:pointer-events-auto">
-        <div className="bg-white/90 backdrop-blur shadow-2xl rounded-2xl p-2 flex gap-1 border border-[#dadad5]">
-           {(["auth", "before", "during", "after"] as Phase[]).map((p) => (
-             <button
-               key={p}
-               onClick={() => { setPhase(p); setActiveNav("Overview"); }}
-               className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                 phase === p ? "bg-[#2E7D32] text-white" : "text-[#707a6c] hover:bg-[#f4f4ef]"
-               }`}
-             >
-               {p}
-             </button>
-           ))}
+      {/* Profile Card */}
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-sm border border-[#e8e8e3] p-8 mb-6">
+        <div className="flex items-center gap-4 mb-6">
+          {profilePhotoUrl ? (
+            <img
+              src={profilePhotoUrl}
+              alt="Profile"
+              className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-2 border-[#FFB300]"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-[#FFB300] flex items-center justify-center text-white text-2xl font-black flex-shrink-0">
+              {initials}
+            </div>
+          )}
+          <div>
+            <h1 className="text-2xl font-black text-[#1A1C1A] leading-tight">{displayName}</h1>
+            <p className="text-sm text-[#888] mt-0.5">{session?.user?.email}</p>
+            {profile?.registrationType && (
+              <span className="inline-block mt-1 text-[10px] font-black tracking-widest text-[#FFB300] uppercase">
+                {profile.registrationType}
+              </span>
+            )}
+          </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          {profile?.birthDate && (
+            <div>
+              <p className="text-[10px] font-black text-[#888] uppercase tracking-wider mb-1">Date of Birth</p>
+              <p className="font-bold text-[#1A1C1A]">{new Date(profile.birthDate).toLocaleDateString()}</p>
+            </div>
+          )}
+          {profile?.gender && (
+            <div>
+              <p className="text-[10px] font-black text-[#888] uppercase tracking-wider mb-1">Gender</p>
+              <p className="font-bold text-[#1A1C1A]">{profile.gender}</p>
+            </div>
+          )}
+          {profile?.bloodType && (
+            <div>
+              <p className="text-[10px] font-black text-[#888] uppercase tracking-wider mb-1">Blood Type</p>
+              <p className="font-bold text-[#1A1C1A]">{profile.bloodType}</p>
+            </div>
+          )}
+          {profile?.medicalConditions && (
+            <div className="col-span-2">
+              <p className="text-[10px] font-black text-[#888] uppercase tracking-wider mb-1">Medical Conditions</p>
+              <p className="font-bold text-[#1A1C1A]">{profile.medicalConditions}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* QR Code Card */}
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-sm border border-[#e8e8e3] p-8">
+        <p className="text-[10px] font-black tracking-widest text-[#888] uppercase mb-6">Your Evacuation QR Code</p>
+
+        {profile?.qrCodeId ? (
+          <div className="flex flex-col items-center gap-4">
+            <div className="p-4 bg-white rounded-2xl border-2 border-[#f0f0eb]">
+              <QRCode value={profile.qrCodeId} size={200} />
+            </div>
+            <p className="text-xs font-bold text-[#888] tracking-wider">{profile.qrCodeId}</p>
+            <p className="text-xs text-[#aaa] text-center max-w-xs">
+              Show this QR code to site managers for check-in and check-out at evacuation centers.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <div className="w-16 h-16 rounded-2xl bg-[#f4f4ef] flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17h3M14 20h3"/>
+              </svg>
+            </div>
+            <p className="text-sm font-bold text-[#888]">No QR code yet</p>
+            <p className="text-xs text-[#aaa] text-center">
+              {error || "Complete your citizen registration in the mobile app to get your QR code."}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

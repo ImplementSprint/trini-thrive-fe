@@ -1,7 +1,9 @@
 /* ============================================
-   DAMAYAN — Shared Auth Styles (Login / ForgotPW)
+   DAMAYAN — Shared Auth Styles (Login / Signup / ForgotPW)
    Citizen: --auth-accent: #2e7d32
    Site Manager: --auth-accent: #1b5e20
+   Dispatcher: --auth-accent: #388e3c
+   Admin: --auth-accent: #4e342e
    ============================================ */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
@@ -25,6 +27,29 @@
   background: var(--auth-neutral);
 }
 
+/* === Theme Overrides by Persona === */
+.citizen-auth {
+  --auth-accent: #2e7d32;
+  --auth-accent-light: rgba(46, 125, 50, 0.08);
+  --auth-accent-ring: rgba(129, 199, 132, 0.3);
+}
+.sm-auth {
+  --auth-accent: #1b5e20;
+  --auth-accent-light: rgba(27, 94, 32, 0.08);
+  --auth-accent-ring: rgba(46, 125, 50, 0.3);
+}
+.dispatcher-auth {
+  --auth-accent: #388e3c;
+  --auth-accent-light: rgba(56, 142, 60, 0.08);
+  --auth-accent-ring: rgba(129, 199, 132, 0.3);
+}
+.admin-auth {
+  --auth-accent: #4e342e;
+  --auth-accent-light: rgba(78, 52, 46, 0.08);
+  --auth-accent-ring: rgba(141, 110, 99, 0.3);
+  --auth-muted: #5d4037;
+}
+
 /* Blobs */
 .auth-blob {
   position: absolute;
@@ -34,36 +59,21 @@
   z-index: 0;
 }
 
-.citizen-auth .auth-blob-1 {
+/* Base blobs */
+.auth-blob-1 {
   width: 480px;
   height: 480px;
-  background: rgba(46, 125, 50, 0.18);
   top: -160px;
   left: -160px;
+  background: var(--auth-accent-light);
 }
 
-.citizen-auth .auth-blob-2 {
+.auth-blob-2 {
   width: 360px;
   height: 360px;
-  background: rgba(255, 179, 0, 0.14);
   bottom: -100px;
   right: 30%;
-}
-
-.sm-auth .auth-blob-1 {
-  width: 480px;
-  height: 480px;
-  background: rgba(27, 94, 32, 0.22);
-  top: -160px;
-  left: -160px;
-}
-
-.sm-auth .auth-blob-2 {
-  width: 360px;
-  height: 360px;
-  background: rgba(46, 125, 50, 0.12);
-  bottom: -100px;
-  right: 30%;
+  background: var(--auth-accent-ring);
 }
 
 /* === Brand Panel === */
@@ -74,13 +84,22 @@
   flex-direction: column;
   justify-content: center;
   padding: 60px 52px;
-  background: linear-gradient(160deg, #1a3d1e 0%, #2e7d32 60%, #81c784 100%);
   color: #fff;
   overflow: hidden;
 }
 
+/* Gradient logic */
+.citizen-auth .auth-brand {
+  background: linear-gradient(160deg, #1a3d1e 0%, #2e7d32 60%, #81c784 100%);
+}
 .sm-auth .auth-brand {
   background: linear-gradient(160deg, #0d2f10 0%, #1b5e20 60%, #2e7d32 100%);
+}
+.dispatcher-auth .auth-brand {
+  background: linear-gradient(160deg, #1b5e20 0%, #388e3c 60%, #a5d6a7 100%);
+}
+.admin-auth .auth-brand {
+  background: linear-gradient(160deg, #3e2723 0%, #4e342e 60%, #8d6e63 100%);
 }
 
 .auth-brand::before {
@@ -139,6 +158,7 @@
   text-transform: uppercase;
   color: rgba(200, 255, 195, 0.7);
 }
+.admin-auth .auth-eyebrow { color: rgba(215, 204, 200, 0.7); }
 
 .auth-headline {
   margin: 0 0 16px;
@@ -150,6 +170,7 @@
 .auth-headline-accent {
   color: #81c784;
 }
+.admin-auth .auth-headline-accent { color: #d7ccc8; }
 
 .auth-subline {
   margin: 0;
@@ -157,41 +178,6 @@
   line-height: 1.8;
   color: rgba(255, 255, 255, 0.6);
   max-width: 380px;
-}
-
-.auth-features {
-  display: grid;
-  gap: 14px;
-}
-
-.auth-feature-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.auth-feature-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.auth-feature-item strong {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 3px;
-}
-
-.auth-feature-item p {
-  margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.58);
 }
 
 /* === Form Panel === */
@@ -216,6 +202,9 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 32px;
+}
+.auth-mobile-logo .auth-logo-name {
+  color: var(--auth-accent);
 }
 
 .auth-form-head {
@@ -358,24 +347,37 @@
   padding: 16px 20px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(135deg, #25692a, var(--auth-accent), #4c9c56);
+  background: var(--auth-accent);
   color: #fff;
   font: inherit;
   font-size: 1rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 12px 28px rgba(46, 125, 50, 0.3);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
+/* Gradient overrides on submit button for each persona */
+.citizen-auth .auth-submit {
+  background: linear-gradient(135deg, #25692a, #2e7d32, #4c9c56);
+  box-shadow: 0 12px 28px rgba(46, 125, 50, 0.3);
+}
 .sm-auth .auth-submit {
   background: linear-gradient(135deg, #0d2f10, #1b5e20, #2e7d32);
   box-shadow: 0 12px 28px rgba(27, 94, 32, 0.35);
 }
+.dispatcher-auth .auth-submit {
+  background: linear-gradient(135deg, #2e7d32, #388e3c, #66bb6a);
+  box-shadow: 0 12px 28px rgba(56, 142, 60, 0.3);
+}
+.admin-auth .auth-submit {
+  background: linear-gradient(135deg, #3e2723, #4e342e, #6d4c41);
+  box-shadow: 0 12px 28px rgba(78, 52, 46, 0.3);
+}
 
 .auth-submit:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(46, 125, 50, 0.35);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .auth-switch-copy {
@@ -391,7 +393,7 @@
   font-weight: 700;
 }
 
-/* === Forgot Password Steps === */
+/* === Forgot Password Steps & Misc === */
 .auth-step-indicator {
   display: flex;
   align-items: center;
@@ -422,10 +424,60 @@
   height: 72px;
   border-radius: 999px;
   background: var(--auth-accent-light);
+  color: var(--auth-accent);
   display: grid;
   place-items: center;
   font-size: 2rem;
   margin: 0 auto 24px;
+}
+
+/* Brand Timeline */
+.auth-steps-timeline {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.auth-timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.3s ease;
+}
+
+.auth-timeline-item.is-active {
+  color: #fff;
+}
+
+.auth-timeline-item.is-done {
+  color: rgba(200, 255, 195, 0.75);
+}
+
+.auth-timeline-node {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.auth-timeline-item.is-active .auth-timeline-node {
+  border-color: #c8ffc3;
+  background: rgba(200, 255, 195, 0.12);
+  color: #c8ffc3;
+}
+
+.auth-timeline-item.is-done .auth-timeline-node {
+  border-color: rgba(200, 255, 195, 0.5);
+  background: rgba(200, 255, 195, 0.1);
+  color: #c8ffc3;
 }
 
 .auth-info-box {
@@ -460,15 +512,12 @@
   .auth-root {
     grid-template-columns: 1fr;
   }
-
   .auth-brand {
     display: none;
   }
-
   .auth-mobile-logo {
     display: flex;
   }
-
   .auth-panel {
     padding: 40px 32px;
   }
