@@ -131,6 +131,41 @@ export default function ScanQrPage() {
     setCameraReady(false);
   }, []);
 
+  // Handle QR detected
+  const handleQrDetected = useCallback(async (rawData: string) => {
+    setScanState("verifying");
+
+    try {
+      // Parse the QR JSON payload
+      const payload = JSON.parse(rawData);
+      const id = payload.application_id || payload.donation_id;
+
+      if (!id) {
+        throw new Error("Invalid QR code — no application or donation ID found");
+      }
+
+      // Call backend to verify
+      const data = await QrScanAPI.verify(id);
+
+      // Auto check-in if this is a volunteer QR and not already checked in
+      if (data.volunteer && data.application_id && !data.qr_scanned_at) {
+        try {
+          await QrScanAPI.checkIn(data.application_id);
+          data.qr_scanned_at = new Date().toISOString();
+        } catch {
+          // Non-fatal: check-in failed silently, the button will still show
+        }
+      }
+
+      setResult(data);
+      setScanState("success");
+      stopCamera();
+    } catch (err: any) {
+      setErrorMsg(err?.message ?? "Failed to verify QR code");
+      setScanState("error");
+    }
+  }, [stopCamera]);
+
   // Scan loop
   useEffect(() => {
     if (scanState !== "scanning" || !cameraReady) return;
@@ -174,48 +209,13 @@ export default function ScanQrPage() {
       active = false;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [scanState, cameraReady]);
+  }, [scanState, cameraReady, handleQrDetected]);
 
   // Start camera on mount
   useEffect(() => {
     startCamera();
     return () => stopCamera();
   }, [startCamera, stopCamera]);
-
-  // Handle QR detected
-  const handleQrDetected = async (rawData: string) => {
-    setScanState("verifying");
-
-    try {
-      // Parse the QR JSON payload
-      const payload = JSON.parse(rawData);
-      const id = payload.application_id || payload.donation_id;
-
-      if (!id) {
-        throw new Error("Invalid QR code — no application or donation ID found");
-      }
-
-      // Call backend to verify
-      const data = await QrScanAPI.verify(id);
-
-      // Auto check-in if this is a volunteer QR and not already checked in
-      if (data.volunteer && data.application_id && !data.qr_scanned_at) {
-        try {
-          await QrScanAPI.checkIn(data.application_id);
-          data.qr_scanned_at = new Date().toISOString();
-        } catch {
-          // Non-fatal: check-in failed silently, the button will still show
-        }
-      }
-
-      setResult(data);
-      setScanState("success");
-      stopCamera();
-    } catch (err: any) {
-      setErrorMsg(err?.message ?? "Failed to verify QR code");
-      setScanState("error");
-    }
-  };
 
   // Reset to scan again
   const handleScanAgain = () => {

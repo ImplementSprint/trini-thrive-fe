@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/enduser-lib/auth-context';
 import EnduserNavBar from '@/enduser-components/EnduserNavBar';
 
+const RequiredLabel = ({ children, style }: { children: React.ReactNode; style?: any }) => (
+  <Text style={[styles.inputLabel, style]}>
+    {children}<Text style={styles.requiredAsterisk}> *</Text>
+  </Text>
+);
+
 export default function PledgePage() {
   const router = useRouter();
   const { token, user, logout, isReady } = useAuth();
@@ -179,12 +185,6 @@ export default function PledgePage() {
       setOpenDropdown({ index, type });
     }
   };
-
-  const RequiredLabel = ({ children, style }: { children: React.ReactNode; style?: any }) => (
-    <Text style={[styles.inputLabel, style]}>
-      {children}<Text style={styles.requiredAsterisk}> *</Text>
-    </Text>
-  );
 
   if (!isReady) {
     return null; // Or a loading spinner
