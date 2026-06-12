@@ -10,6 +10,12 @@ export default async function MyCampaignsPage({
 }: {
   searchParams: Promise<{ status?: string; search?: string; page?: string }>;
 }) {
+  let pageProps!: {
+    campaigns: any[];
+    totalCount: number;
+    currentPage: number;
+    managerName: string;
+  };
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -107,16 +113,23 @@ export default async function MyCampaignsPage({
       createdAt: c.created_at,
     }));
 
-    return (
-      <MyCampaignsUI
-        campaigns={formattedCampaigns}
-        totalCount={totalCount}
-        currentPage={currentPage}
-        managerName={managerName}
-      />
-    );
+    pageProps = {
+      campaigns: formattedCampaigns,
+      totalCount,
+      currentPage,
+      managerName,
+    };
   } catch (error) {
     console.error('[MyCampaignsPage] Error:', error);
     redirect(`/?error=server_error`);
   }
+
+  return (
+    <MyCampaignsUI
+      campaigns={pageProps.campaigns}
+      totalCount={pageProps.totalCount}
+      currentPage={pageProps.currentPage}
+      managerName={pageProps.managerName}
+    />
+  );
 }

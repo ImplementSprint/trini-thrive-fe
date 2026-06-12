@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Clock, ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -14,7 +14,7 @@ const BACKEND = process.env.NEXT_PUBLIC_BENEFICIARY_BACKEND_URL ?? "";
 interface OtpDigitProps {
   index: number;
   value: string;
-  inputRef: React.RefObject<HTMLInputElement | null>;
+  inputRef: React.Ref<HTMLInputElement>;
   onChange: (i: number, v: string) => void;
   onKeyDown: (i: number, e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
@@ -89,8 +89,12 @@ export default function ForgotPasswordPage() {
   const [resendSeconds, setResendSeconds] = useState(RESEND_SECONDS);
   const [canResend, setCanResend] = useState(false);
 
-  const refs = useRef<Array<React.RefObject<HTMLInputElement | null>>>(
-    new Array(OTP_LENGTH).fill(null).map(() => React.createRef<HTMLInputElement>())
+  const refs = useRef<Array<HTMLInputElement | null>>(new Array(OTP_LENGTH).fill(null));
+  const refSetters = useMemo(
+    () => Array.from({ length: OTP_LENGTH }, (_, i) => (el: HTMLInputElement | null) => {
+      refs.current[i] = el;
+    }),
+    []
   );
 
   useEffect(() => {
@@ -117,12 +121,12 @@ export default function ForgotPasswordPage() {
       next[i] = digit;
       return next;
     });
-    if (digit && i < OTP_LENGTH - 1) refs.current[i + 1].current?.focus();
+    if (digit && i < OTP_LENGTH - 1) refs.current[i + 1]?.focus();
   }, []);
 
   const handleKeyDown = useCallback(
     (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Backspace" && !digits[i] && i > 0) refs.current[i - 1].current?.focus();
+      if (e.key === "Backspace" && !digits[i] && i > 0) refs.current[i - 1]?.focus();
     },
     [digits]
   );
@@ -317,7 +321,7 @@ export default function ForgotPasswordPage() {
                       key={id}
                       index={i}
                       value={digits[i]}
-                      inputRef={refs.current[i]}
+                      inputRef={refSetters[i]}
                       onChange={handleChange}
                       onKeyDown={handleKeyDown}
                     />
